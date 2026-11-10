@@ -1,0 +1,498 @@
+/* ===================== Startseite: Comic-Szene (Funkhaus → Funkraum) ===================== */
+
+/* ---------- Farben je Design: alle Zeichnungen holen ihre Farben hier ab ---------- */
+[data-theme="dunkel"] {
+  --sc-ink: #0a0c1e; --sc-pop: #6366f1; --sc-focus: #22d3ee; --sc-paper: #eef0ff; --sc-tag: #ffd36b; --sc-tapc: #22d3ee;
+  --sc-sky1: #12142b; --sc-sky2: #191c3d; --sc-sky3: #242859; --sc-ht: rgba(0, 0, 0, .42);
+  --sc-star: #fff6cf; --sc-moon: #f4efc8; --sc-moon-d: #d6cf9c; --sc-sun: #ffd34d; --sc-cloud: #3a3f74;
+  --sc-city3: #22265a; --sc-city2: #2b3069; --sc-city1: #353b7c; --sc-citywin: #ffd36b; --sc-fogc: #353a78; --sc-haze: #12142b;
+  --sc-hill2: #1d2547; --sc-hill: #263259; --sc-path: #4c5288; --sc-grassc: #44548a;
+  --sc-brick: #6c3840; --sc-brick-d: #4c262e; --sc-mortar: #3a1f2a; --sc-trim: #b8bce6; --sc-trim-d: #8489bd; --sc-plinth: #3a2a40;
+  --sc-win: #ffd36b; --sc-winhalo: rgba(255, 211, 107, .28); --sc-glare: rgba(255, 255, 255, .55); --sc-mull: #3b3260;
+  --sc-sign: #eef0ff; --sc-door: #5a3330; --sc-door-d: #43262a; --sc-doorway: #0a0c1e; --sc-knob: #ffd36b; --sc-lantern: #ffd36b; --sc-step: #4a4f80;
+  --sc-mast: #a9acd6; --sc-mast-d: #5a5f8f; --sc-red: #ff5a6e; --sc-wave: #22d3ee;
+  --sc-zep: #8189bf; --sc-zep-d: #525884; --sc-zlight: #ffd36b;
+  --sc-wall: #232850; --sc-wall2: #1d2146; --sc-wains: #191c3c; --sc-floor: #101228;
+  --sc-frame: #4a3f78; --sc-wsky: #141735; --sc-curtain: #5b4b9e;
+  --sc-board: #163a3d; --sc-chalk: #e9fbff;
+  --sc-tab-t: #463b6c; --sc-tab-f: #332b55; --sc-tab-s: #251f40; --sc-grainl: rgba(0, 0, 0, .35);
+  --sc-book: #2a6f90; --sc-book-d: #1c4c66; --sc-book2: #8f3b6b; --sc-book3: #5b5fb0;
+  --sc-dark-t: #2e3354; --sc-dark-f: #1b1e36; --sc-dark-s: #111326;
+  --sc-glass: rgba(150, 225, 255, .22); --sc-tube: #67e8f9; --sc-tube-o: .55;
+  --sc-radio: #3b3060; --sc-grille: #121428; --sc-grille-l: #5b5f9a; --sc-dial: #d8f6ff; --sc-dialink: #1d2a50; --sc-needle: #ff5a6e;
+  --sc-met-t: #6f79a8; --sc-met-f: #464e7c; --sc-met-s: #2c3256; --sc-shine: #22d3ee;
+  --sc-sil-t: #e8edff; --sc-sil-f: #aab3d8; --sc-sil-s: #7a83ad;
+  --sc-wood-t: #4a3f72; --sc-wood-f: #342c55; --sc-wood-s: #251f3f;
+  --sc-shade: #3e3b80; --sc-bulb: #fff1b0; --sc-light: #ffd36b; --sc-cone-o: .16;
+  --sc-pencil: #f4c542; --sc-eraser: #f472b6; --sc-accent: #22d3ee; --sc-pad: #3b3f66; --sc-cable: #1a1d38; --sc-wire: #f472b6; --sc-socket: #d8dcf5;
+  --sc-paper-d: #c9cdf2; --sc-paper-dd: #9fa5d8; --sc-ruled: #8ea2ff; --sc-inkc: #1d2a50; --sc-kshadow: #0a0c1e;
+  --sc-font-pop: "Arial Black", "Arial Bold", Arial, sans-serif;
+}
+[data-theme="hell"] {
+  --sc-ink: #0b2545; --sc-pop: #0b2545; --sc-focus: #1d62d6; --sc-paper: #ffffff; --sc-tag: #ffe27a; --sc-tapc: #ffd34d;
+  --sc-sky1: #bcd8f7; --sc-sky2: #d6e7fa; --sc-sky3: #f3f7fc; --sc-ht: rgba(11, 37, 69, .16);
+  --sc-star: #ffffff; --sc-moon: #ffffff; --sc-moon-d: #dddddd; --sc-sun: #ffd34d; --sc-cloud: #ffffff;
+  --sc-city3: #cfdced; --sc-city2: #b1c6e0; --sc-city1: #8eabd2; --sc-citywin: #eaf2fc; --sc-fogc: #f3f7fc; --sc-haze: #f3f7fc;
+  --sc-hill2: #8dc97b; --sc-hill: #6cb35e; --sc-path: #efe2c4; --sc-grassc: #3f8a3e;
+  --sc-brick: #c8553d; --sc-brick-d: #9c3f2d; --sc-mortar: #e9b9a2; --sc-trim: #ffffff; --sc-trim-d: #cfdced; --sc-plinth: #7a8aa3;
+  --sc-win: #bfe0ff; --sc-winhalo: transparent; --sc-glare: rgba(255, 255, 255, .9); --sc-mull: #0b2545;
+  --sc-sign: #ffffff; --sc-door: #1d62d6; --sc-door-d: #164fb0; --sc-doorway: #0b2545; --sc-knob: #ffd34d; --sc-lantern: #e9f1fc; --sc-step: #d3e2f4;
+  --sc-mast: #5a7089; --sc-mast-d: #0b2545; --sc-red: #d13b3b; --sc-wave: #1d62d6;
+  --sc-zep: #e3e9f2; --sc-zep-d: #a9b9cf; --sc-zlight: #ffd34d;
+  --sc-wall: #eef4fc; --sc-wall2: #e1ebf8; --sc-wains: #cfe0f5; --sc-floor: #b7cbe6;
+  --sc-frame: #ffffff; --sc-wsky: #cfe6fb; --sc-curtain: #9cc3f2;
+  --sc-board: #2f5d50; --sc-chalk: #ffffff;
+  --sc-tab-t: #e6c48f; --sc-tab-f: #d4a86a; --sc-tab-s: #b88a4e; --sc-grainl: rgba(120, 80, 30, .35);
+  --sc-book: #1d62d6; --sc-book-d: #0b2f6b; --sc-book2: #d13b3b; --sc-book3: #1a8f55;
+  --sc-dark-t: #3a4a62; --sc-dark-f: #26334a; --sc-dark-s: #18233a;
+  --sc-glass: rgba(190, 225, 255, .55); --sc-tube: #ffb347; --sc-tube-o: .25;
+  --sc-radio: #d4a86a; --sc-grille: #8a6a42; --sc-grille-l: #f3e2c2; --sc-dial: #ffffff; --sc-dialink: #0b2545; --sc-needle: #d13b3b;
+  --sc-met-t: #f4f7fb; --sc-met-f: #c6d1de; --sc-met-s: #8e9db2; --sc-shine: #ffffff;
+  --sc-sil-t: #ffffff; --sc-sil-f: #d7dfe9; --sc-sil-s: #a6b3c4;
+  --sc-wood-t: #ecd09e; --sc-wood-f: #d9b175; --sc-wood-s: #bb8f54;
+  --sc-shade: #1d62d6; --sc-bulb: #fff6c8; --sc-light: #fff0b0; --sc-cone-o: .35;
+  --sc-pencil: #ffd34d; --sc-eraser: #f28b9a; --sc-accent: #1d62d6; --sc-pad: #c6d1de; --sc-cable: #26334a; --sc-wire: #d13b3b; --sc-socket: #ffffff;
+  --sc-paper-d: #e3edf9; --sc-paper-dd: #bcd0ea; --sc-ruled: #9cc3f2; --sc-inkc: #0b2545; --sc-kshadow: #0b2545;
+  --sc-font-pop: "Arial Black", "Arial Bold", Arial, sans-serif;
+}
+[data-theme="funk"] {
+  --sc-ink: #2a1c0c; --sc-pop: #2a1c0c; --sc-focus: #ffb347; --sc-paper: #eadfb9; --sc-tag: #f3e2b0; --sc-tapc: #ffb347;
+  --sc-sky1: #c8b383; --sc-sky2: #d8c697; --sc-sky3: #eadfb9; --sc-ht: rgba(60, 35, 10, .28);
+  --sc-star: #f7efd2; --sc-moon: #f5ebc6; --sc-moon-d: #d8c697; --sc-sun: #f6e7b6; --sc-cloud: #efe4c2;
+  --sc-city3: #bea777; --sc-city2: #a88f63; --sc-city1: #8f7550; --sc-citywin: #f2dfa8; --sc-fogc: #eadfb9; --sc-haze: #eadfb9;
+  --sc-hill2: #a68d5e; --sc-hill: #8f764c; --sc-path: #d8c697; --sc-grassc: #5a4628;
+  --sc-brick: #9b5a3a; --sc-brick-d: #74402a; --sc-mortar: #c9a77a; --sc-trim: #eadfb9; --sc-trim-d: #c9b48a; --sc-plinth: #5a4028;
+  --sc-win: #ffb347; --sc-winhalo: rgba(255, 179, 71, .25); --sc-glare: rgba(255, 245, 210, .6); --sc-mull: #4b2f17;
+  --sc-sign: #eadfb9; --sc-door: #6b4426; --sc-door-d: #4b2f17; --sc-doorway: #1b120a; --sc-knob: #d9a441; --sc-lantern: #ffb347; --sc-step: #c9b48a;
+  --sc-mast: #5a4028; --sc-mast-d: #2a1c0c; --sc-red: #c2321f; --sc-wave: #a67c2e;
+  --sc-zep: #cbb68c; --sc-zep-d: #a8916a; --sc-zlight: #ffb347;
+  --sc-wall: #6b5236; --sc-wall2: #5e472e; --sc-wains: #4b2f17; --sc-floor: #2f1f10;
+  --sc-frame: #7a512b; --sc-wsky: #e3d3a6; --sc-curtain: #8a3f26;
+  --sc-board: #2d3a2a; --sc-chalk: #eadfb9;
+  --sc-tab-t: #8a5a30; --sc-tab-f: #7a512b; --sc-tab-s: #5a3a1c; --sc-grainl: rgba(30, 15, 5, .4);
+  --sc-book: #7a2a1a; --sc-book-d: #521a10; --sc-book2: #3c4a2a; --sc-book3: #a67c2e;
+  --sc-dark-t: #3a2a1a; --sc-dark-f: #24180c; --sc-dark-s: #160e06;
+  --sc-glass: rgba(255, 220, 160, .28); --sc-tube: #ffb347; --sc-tube-o: .9;
+  --sc-radio: #7a512b; --sc-grille: #241810; --sc-grille-l: #a07c3d; --sc-dial: #eadfb9; --sc-dialink: #3b2a12; --sc-needle: #c2321f;
+  --sc-met-t: #f0cf7a; --sc-met-f: #c89a3c; --sc-met-s: #8a6420; --sc-shine: #fff2c0;
+  --sc-sil-t: #f2ead2; --sc-sil-f: #cbbf9c; --sc-sil-s: #9a8e6c;
+  --sc-wood-t: #9b4a2c; --sc-wood-f: #7a3420; --sc-wood-s: #5a2314;
+  --sc-shade: #3c4a2a; --sc-bulb: #ffe2a8; --sc-light: #ffb347; --sc-cone-o: .3;
+  --sc-pencil: #d9a441; --sc-eraser: #c2321f; --sc-accent: #a67c2e; --sc-pad: #5a4028; --sc-cable: #24180c; --sc-wire: #7a2a1a; --sc-socket: #eadfb9;
+  --sc-paper-d: #d8c697; --sc-paper-dd: #bea777; --sc-ruled: #a88f63; --sc-inkc: #2a1c0c; --sc-kshadow: #2a1c0c;
+  --sc-font-pop: Georgia, "Times New Roman", serif;
+}
+
+/* ---------- Grundgerüst: hoher Container, darin eine mitlaufende (sticky) Bühne ---------- */
+/* Die Bühne ist breiter als die Inhaltsspalte: seitlich abschneiden, ohne das Mitlaufen (sticky) zu stören */
+body.on-start { overflow-x: clip; }
+body.on-start .layout { padding-top: 0; }
+.sc {
+  position: relative; height: 500vh;
+  width: var(--sc-vw, 100vw); margin-left: calc(50% - var(--sc-vw, 100vw) / 2);
+}
+.sc-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.sc-stage {
+  position: sticky; top: var(--hh, 64px); overflow: hidden; isolation: isolate;
+  height: calc(100vh - var(--hh, 64px)); height: calc(100svh - var(--hh, 64px)); min-height: 300px;
+  background: var(--sc-sky1); color: var(--sc-ink);
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.sc-start-card { margin-top: 14px; }
+.sc-room, .sc-ext, .sc-haze, .sc-grain { position: absolute; inset: 0; }
+
+/* ---------- Zeichenstil: dicke Outlines, flache Farben, Halbtonraster ---------- */
+.sc svg { overflow: visible; }
+.sc .o { stroke: var(--sc-ink); stroke-width: var(--sw, 3px); stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sc .o2 { stroke: var(--sc-ink); stroke-width: 1.5px; stroke-opacity: .55; vector-effect: non-scaling-stroke; }
+.sc-htdot { fill: var(--sc-ht); }
+.sc-ht { fill: url(#sc-ht); stroke: none; }
+.sc-ht2 { fill: url(#sc-ht2); opacity: .45; }
+.sc-fogs0 { stop-color: var(--sc-fogc); stop-opacity: 0; }
+.sc-fogs1 { stop-color: var(--sc-fogc); stop-opacity: .92; }
+.sc-fogs2 { stop-color: var(--sc-fogc); stop-opacity: .55; }
+
+.f-sky1 { fill: var(--sc-sky1); } .f-sky2 { fill: var(--sc-sky2); } .f-sky3 { fill: var(--sc-sky3); }
+.f-star { fill: var(--sc-star); } .f-moon { fill: var(--sc-moon); } .f-moon-d { fill: var(--sc-moon-d); }
+.f-sun { fill: var(--sc-sun); } .f-cloud { fill: var(--sc-cloud); }
+.f-city3 { fill: var(--sc-city3); } .f-city2 { fill: var(--sc-city2); } .f-city1 { fill: var(--sc-city1); } .f-citywin { fill: var(--sc-citywin); }
+.f-hill2 { fill: var(--sc-hill2); } .f-hill { fill: var(--sc-hill); } .f-path { fill: var(--sc-path); }
+.f-brick { fill: var(--sc-brick); } .f-brick-d { fill: var(--sc-brick-d); } .f-trim { fill: var(--sc-trim); } .f-trim-d { fill: var(--sc-trim-d); }
+.f-plinth { fill: var(--sc-plinth); } .f-win { fill: var(--sc-win); } .f-glare { fill: var(--sc-glare); } .f-sign { fill: var(--sc-sign); }
+.f-door { fill: var(--sc-door); } .f-door-d { fill: var(--sc-door-d); } .f-doorway { fill: var(--sc-doorway); } .f-knob { fill: var(--sc-knob); }
+.f-lantern { fill: var(--sc-lantern); } .f-step { fill: var(--sc-step); } .f-mast { fill: var(--sc-mast); } .f-red { fill: var(--sc-red); }
+.f-zep { fill: var(--sc-zep); } .f-zep-d { fill: var(--sc-zep-d); } .f-zlight { fill: var(--sc-zlight); }
+.f-frame { fill: var(--sc-frame); } .f-wsky { fill: var(--sc-wsky); } .f-curtain { fill: var(--sc-curtain); }
+.f-board { fill: var(--sc-board); } .f-chalk { fill: var(--sc-chalk); }
+.f-tab-t { fill: var(--sc-tab-t); } .f-tab-f { fill: var(--sc-tab-f); } .f-tab-s { fill: var(--sc-tab-s); }
+.f-book { fill: var(--sc-book); } .f-book-d { fill: var(--sc-book-d); } .f-book2 { fill: var(--sc-book2); } .f-book3 { fill: var(--sc-book3); }
+.f-paper { fill: var(--sc-paper); } .f-paper-d { fill: var(--sc-paper-d); } .f-paper-dd { fill: var(--sc-paper-dd); }
+.f-dark-t { fill: var(--sc-dark-t); } .f-dark-f { fill: var(--sc-dark-f); } .f-dark-s { fill: var(--sc-dark-s); }
+.f-glass { fill: var(--sc-glass); } .f-radio { fill: var(--sc-radio); } .f-grille { fill: var(--sc-grille); } .f-dial { fill: var(--sc-dial); }
+.f-knobc { fill: var(--sc-dark-f); } .f-met-t { fill: var(--sc-met-t); } .f-met-f { fill: var(--sc-met-f); }
+.f-shade { fill: var(--sc-shade); } .f-bulb { fill: var(--sc-bulb); } .f-pencil { fill: var(--sc-pencil); } .f-eraser { fill: var(--sc-eraser); }
+.f-wood-t { fill: var(--sc-wood-t); } .f-ink { fill: var(--sc-ink); } .f-accent { fill: var(--sc-accent); } .f-pad { fill: var(--sc-pad); }
+.f-socket { fill: var(--sc-socket); }
+.m-wood-t { fill: var(--sc-wood-t); } .m-wood-f { fill: var(--sc-wood-f); } .m-wood-s { fill: var(--sc-wood-s); }
+.m-met-t { fill: var(--sc-met-t); } .m-met-f { fill: var(--sc-met-f); } .m-met-s { fill: var(--sc-met-s); }
+.m-dark-t { fill: var(--sc-dark-t); } .m-dark-f { fill: var(--sc-dark-f); } .m-dark-s { fill: var(--sc-dark-s); }
+.m-sil-t { fill: var(--sc-sil-t); } .m-sil-f { fill: var(--sc-sil-f); } .m-sil-s { fill: var(--sc-sil-s); }
+
+/* Linien ohne Füllung */
+.sc-mortar, .sc-grille-l, .sc-ray, .sc-zline, .sc-mull, .sc-grass, .sc-guy, .sc-mast-o, .sc-mast-i, .sc-brace, .sc-cord,
+.sc-chalk, .sc-grain, .sc-tubeinner, .sc-glassglare, .sc-bookband, .sc-booklines, .sc-tick, .sc-needle-l, .sc-knobptr,
+.sc-ribs, .sc-ant, .sc-handle, .sc-trimline, .sc-ruled, .sc-inkline, .sc-pencilline, .sc-cable-o, .sc-cable-i, .sc-motion,
+.sc-knurl, .sc-shine, .sc-slot, .sc-spring-o, .sc-spring-i, .sc-wire-o, .sc-wire-i, .sc-minimast, .sc-wave {
+  fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+.sc-mortar { stroke: var(--sc-mortar); stroke-width: 1; vector-effect: none; }
+.sc-grille-l { stroke: var(--sc-grille-l); stroke-width: 1.6; vector-effect: none; }
+.sc-ray { stroke: var(--sc-sun); stroke-width: 6px; }
+.sc-zline { stroke: var(--sc-zep-d); stroke-width: 1.5px; }
+.sc-mull { stroke: var(--sc-mull); stroke-width: calc(var(--sw, 3px) * .6); }
+.sc-grass { stroke: var(--sc-grassc); stroke-width: calc(var(--sw, 3px) * .8); }
+.sc-guy { stroke: var(--sc-mast-d); stroke-width: calc(var(--sw, 3px) * .4); stroke-opacity: .7; }
+.sc-mast-o { stroke: var(--sc-ink); stroke-width: calc(var(--sw, 3px) * 2.2); }
+.sc-mast-i { stroke: var(--sc-mast); stroke-width: calc(var(--sw, 3px) * .9); }
+.sc-brace { stroke: var(--sc-mast-d); stroke-width: calc(var(--sw, 3px) * .55); }
+.sc-wave { stroke: var(--sc-wave); stroke-width: calc(var(--sw, 3px) * 1.1); opacity: 0;
+  transform-box: fill-box; transform-origin: center; animation: sc-wave 4s ease-out infinite; }
+.sc-wave2 { animation-delay: -1.33s; } .sc-wave3 { animation-delay: -2.66s; }
+@keyframes sc-wave { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(5.5); opacity: 0; } }
+.sc-winhalo { fill: var(--sc-winhalo); }
+.sc-lanternglow { fill: var(--sc-winhalo); }
+.sc-signtxt { font: 900 10.5px "Arial Black", Arial, sans-serif; fill: var(--sc-ink); letter-spacing: .6px; }
+[data-theme="funk"] .sc-signtxt { font: 700 11px Georgia, serif; letter-spacing: 1.5px; }
+.sc-blink { animation: sc-blink 1.8s steps(1) infinite; }
+.sc-blink2 { animation-delay: -.9s; }
+@keyframes sc-blink { 50% { opacity: .15; } }
+
+.sc-cord { stroke: var(--sc-ink); stroke-width: 3px; }
+.sc-chalk { stroke: var(--sc-chalk); stroke-width: 3px; }
+.sc-chalkbar { fill: var(--sc-chalk); fill-opacity: .3; stroke: var(--sc-chalk); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.sc-grain { stroke: var(--sc-grainl); stroke-width: 2px; }
+.sc-tubeinner { stroke: var(--sc-ink); stroke-width: 2px; stroke-opacity: .7; }
+.sc-glassglare { stroke: #fff; stroke-width: 3px; stroke-opacity: .6; }
+.sc-tubeglow { fill: var(--sc-tube); opacity: var(--sc-tube-o); animation: sc-glim 3.2s ease-in-out infinite; }
+.sc-tubeglow2 { animation-delay: -1.4s; }
+@keyframes sc-glim { 50% { opacity: calc(var(--sc-tube-o) * .55); } }
+.sc-bookband { stroke: var(--sc-tag); stroke-width: 2.5px; }
+.sc-booktxt { font: 900 10px "Arial Black", Arial, sans-serif; fill: var(--sc-inkc); }
+.sc-booklines { stroke: var(--sc-inkc); stroke-width: 2.5px; }
+.sc-tick { stroke: var(--sc-dialink); stroke-width: 1.2px; }
+.sc-dialtxt text { font: 9px Georgia, serif; fill: var(--sc-dialink); text-anchor: middle; }
+.sc-dialtxt2 { font: 9px Georgia, serif; fill: var(--sc-needle); letter-spacing: 2px; }
+.sc-radiotxt { font: 700 12px Georgia, serif; fill: var(--sc-tag); letter-spacing: 4px; }
+.sc-needle-l { stroke: var(--sc-needle); stroke-width: 2.5px; }
+.sc-needle { animation: sc-sweep 7s ease-in-out infinite alternate; }
+@keyframes sc-sweep { to { transform: translateX(124px); } }
+.sc-knobptr { stroke: var(--sc-paper); stroke-width: 3.5px; }
+.sc-ribs { stroke: var(--sc-dark-s); stroke-width: 2px; }
+.sc-ant { stroke: var(--sc-ink); stroke-width: 3.5px; }
+.sc-handle { stroke: var(--sc-met-f); stroke-width: 5px; }
+.sc-trimline { fill: none; stroke: var(--sc-met-f); stroke-width: 2px; opacity: .6; vector-effect: non-scaling-stroke; }
+.sc-radio-lamp { fill: var(--sc-dark-f); transition: fill .08s; }
+.sc-radio.on .sc-radio-lamp { fill: var(--sc-light); }
+.sc-ruled { stroke: var(--sc-ruled); stroke-width: 1.5px; }
+.sc-inkline { stroke: var(--sc-inkc); stroke-width: 3px; }
+.sc-ring { fill: none; stroke: var(--sc-ink); stroke-width: 2.4px; vector-effect: non-scaling-stroke; }
+.sc-pencilline { stroke: var(--sc-ink); stroke-width: 1px; stroke-opacity: .4; }
+.sc-cable-o { stroke: var(--sc-ink); stroke-width: 7px; }
+.sc-cable-i { stroke: var(--sc-cable); stroke-width: 3.5px; }
+.sc-motion { stroke: var(--sc-accent); stroke-width: 3px; stroke-dasharray: 6 6; }
+.sc-minimast { stroke: var(--sc-ink); stroke-width: 2px; }
+.sc-bulb { filter: drop-shadow(0 0 6px var(--sc-light)); }
+
+/* Morsetaste */
+.sc-knurl { stroke: var(--sc-ink); stroke-width: 1px; stroke-opacity: .55; }
+.sc-shine { stroke: var(--sc-shine); stroke-width: 2.4px; stroke-opacity: .9; }
+.sc-slot { stroke: var(--sc-ink); stroke-width: 1.4px; }
+.sc-spring-o { stroke: var(--sc-ink); stroke-width: 4.6px; }
+.sc-spring-i { stroke: var(--sc-met-t); stroke-width: 2px; }
+.sc-wire-o { stroke: var(--sc-ink); stroke-width: 5px; }
+.sc-wire-i { stroke: var(--sc-wire); stroke-width: 2.4px; }
+.sc-kshadow { fill: var(--sc-kshadow); fill-opacity: .32; }
+[data-theme="dunkel"] .sc-v .m-met-t { stroke: var(--sc-shine); stroke-opacity: .9; }
+
+/* Nur in einem Design sichtbare Teile */
+.t-night, .t-sun, .t-cloud, .t-day { display: none; }
+[data-theme="dunkel"] .t-night,
+[data-theme="hell"] .t-sun, [data-theme="funk"] .t-sun,
+[data-theme="hell"] .t-cloud, [data-theme="funk"] .t-cloud,
+[data-theme="hell"] .t-day { display: inline; }
+
+/* ---------- Außenansicht: Ebenen skalieren um die Tür, unterschiedlich stark (Parallax) ---------- */
+.sc-ext { z-index: 2; opacity: var(--ext, 1); }
+.sc-layer { position: absolute; inset: 0; transform-origin: var(--ox, 50%) var(--oy, 75%); }
+.sc-layer > svg { display: block; width: 100%; height: 100%; }
+.sc-l-sky { transform: scale(calc(1 + (var(--k, 1) - 1) * .01)); will-change: transform; }
+.sc-l-zep { transform: scale(calc(1 + (var(--k, 1) - 1) * .015)); }
+.sc-l-c3, .sc-l-f3 { transform: scale(calc(1 + (var(--k, 1) - 1) * .03)); will-change: transform; }
+.sc-l-c2, .sc-l-f2 { transform: scale(calc(1 + (var(--k, 1) - 1) * .06)); will-change: transform; }
+.sc-l-c1, .sc-l-f1 { transform: scale(calc(1 + (var(--k, 1) - 1) * .1)); will-change: transform; }
+.sc-l-hills { transform: scale(calc(1 + (var(--k, 1) - 1) * .18)); --sw: calc(3px / (1 + (var(--k, 1) - 1) * .18)); }
+/* Das Haus wird nicht vorab gerastert (kein will-change), damit es beim Zoomen scharf bleibt.
+   Die Linienstärke wird gegen den Zoom gerechnet, damit Outlines gleich dick bleiben. */
+.sc-l-house { transform: scale(var(--k, 1)); --sw: calc(3px / var(--k, 1)); }
+.sc-fog { opacity: var(--fog, .9); }
+
+.sc-zep { position: absolute; left: 0; top: 12%; width: clamp(64px, 9vw, 130px); animation: sc-zep 90s linear -32s infinite; will-change: transform; }
+.sc-zep-in > svg { display: block; width: 100%; height: auto; }
+@keyframes sc-zep { from { transform: translateX(-15vw); } to { transform: translateX(110vw); } }
+[data-theme="funk"] .sc-zep-in > svg { filter: sepia(.9) contrast(.85) brightness(1.06); opacity: .85; }
+
+/* Nahansicht der Tür: scharf gezeichnet, deckungsgleich mit dem Haus */
+.sc-close {
+  position: absolute; z-index: 3; left: var(--cu-l, 0); top: var(--cu-t, 0); width: var(--cu-w, 100%); height: var(--cu-h, 100%);
+  transform-origin: var(--cu-ox, 50%) var(--cu-oy, 50%);
+  transform: scale(calc(var(--k, 1) / var(--kend, 10) * var(--cuz, 1)));
+  opacity: var(--cu, 0); visibility: hidden; will-change: transform, opacity;
+}
+.sc-stage.cu-on .sc-close { visibility: visible; }
+.sc-close > svg { display: block; width: 100%; height: 100%; }
+.sc-wing { transform-box: fill-box; transform: scaleX(calc(1 - var(--wing, 0) * .88)); }
+.sc-wing-l { transform-origin: left center; }
+.sc-wing-r { transform-origin: right center; }
+
+/* Phasen: unsichtbare Ebenen werden gar nicht erst gezeichnet */
+.sc-stage[data-phase="c"] .sc-ext, .sc-stage[data-phase="d"] .sc-ext { visibility: hidden; }
+.sc-room { z-index: 1; visibility: hidden; transform-origin: var(--ox, 50%) var(--oy, 75%); transform: scale(var(--rs, 1)); }
+.sc-stage[data-phase="c"] .sc-room, .sc-stage[data-phase="d"] .sc-room { visibility: visible; }
+.sc-stage.paused *, .sc-stage[data-phase="d"] .sc-ext *,
+.sc-stage[data-phase="a"] .sc-room *, .sc-stage[data-phase="b"] .sc-room * { animation-play-state: paused !important; }
+
+/* ---------- Intro ---------- */
+.sc-haze { z-index: 4; background: var(--sc-haze); opacity: 0; pointer-events: none; }
+.intro-long .sc-haze { animation: sc-haze 3s ease-out both; }
+.intro-short .sc-haze { animation: sc-haze .8s ease-out both; }
+.intro-long .sc-l-house { animation: sc-rise 3s ease-out both; }
+.intro-long .sc-zep-in { animation: sc-zep-in 3s cubic-bezier(.2, .7, .3, 1) both; }
+.intro-long .sc-title { animation: sc-pop .7s 1.6s cubic-bezier(.2, 1.5, .4, 1) both; }
+@keyframes sc-haze { from { opacity: 1; } to { opacity: 0; } }
+@keyframes sc-rise { 0%, 20% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes sc-zep-in { from { transform: translateX(-45vw); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sc-pop { from { transform: translateX(-50%) scale(.4); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+
+/* ---------- Bedienleiste der Szene ---------- */
+.sc-ui { position: absolute; inset: 0; z-index: 7; pointer-events: none; }
+.sc-ui > * { pointer-events: auto; }
+.sc-title { position: absolute; left: 50%; top: 6%; transform: translateX(-50%); text-align: center; opacity: var(--title, 1); width: max-content; max-width: 92%; }
+.sc-logo {
+  margin: 0; font: 900 clamp(2.1rem, 6.4vw, 4.4rem)/1 var(--sc-font-pop); letter-spacing: .02em;
+  color: var(--sc-paper); -webkit-text-stroke: 3px var(--sc-ink); paint-order: stroke fill;
+  text-shadow: 5px 5px 0 var(--sc-pop); transform: rotate(-3deg);
+}
+.sc-logo span { color: var(--sc-tag); margin-left: .18em; }
+[data-theme="funk"] .sc-logo { font-weight: 700; font-variant: small-caps; letter-spacing: .08em; }
+.sc-btn {
+  font: 800 .92rem/1 var(--sc-font-pop); color: var(--sc-ink); background: var(--sc-paper);
+  border: 3px solid var(--sc-ink); border-radius: 999px; padding: 10px 18px; min-height: 44px; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--sc-pop); touch-action: manipulation;
+}
+.sc-btn:hover { background: var(--sc-tag); }
+.sc-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sc-pop); }
+.sc-hint { margin-top: 18px; }
+.sc-hint span { display: inline-block; animation: sc-bounce 1.4s ease-in-out infinite; }
+@keyframes sc-bounce { 50% { transform: translateY(4px); } }
+.sc-skip { position: absolute; right: 14px; bottom: 14px; }
+.sc-sound { position: absolute; left: 12px; bottom: 12px; width: 48px; height: 48px; padding: 0; display: grid; place-items: center; }
+.sc-sound svg { width: 24px; height: 24px; }
+.sc-ic-f { fill: var(--sc-ink); }
+.sc-ic-s { fill: none; stroke: var(--sc-ink); stroke-width: 2.4; stroke-linecap: round; }
+.sc-stage:not([data-phase="a"]) .sc-title,
+.sc-stage[data-phase="d"] .sc-skip { visibility: hidden; }
+.sc .sc-btn:focus-visible, .sc .sc-obj:focus-visible, .sc .sc-label:focus-visible, .sc .sc-bx:focus-visible {
+  outline: 3px solid var(--sc-focus); outline-offset: 3px;
+}
+
+/* ---------- Funkraum ---------- */
+.sc-cam { position: absolute; inset: 0; transition: transform .4s cubic-bezier(.55, 0, .8, .3); }
+.sc-cam.zoom { transform: scale(2.6); }
+.sc-wallbg {
+  position: absolute; inset: -4% -6%;
+  background: repeating-linear-gradient(90deg, var(--sc-wall) 0 26px, var(--sc-wall2) 26px 31px);
+  transform: translateX(calc(var(--vt, 0) * -1.2vw));
+}
+.sc-wains {
+  position: absolute; left: 0; right: 0; top: var(--wains, 56%); bottom: 0;
+  background-color: var(--sc-wains); background-image: radial-gradient(var(--sc-ht) 1.3px, transparent 1.7px); background-size: 7px 7px;
+  border-top: 9px solid var(--sc-tab-t); box-shadow: 0 -3px 0 var(--sc-ink);
+}
+.sc-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 15%; background: var(--sc-floor); border-top: 3px solid var(--sc-ink); }
+.sc-cone {
+  position: absolute; left: var(--lamp-x, 54%); top: var(--cone-y, 24%); width: 46vw; height: 76%;
+  transform: translateX(-50%) translateX(calc(var(--vt, 0) * -2.5vw));
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  background: linear-gradient(var(--sc-light), transparent 85%); opacity: var(--sc-cone-o, .2); pointer-events: none;
+}
+
+.sc-pos {
+  position: absolute; left: var(--x); top: var(--y); width: var(--w); z-index: var(--z, 2);
+  transform: translate(-50%, -50%) translateX(calc(var(--vt, 0) * var(--par, 0) * 1vw));
+}
+/* Im Funkraum bewegen sich diese Teile beim Scrollen: eigene Ebenen, damit nichts neu gezeichnet werden muss */
+.sc-stage[data-phase="d"] .sc-pos, .sc-stage[data-phase="d"] .sc-wallbg, .sc-stage[data-phase="d"] .sc-table,
+.sc-stage[data-phase="d"] .sc-cone, .sc-stage[data-phase="d"] .sc-views { will-change: transform; }
+.sc-stage[data-phase="d"] .sc-v { will-change: opacity; }
+.sc-stage[data-phase="c"] .sc-room { will-change: transform; }
+.sc-wallpar { --par: -2.5; --z: 1; }
+.sc-tablepar { --par: 1.2; --z: 3; }
+.sc-pos > .sc-art { display: block; width: 100%; height: auto; }
+.sc-table { position: absolute; left: 3%; right: 3%; top: var(--tt, 58%); bottom: -4%; z-index: 2; transform: translateX(calc(var(--vt, 0) * 1.2vw)); }
+.sc-tableart { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-tableart.sc-deep { display: none; }
+
+/* Querformat */
+.sc-p-window { --x: 12%; --y: 28%; --w: min(15vw, 30vh); }
+.sc-p-board  { --x: 33%; --y: 24%; --w: min(15vw, 28vh); }
+.sc-p-lamp   { --x: 54%; --w: min(8vw, 15vh); top: 0; transform: translate(-50%, 0) translateX(calc(var(--vt, 0) * -2.5vw)); }
+.sc-p-shelf  { --x: 75%; --y: 22%; --w: min(22vw, 40vh); }
+.sc-p-radio  { --x: 85%; --y: 45%; --w: min(16vw, 30vh); }
+.sc-p-key    { --x: 50%; --y: 46%; --w: min(40vw, 64vh); --z: 4; max-width: 620px; }
+.sc-p-heft   { --x: 15%; --y: 68%; --w: min(12vw, 22vh); }
+.sc-p-phones { --x: 28%; --y: 72%; --w: min(10vw, 18vh); }
+.sc-p-plane  { --x: 80%; --y: 70%; --w: min(12vw, 21vh); }
+.sc-orbit { position: absolute; left: 50%; top: 56%; width: 0; height: 0; }
+
+/* Hochformat (Handy, Tablet hochkant) */
+@media (max-aspect-ratio: 9/10) {
+  .sc-stage { --wains: 44%; --tt: 47%; --lamp-x: 46%; --cone-y: 13%; }
+  .sc-tableart.sc-flat { display: none; }
+  .sc-tableart.sc-deep { display: block; }
+  .sc-p-window { --x: 18%; --y: 13%; --w: min(30vw, 18vh); }
+  .sc-p-board  { --x: 73%; --y: 12%; --w: min(40vw, 22vh); }
+  .sc-p-lamp   { --x: 46%; --w: min(13vw, 9vh); }
+  .sc-p-shelf  { --x: 27%; --y: 33%; --w: min(46vw, 26vh); }
+  .sc-p-radio  { --x: 75%; --y: 35%; --w: min(40vw, 22vh); }
+  .sc-p-key    { --x: 50%; --y: 55%; --w: min(72vw, 40vh); }
+  .sc-p-heft   { --x: 18%; --y: 75%; --w: min(26vw, 15vh); }
+  .sc-p-phones { --x: 50%; --y: 79%; --w: min(21vw, 12vh); }
+  .sc-p-plane  { --x: 82%; --y: 74%; --w: min(26vw, 15vh); }
+  .sc-orbit { top: 57%; }
+}
+
+/* ---------- Modus-Objekte ---------- */
+.sc-obj {
+  -webkit-appearance: none; appearance: none; display: block; position: relative; width: 100%;
+  margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+  min-width: 44px; min-height: 44px; border-radius: 10px; touch-action: manipulation;
+}
+.sc-obj .sc-art { display: block; width: 100%; height: auto; filter: drop-shadow(4px 4px 0 var(--sc-pop)); transform-origin: 50% 85%; }
+.sc-obj:hover .sc-art, .sc-obj:focus-visible .sc-art { animation: sc-wobble .9s ease-in-out infinite; }
+@keyframes sc-wobble { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-3deg) translateY(-2px); } 75% { transform: rotate(3deg) translateY(-2px); } }
+.sc-tag {
+  position: absolute; left: 50%; bottom: calc(100% + 2px); z-index: 10; white-space: nowrap; pointer-events: none;
+  font: 800 .8rem/1 var(--sc-font-pop); text-transform: uppercase; letter-spacing: .04em; color: var(--sc-ink);
+  background: var(--sc-tag); border: 3px solid var(--sc-ink); border-radius: 6px; padding: 5px 9px;
+  box-shadow: 3px 3px 0 var(--sc-pop); opacity: 0; transform: translate(-50%, 6px) rotate(-2deg); transition: opacity .15s, transform .15s;
+}
+.sc-obj:hover .sc-tag, .sc-obj:focus-visible .sc-tag { opacity: 1; transform: translate(-50%, 0) rotate(-2deg); }
+/* Schilder, die oben keinen Platz haben, hängen unter dem Objekt */
+.sc-key .sc-tag { bottom: auto; top: 98%; }
+.sc-p-board .sc-tag, .sc-knob .sc-tag { bottom: auto; top: calc(100% + 2px); }
+@media (hover: none) {
+  .sc-tag { opacity: .96; transform: translate(-50%, 0) rotate(-2deg); font-size: .62rem; padding: 3px 5px; border-width: 2px; box-shadow: 2px 2px 0 var(--sc-pop); }
+  .sc-radio .sc-tag { display: none; }
+}
+
+/* Codebuch steht auf dem Regal, Drehknopf sitzt auf dem Funkgerät */
+.sc-book { position: absolute; left: 4%; top: 11%; width: 22.7%; }
+.sc-radio { z-index: 1; }
+.sc-knob { position: absolute; left: 82.2%; top: 70.4%; width: 16%; z-index: 2; transform: translate(-50%, -50%); border-radius: 50%; }
+.sc-knob .sc-art { filter: none; transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); transform-origin: 50% 50%; }
+.sc-knob:hover .sc-art, .sc-knob:focus-visible .sc-art { animation: none; transform: rotate(50deg); }
+.sc-caption { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin: 6px 0 0; width: max-content; max-width: 46vw;
+  font: 700 .72rem/1.3 var(--sc-font-pop); color: var(--sc-ink); background: var(--sc-paper); border: 2px solid var(--sc-ink);
+  border-radius: 6px; padding: 3px 7px; white-space: normal; text-align: center; }
+.sc-caption:empty { display: none; }
+
+/* Morsetaste: drei Ansichten übereinander, Überblendung und leichte Schrägstellung beim Herumgehen */
+.sc-views {
+  position: relative; display: block; width: 100%; aspect-ratio: var(--kar);
+  transform: skewY(calc(var(--vt, 0) * -2.2deg)) scaleX(calc(1 - var(--vabs, 0) * .05));
+}
+.sc-v { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-v-f { opacity: var(--vf, 1); }
+.sc-v-l { opacity: var(--vl, 0); }
+.sc-v-r { opacity: var(--vr, 0); }
+.sc-key .o { --sw: 2.4px; }
+/* Nur die gezeichneten Teile der Taste sind anklickbar, die leere Fläche darum nicht */
+.sc-p-key, .sc-key { pointer-events: none; }
+.sc-key .sc-v * { pointer-events: visiblePainted; }
+.sc-key .sc-v-l *, .sc-key .sc-v-r * { pointer-events: none; }
+.sc-lever { transform-box: view-box; transition: transform .16s ease-out; }
+.sc-key:hover .sc-lever, .sc-key:focus-visible .sc-lever { transform: rotate(-1.8deg); }
+.sc-key.klack .sc-lever { transform: rotate(-5deg); transition-duration: .04s; }
+.sc-key:hover .sc-views { animation: none; }
+.sc-tap {
+  position: absolute; left: 8%; top: 22%; z-index: 5; pointer-events: none; padding: .45em .6em;
+  font: 900 clamp(1.4rem, 3.6vw, 2.6rem)/1 var(--sc-font-pop); color: var(--sc-tapc);
+  -webkit-text-stroke: 2px var(--sc-ink); paint-order: stroke fill; text-shadow: 3px 3px 0 var(--sc-ink);
+  opacity: 0; transform: scale(.2) rotate(-12deg);
+}
+.sc-tap::before {
+  content: ""; position: absolute; inset: -18%; z-index: -1; background: var(--sc-paper);
+  clip-path: polygon(50% 0, 61% 26%, 92% 10%, 76% 40%, 100% 52%, 74% 62%, 86% 94%, 58% 76%, 44% 100%, 38% 74%, 8% 90%, 24% 60%, 0 46%, 26% 36%, 12% 6%, 40% 24%);
+}
+.sc-key.klack .sc-tap { animation: sc-tap .65s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes sc-tap {
+  0% { opacity: 0; transform: scale(.2) rotate(-12deg); }
+  25% { opacity: 1; transform: scale(1.15) rotate(-8deg); }
+  70% { opacity: 1; transform: scale(1) rotate(-8deg); }
+  100% { opacity: 0; transform: scale(1.05) translateY(-12px) rotate(-8deg); }
+}
+
+/* ---------- Schwebende Etiketten und Sprechblase ---------- */
+.sc-label {
+  position: absolute; left: 0; top: 0; white-space: nowrap; cursor: pointer; will-change: transform;
+  font: 800 .82rem/1.15 var(--sc-font-pop); color: var(--sc-ink); background: var(--sc-paper);
+  border: 3px solid var(--sc-ink); border-radius: 10px; padding: 6px 11px; min-height: 36px;
+  box-shadow: 4px 4px 0 var(--sc-pop); touch-action: manipulation;
+}
+.sc-label:hover, .sc-label[aria-expanded="true"] { background: var(--sc-tag); }
+[data-theme="funk"] .sc-label { font-weight: 700; font-style: italic; }
+.sc-bubble {
+  position: absolute; left: 0; top: 0; z-index: 8; width: min(340px, calc(100% - 24px));
+  background: var(--sc-paper); color: var(--sc-ink); border: 3px solid var(--sc-ink); border-radius: 22px;
+  padding: 14px 46px 15px 17px; box-shadow: 5px 5px 0 var(--sc-pop); font: .95rem/1.45 var(--font, system-ui);
+  -webkit-user-select: text; user-select: text;
+}
+.sc-bubble[hidden] { display: none; }
+.sc-bubble h3 { margin: 0 0 6px; font: 900 1.02rem/1.2 var(--sc-font-pop); text-transform: uppercase; letter-spacing: .02em; }
+.sc-bubble p { margin: 0; }
+.sc-bubble::before, .sc-bubble::after { content: ""; position: absolute; left: var(--tail, 40px); }
+.sc-bubble::before { width: 30px; height: 24px; margin-left: -15px; background: var(--sc-ink); }
+.sc-bubble::after { width: 20px; height: 17px; margin-left: -9px; background: var(--sc-paper); }
+.sc-bubble.down::before { top: 100%; clip-path: polygon(0 0, 100% 0, 25% 100%); }
+.sc-bubble.down::after { top: calc(100% - 1px); clip-path: polygon(0 0, 100% 0, 25% 100%); }
+.sc-bubble.up::before { bottom: 100%; clip-path: polygon(25% 0, 100% 100%, 0 100%); }
+.sc-bubble.up::after { bottom: calc(100% - 1px); clip-path: polygon(25% 0, 100% 100%, 0 100%); }
+.sc-bx {
+  position: absolute; right: 6px; top: 6px; width: 40px; height: 40px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: none; cursor: pointer; padding: 0;
+}
+.sc-bx:hover { background: var(--sc-tag); }
+.sc-bx svg { width: 20px; height: 20px; }
+@media (max-width: 639px) {
+  .sc-bubble { width: calc(100% - 20px); max-height: 34%; overflow: auto; font-size: .9rem; padding: 11px 44px 12px 14px; }
+  .sc-label { font-size: .7rem; padding: 4px 8px; min-height: 30px; border-width: 2px; box-shadow: 3px 3px 0 var(--sc-pop); }
+}
+
+/* ---------- Funk: Sepia, Körnung, Vignette ---------- */
+.sc-grain { z-index: 9; pointer-events: none; display: none; }
+[data-theme="funk"] .sc-grain {
+  display: block; opacity: .55;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .16 0 0 0 0 .1 0 0 0 0 .04 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at center, transparent 55%, rgba(42, 28, 12, .55));
+}
+
+/* ---------- Ohne Bewegung (prefers-reduced-motion): direkt der Funkraum als feste Szene ---------- */
+.sc.sc-reduced { height: auto; }
+.sc-reduced .sc-stage { position: relative; top: 0; min-height: 520px; }
+.sc-reduced .sc-ext, .sc-reduced .sc-close, .sc-reduced .sc-haze, .sc-reduced .sc-title, .sc-reduced .sc-skip { display: none; }
+.sc-reduced .sc-room { visibility: visible; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sc *, .sc *::before, .sc *::after { animation: none !important; transition: none !important; }
+  .sc-key.klack .sc-tap { opacity: 1; transform: rotate(-8deg); }
+}
