@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dunkel">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171a33">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Morse Coach">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <title>Morse Coach</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/scene.css">
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <button id="brand" class="brand" title="Zur Startseite">Morse<span>Coach</span></button>
+    <nav id="tabs" aria-label="Bereiche">
+      <button data-tab="lernen">Lernen</button>
+      <button data-tab="hoeren">Hören</button>
+      <button data-tab="senden">Senden</button>
+      <button data-tab="spiel">Spiel</button>
+      <button data-tab="uebersetzer">Übersetzer</button>
+      <button data-tab="statistik">Statistik</button>
+      <button data-tab="einstellungen">Einstellungen</button>
+    </nav>
+    <button id="themeToggle" class="btn small" title="Design wechseln">Design</button>
+  </header>
+
+  <div class="layout" id="layout">
+    <!-- Immer erreichbar und läuft beim Scrollen mit: Tempo, Ton, Lautstärke -->
+    <aside class="quickbar closed" id="quickbar" aria-label="Ton und Tempo">
+      <button type="button" class="qtoggle" id="qToggle" aria-expanded="false">Ton &amp; Tempo ▾</button>
+      <label title="Geschwindigkeit der einzelnen Zeichen">Tempo <b data-out="cwpm"></b> WPM
+        <input type="range" data-set="cwpm" min="10" max="40" step="1"></label>
+      <label title="Gesamttempo. Kleiner als das Tempo = längere Pausen zwischen den Zeichen">Gesamttempo <b data-out="wpm"></b> WPM
+        <input type="range" data-set="wpm" min="5" max="40" step="1"></label>
+      <label title="Tonhöhe">Tonhöhe <b data-out="freq"></b> Hz
+        <input type="range" data-set="freq" min="300" max="1000" step="10"></label>
+      <label title="Lautstärke">Lautstärke <b data-out="vol"></b> %
+        <input type="range" data-set="vol" min="5" max="100" step="5"></label>
+    </aside>
+
+    <main>
+      <!-- START -->
+      <section id="tab-start" class="tab">
+        <!-- Startseite als scrollbare Comic-Szene (wird von js/scene.js aufgebaut) -->
+        <div id="scene"></div>
+
+        <div class="card sc-start-card">
+          <h2>Kurzstatistik</h2>
+          <div class="stats" id="startStats"></div>
+        </div>
+      </section>
+
+      <!-- LERNEN -->
+      <section id="tab-lernen" class="tab">
+        <div class="card">
+          <h2>Zeichen lernen</h2>
+          <div class="pick-slot" data-area="lernen"></div>
+        </div>
+        <div class="card center">
+          <div class="rx-slot"></div>
+          <div class="display" id="lernAnzeige">?</div>
+          <div class="code" id="lernCode"></div>
+          <input id="lernInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Zeichen eintippen" aria-label="Gehörtes Zeichen">
+          <div class="feedback" id="lernFeedback"></div>
+          <div class="row">
+            <button class="btn primary" id="lernStart">Start</button>
+            <button class="btn" id="lernReplay">Nochmal hören</button>
+          </div>
+          <div class="meter" id="lernMeter"><div id="lernBar"></div></div>
+          <p class="muted" id="lernQuote"></p>
+        </div>
+      </section>
+
+      <!-- HÖREN -->
+      <section id="tab-hoeren" class="tab">
+        <div class="card">
+          <h2>Hörtraining</h2>
+          <div class="seg" id="hoerLevels"></div>
+          <p class="muted" id="hoerDesc"></p>
+          <div class="pick-slot" id="hoerPick" data-area="hoeren"></div>
+        </div>
+        <div class="card">
+          <div class="rx-slot"></div>
+          <div class="row left tempo">
+            <span>Hörtempo: <strong id="hoerTempo">10</strong> WPM</span>
+            <button class="btn small" id="hoerMinus" title="Langsamer">−</button>
+            <button class="btn small" id="hoerPlus" title="Schneller">+</button>
+          </div>
+          <div class="row left">
+            <button class="btn primary" id="hoerStart">Neue Runde</button>
+            <button class="btn" id="hoerReplay">Nochmal hören</button>
+          </div>
+          <textarea id="hoerInput" rows="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Gehörtes hier eintippen"></textarea>
+          <div class="row left"><button class="btn primary" id="hoerCheck">Prüfen</button></div>
+          <div id="hoerResult" class="result"></div>
+        </div>
+      </section>
+
+      <!-- SENDEN -->
+      <section id="tab-senden" class="tab">
+        <div class="card">
+          <h2>Zeichen zum Senden</h2>
+          <div class="pick-slot" data-area="senden"></div>
+        </div>
+        <div class="card center">
+          <h2>Senden</h2>
+          <p class="muted"><span class="kbd-hint">Taste <kbd>E</kbd> = kurz, Taste <kbd>T</kbd> = lang, oder die Knöpfe unten. </span><span class="touch-hint">Tippe die Knöpfe unten. </span>Nach einer kurzen Pause wird automatisch bestätigt (einstellbar).</p>
+          <div class="display" id="sendAnzeige">?</div>
+          <div class="code" id="sendCode"></div>
+          <div class="pattern" id="sendMuster">&nbsp;</div>
+          <div class="feedback" id="sendFeedback"></div>
+
+          <svg id="morseKey" class="morsekey only-funk" viewBox="0 0 320 170" role="img" aria-label="Alte Morsetaste mit Holzsockel und Messinghebel">
+            <defs>
+              <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#f0cf7a"/><stop offset=".55" stop-color="#c89a3c"/><stop offset="1" stop-color="#8a6420"/>
+              </linearGradient>
+              <linearGradient id="mahogany" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#8a3f26"/><stop offset="1" stop-color="#5a2314"/>
+              </linearGradient>
+            </defs>
+            <!-- Holzsockel -->
+            <polygon points="24,122 296,122 306,108 36,108" fill="#9b4a2c" stroke="#3a140a" stroke-width="1.5"/>
+            <rect x="24" y="122" width="272" height="34" rx="2" fill="url(#mahogany)" stroke="#3a140a" stroke-width="2"/>
+            <ellipse cx="82" cy="115" rx="10" ry="3" fill="#3a140a" opacity=".7"/>
+            <ellipse cx="118" cy="115" rx="8" ry="2.5" fill="#3a140a" opacity=".7"/>
+            <!-- Messingplatte -->
+            <polygon points="150,112 290,112 296,104 156,104" fill="#e2bd66" stroke="#6a4a14"/>
+            <rect x="150" y="112" width="140" height="10" fill="url(#brass)" stroke="#6a4a14"/>
+            <!-- Feder -->
+            <path d="M52 116 C 90 120, 130 112, 176 92" fill="none" stroke="#c89a3c" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Kontaktsäule und Trommel -->
+            <rect x="204" y="86" width="22" height="26" rx="3" fill="url(#brass)" stroke="#6a4a14"/>
+            <ellipse cx="190" cy="94" rx="15" ry="17" fill="url(#brass)" stroke="#6a4a14" stroke-width="1.5"/>
+            <ellipse cx="190" cy="94" rx="6" ry="7" fill="#8a6420" stroke="#6a4a14"/>
+            <!-- rechte Stellschraube (fest) -->
+            <rect x="262" y="58" width="5" height="46" fill="#c89a3c" stroke="#6a4a14"/>
+            <ellipse cx="264.5" cy="56" rx="18" ry="6" fill="url(#brass)" stroke="#6a4a14" stroke-width="1.5"/>
+            <rect x="256" y="96" width="18" height="10" rx="2" fill="url(#brass)" stroke="#6a4a14"/>
+            <!-- Hebel (bewegt sich) -->
+            <g class="lever" style="transform-origin: 196px 74px">
+              <polygon points="44,44 204,62 252,60 252,78 204,80 46,56" fill="url(#brass)" stroke="#6a4a14" stroke-width="1.5"/>
+              <ellipse cx="40" cy="46" rx="22" ry="8" fill="url(#brass)" stroke="#6a4a14" stroke-width="1.5"/>
+              <rect x="206" y="64" width="46" height="18" rx="3" fill="url(#brass)" stroke="#6a4a14"/>
+              <rect x="150" y="38" width="5" height="28" fill="#c89a3c" stroke="#6a4a14"/>
+              <ellipse cx="152.5" cy="36" rx="19" ry="6" fill="url(#brass)" stroke="#6a4a14" stroke-width="1.5"/>
+            </g>
+          </svg>
+
+          <div class="row">
+            <button class="btn key" id="sendKurz">Kurz ( E )</button>
+            <button class="btn key" id="sendLang">Lang ( T )</button>
+          </div>
+          <div class="row">
+            <button class="btn" id="sendBack">Löschen</button>
+            <button class="btn primary" id="sendOk">Bestätigen</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPIEL -->
+      <section id="tab-spiel" class="tab">
+        <div class="card center">
+          <h2>Morse-Flug</h2>
+          <p class="muted">Gib den Morsecode des Buchstabens auf dem Hindernis ein, bevor du dagegen fliegst. <span class="kbd-hint">Taste <kbd>E</kbd> = kurz, Taste <kbd>T</kbd> = lang. </span>Eine falsche Eingabe wird gelöscht.</p>
+          <div class="game-wrap">
+            <canvas id="gameCanvas" class="gamecanvas" width="640" height="360" role="img" aria-label="Spielfeld: Ein Vogel fliegt auf Hindernisse mit Buchstaben zu"></canvas>
+            <div class="game-overlay" id="gameOverlay">
+              <b id="gameOverTitle"></b>
+              <p id="gameOverText"></p>
+              <button class="btn primary" id="gameStart">Start</button>
+            </div>
+          </div>
+          <div class="stats game-stats">
+            <div class="stat"><span>Hindernisse</span><b id="gScore">0</b></div>
+            <div class="stat"><span>Stufe</span><b id="gLevel">1</b></div>
+            <div class="stat"><span>Rekord</span><b id="gBest">0</b></div>
+          </div>
+          <div class="code" id="gameCode"></div>
+          <div class="pattern" id="gamePattern">&nbsp;</div>
+          <div class="row">
+            <button class="btn key" id="gameKurz">Kurz ( E )</button>
+            <button class="btn key" id="gameLang">Lang ( T )</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ÜBERSETZER -->
+      <section id="tab-uebersetzer" class="tab">
+        <div class="card">
+          <h2>Übersetzer</h2>
+          <div class="rx-slot"></div>
+          <label for="uText">Text</label>
+          <textarea id="uText" rows="3" placeholder="Text eingeben" spellcheck="false"></textarea>
+          <label for="uMorse">Morse <small>(Zeichen mit Leerzeichen trennen, Wörter mit /)</small></label>
+          <textarea id="uMorse" rows="3" placeholder=".... .- .-.. .-.. --- / .-- . .-.. -" spellcheck="false"></textarea>
+          <div class="row left">
+            <button class="btn primary" id="uPlay">Abspielen</button>
+            <button class="btn" id="uStop">Stopp</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Alphabet <small>Anklicken zum Anhören</small></h2>
+          <div class="alphabet" id="alphabet"></div>
+        </div>
+      </section>
+
+      <!-- STATISTIK -->
+      <section id="tab-statistik" class="tab">
+        <div class="card">
+          <h2>Statistik</h2>
+          <div class="stats" id="statSummary"></div>
+        </div>
+        <div class="card">
+          <h2>Verlauf</h2>
+          <div class="seg" id="periodSeg">
+            <button data-period="tag">Tag</button>
+            <button data-period="woche">Woche</button>
+            <button data-period="monat">Monat</button>
+            <button data-period="jahr">Jahr</button>
+          </div>
+          <h3>Antworten <small id="periodNote"></small></h3>
+          <div id="chartCount"></div>
+          <h3>Genauigkeit</h3>
+          <div id="chartAcc"></div>
+        </div>
+        <div class="card">
+          <h2>Zeichen im Detail <small>Genauigkeit der letzten 20 Antworten</small></h2>
+          <div id="statChars" class="charstats"></div>
+        </div>
+        <div class="card">
+          <h2>Wettbewerbe &amp; Rangliste</h2>
+          <p class="muted">Kommt mit dem Login (Google oder E-Mail) in der nächsten Ausbaustufe.</p>
+        </div>
+      </section>
+
+      <!-- EINSTELLUNGEN -->
+      <section id="tab-einstellungen" class="tab">
+        <div class="card">
+          <h2>Darstellung</h2>
+          <div class="seg" id="themeSeg">
+            <button data-theme-set="dunkel">Dunkel</button>
+            <button data-theme-set="hell">Hell</button>
+            <button data-theme-set="funk">Funkgerät</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Ton &amp; Tempo</h2>
+          <div class="setgrid">
+            <label>Tempo <b data-out="cwpm"></b> WPM
+              <input type="range" data-set="cwpm" min="10" max="40" step="1"></label>
+            <label>Gesamttempo <b data-out="wpm"></b> WPM
+              <input type="range" data-set="wpm" min="5" max="40" step="1"></label>
+            <label>Tonhöhe <b data-out="freq"></b> Hz
+              <input type="range" data-set="freq" min="300" max="1000" step="10"></label>
+            <label>Lautstärke <b data-out="vol"></b> %
+              <input type="range" data-set="vol" min="5" max="100" step="5"></label>
+          </div>
+          <p class="muted small">Ist das Gesamttempo kleiner als das Tempo, werden die Pausen zwischen den Zeichen länger. Du hörst schnelle Zeichen und hast mehr Zeit zum Erkennen.</p>
+        </div>
+
+        <div class="card">
+          <h2>Training</h2>
+          <div class="setrow">
+            <div><b>Code anzeigen</b><span class="muted small">Punkte und Striche beim Üben einblenden</span></div>
+            <label class="switch"><input type="checkbox" id="setHint"><i></i></label>
+          </div>
+          <div class="setrow">
+            <div><b>Automatisch bestätigen</b><span class="muted small">Beim Senden nach einer Pause die Eingabe prüfen</span></div>
+            <label class="switch"><input type="checkbox" id="setAuto"><i></i></label>
+          </div>
+          <div class="setrow col">
+            <label for="setDelay">Pause bis zur Bestätigung <b data-out="confirmDelay"></b> Sekunden</label>
+            <input type="range" id="setDelay" data-set="confirmDelay" min="0.5" max="3" step="0.1">
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Daten</h2>
+          <div class="row left"><button class="btn danger" id="resetAll">Fortschritt zurücksetzen</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Zeichenauswahl (für Lernen, Hören und Senden) -->
+  <template id="pickerTpl">
+    <div class="picker">
+      <div class="seg pk-method">
+        <button data-method="koch">Koch-Methode</button>
+        <button data-method="custom">Eigene Auswahl</button>
+      </div>
+      <p class="muted info pk-info"></p>
+      <div class="chargrid pk-grid"></div>
+      <div class="gridctl pk-koch">
+        <button class="btn small pk-minus">Stufe −</button>
+        <span class="stufe pk-label"></span>
+        <button class="btn small pk-plus">Stufe +</button>
+      </div>
+      <div class="gridctl pk-custom">
+        <button class="btn small pk-letters">Alle Buchstaben</button>
+        <button class="btn small pk-digits">Alle Ziffern</button>
+        <button class="btn small pk-none">Auswahl leeren</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- Empfangsanzeige: Lampe und Zeiger reagieren auf den Ton -->
+  <template id="rxTpl">
+    <div class="rx">
+      <svg class="receiver only-funk" viewBox="0 0 260 120" role="img" aria-label="Empfangsanzeige">
+        <rect x="6" y="6" width="248" height="108" rx="8" fill="#2b1d10" stroke="#a67c2e" stroke-width="3"/>
+        <path d="M30 100 A100 100 0 0 1 230 100 Z" fill="#eadfb9" stroke="#8b6a2b" stroke-width="2"/>
+        <g stroke="#4a3414" stroke-width="1.5">
+          <g transform="rotate(-50 130 100)"><line x1="130" y1="12" x2="130" y2="26"/></g>
+          <g transform="rotate(-40 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(-30 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(-20 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(-10 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(0 130 100)"><line x1="130" y1="12" x2="130" y2="26"/></g>
+          <g transform="rotate(10 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(20 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(30 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(40 130 100)"><line x1="130" y1="16" x2="130" y2="24"/></g>
+          <g transform="rotate(50 130 100)"><line x1="130" y1="12" x2="130" y2="26"/></g>
+        </g>
+        <text x="130" y="62" text-anchor="middle" font-family="Georgia, serif" font-size="11" letter-spacing="3" fill="#7a2a1a">SIGNAL</text>
+        <g class="rx-needle" style="transform-origin: 130px 100px">
+          <line x1="130" y1="100" x2="130" y2="22" stroke="#c2321f" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+        <circle cx="130" cy="100" r="7" fill="#17100a" stroke="#a67c2e" stroke-width="2"/>
+        <circle class="rx-lamp" cx="232" cy="26" r="9" stroke="#a67c2e" stroke-width="2"/>
+      </svg>
+      <div class="lamp-simple not-funk"><i></i><span>Signal</span></div>
+    </div>
+  </template>
+
+  <script src="js/morse.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/scene-art.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+  </script>
+</body>
+</html>
