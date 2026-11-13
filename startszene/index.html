@@ -482,7 +482,7 @@
     box-shadow:inset 0 0 2.5vmin rgba(0,10,20,.6),inset .5vmin .7vmin 1.2vmin rgba(0,0,0,.4)}
   #titel{position:fixed;left:0;right:0;top:50%;z-index:7;text-align:center;color:#eaf6ff;opacity:0;pointer-events:none;
     font-family:Georgia,'Times New Roman',serif;transform:translateY(-50%)}
-  #titel h1{margin:0 auto;position:relative;width:min(92vw,940px);aspect-ratio:1938/336}
+  #titel h1{margin:0 auto;position:relative;width:min(92vw,940px);aspect-ratio:1946/334}
   #titel h1 img{position:absolute;top:0;height:100%;display:block}
   #tcur{position:absolute;bottom:9%;height:3.5%;border-radius:1em;background:#9fe3ff;box-shadow:0 0 .6em #6fd0ff;display:none;
     transition:left .15s ease,width .15s ease;animation:tCursor .5s steps(2) infinite}
@@ -965,7 +965,7 @@
   /* ---------- Titel: wird wie mit einer Morsetaste eingetippt ---------- */
   const TMC={M:'--',O:'---',R:'.-.',S:'...',E:'.',C:'-.-.',A:'.-',H:'....'};
   const TTEXT='Morse Coach', th1=titel.querySelector('h1'), tcode=document.getElementById('tcode');
-  const TPOS=[{"l": 0.0, "w": 18.06}, {"l": 15.893, "w": 11.249}, {"l": 25.077, "w": 9.082}, {"l": 31.269, "w": 11.146}, {"l": 39.938, "w": 11.249}, {"l": 52.219, "w": 12.074}, {"l": 61.92, "w": 11.352}, {"l": 70.691, "w": 11.558}, {"l": 79.773, "w": 11.249}, {"l": 88.751, "w": 11.249}];   // Lage der Buchstabenbilder in % der Schriftzugbreite
+  const TPOS=[{"l": 0.0, "w": 17.575}, {"l": 15.93, "w": 10.997}, {"l": 25.18, "w": 8.684}, {"l": 31.398, "w": 10.791}, {"l": 40.031, "w": 11.048}, {"l": 52.415, "w": 11.819}, {"l": 62.179, "w": 10.997}, {"l": 71.017, "w": 11.202}, {"l": 80.062, "w": 10.894}, {"l": 89.054, "w": 10.946}];   // Lage der Buchstabenbilder in % der Schriftzugbreite
   let bi=0;
   th1.innerHTML=[...TTEXT].map(c=>{ if(c===' ') return '<b class="leer"></b>'; const d=TPOS[bi]; return `<img class="tb" alt="" src="img/titel/t${bi++}.webp" style="left:${d.l}%;width:${d.w}%">`; }).join('')+'<i id="tcur"></i>';
   const tSpans=[...th1.querySelectorAll('.tb,.leer')], tcur=th1.querySelector('#tcur');
