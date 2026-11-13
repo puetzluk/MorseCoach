@@ -14,19 +14,20 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/intro.css">
 </head>
-<body class="intro-an">
-  <!-- Intro: Meer-Animation (startszene/). Am Ende blendet sie in die Lernseite über. -->
-  <div id="intro" aria-label="Intro">
-    <iframe id="introFrame" title="Morse Coach – Intro" src="startszene/index.html?eingebettet"></iframe>
-    <button id="introSkip" type="button">Überspringen ›</button>
+<body class="start-an">
+  <!-- Startseite: Meer-Animation, Titel und Karten der Lernbereiche (startszene/).
+       Ein Klick auf eine Karte öffnet den Bereich; „Startseite“ in der Leiste führt zurück zu den Karten. -->
+  <div id="intro" aria-label="Startseite">
+    <iframe id="introFrame" title="Morse Coach – Startseite" src="startszene/index.html?eingebettet"></iframe>
   </div>
   <header class="topbar" id="topbar">
     <button id="brand" class="brand" title="Zur Startseite">Morse<span>Coach</span></button>
     <nav id="tabs" aria-label="Bereiche">
+      <button data-tab="start">Startseite</button>
       <button data-tab="lernen">Lernen</button>
       <button data-tab="hoeren">Hören</button>
       <button data-tab="senden">Senden</button>
-      <button data-tab="spiel">Spiel</button>
+      <button data-tab="spiel">Games</button>
       <button data-tab="uebersetzer">Übersetzer</button>
       <button data-tab="statistik">Statistik</button>
       <button data-tab="einstellungen">Einstellungen</button>
@@ -49,46 +50,7 @@
     </aside>
 
     <main>
-      <!-- START -->
-      <section id="tab-start" class="tab">
-        <div class="card hero">
-          <div>
-            <h1 class="hero-title">Morse Coach</h1>
-            <div class="dots" aria-hidden="true">−− −−− ·−· ··· ·</div>
-            <p>Lerne Morsezeichen Schritt für Schritt, trainiere Hören und Senden und werde jeden Tag ein bisschen schneller.</p>
-            <button type="button" class="btn small" id="introAgain">Intro noch einmal ansehen</button>
-          </div>
-          <div class="radio-wrap only-funk">
-            <svg id="radio" class="radio" viewBox="0 0 360 250" role="button" aria-label="Funkspruch abspielen">
-              <rect x="12" y="34" width="336" height="200" rx="22" fill="#5a3a1c" stroke="#2a1a0a" stroke-width="4"/>
-              <rect x="34" y="56" width="292" height="80" rx="8" fill="#e9d9a8" stroke="#8b6a2b" stroke-width="3"/>
-              <g stroke="#8b6a2b" stroke-width="2">
-                <path d="M60 70v14M90 70v10M120 70v14M150 70v10M180 70v14M210 70v10M240 70v14M270 70v10M300 70v14"/>
-              </g>
-              <g class="needle"><path d="M110 62v66" stroke="#c0392b" stroke-width="4" stroke-linecap="round"/></g>
-              <circle cx="90" cy="186" r="28" fill="#3a2612" stroke="#d9a441" stroke-width="4"/>
-              <circle cx="270" cy="186" r="28" fill="#3a2612" stroke="#d9a441" stroke-width="4"/>
-              <circle class="lamp" cx="180" cy="186" r="9" fill="#ffb347"/>
-              <path d="M70 34 L120 6 M290 34 L240 6" stroke="#2a1a0a" stroke-width="5" stroke-linecap="round"/>
-            </svg>
-            <p class="muted small" id="radioCaption">Klick aufs Funkgerät: Funkspruch abspielen</p>
-          </div>
-        </div>
-
-        <div class="tiles">
-          <button class="tile" data-goto="lernen"><b>Lernen</b><span>Die Koch-Methode oder deine eigene Zeichenauswahl.</span></button>
-          <button class="tile" data-goto="hoeren"><b>Hören</b><span>Zeichengruppen, Wörter und Sätze in fünf Stufen.</span></button>
-          <button class="tile" data-goto="senden"><b>Senden</b><span>Zeichen mit E (kurz) und T (lang) oder per Knopf eingeben.</span></button>
-          <button class="tile" data-goto="spiel"><b>Spiel</b><span>Morse-Flug: Code eingeben, um weiterzufliegen.</span></button>
-          <button class="tile" data-goto="uebersetzer"><b>Übersetzer</b><span>Text in Morsecode umwandeln und umgekehrt.</span></button>
-          <button class="tile" data-goto="statistik"><b>Statistik</b><span>Dein Fortschritt nach Tag, Woche, Monat und Jahr.</span></button>
-        </div>
-
-        <div class="card">
-          <h2>Kurzstatistik</h2>
-          <div class="stats" id="startStats"></div>
-        </div>
-      </section>
+      <!-- Die Startseite ist die Meer-Animation mit den Karten (#intro) -->
 
       <!-- LERNEN -->
       <section id="tab-lernen" class="tab">
