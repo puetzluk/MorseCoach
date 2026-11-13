@@ -79,12 +79,11 @@ kbd {
   background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: var(--text);
   font-family: var(--font-head); font-size: 1.3rem; font-weight: 700;
 }
-.brand span {
-  margin-left: 5px;
-  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-[data-theme="funk"] .brand { letter-spacing: .12em; text-transform: uppercase; color: #d9a441; }
-[data-theme="funk"] .brand span { color: #eadfc2; background: none; -webkit-background-clip: border-box; }
+/* Logo: neuer Schriftzug mit Regenbogen-M, Farben je Design (Bilder aus img/) */
+.brand { display: flex; align-items: center; }
+.brand-logo { display: block; height: 32px; aspect-ratio: 807 / 141; background: url(../img/logo_dunkel.webp) center / contain no-repeat; }
+[data-theme="hell"] .brand-logo { background-image: url(../img/logo_hell.webp); }
+[data-theme="funk"] .brand-logo { background-image: url(../img/logo_funk.webp); }
 nav { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
 nav button {
   background: transparent; color: var(--text); border: 0; border-radius: 9px;
@@ -310,7 +309,6 @@ button.chip { cursor: pointer; }
 }
 
 /* Hell: ohne Verläufe */
-[data-theme="hell"] .brand span { background: none; -webkit-background-clip: border-box; color: var(--accent); }
 [data-theme="hell"] .hero-title { background: none; -webkit-background-clip: border-box; color: var(--accent2); }
 [data-theme="hell"] .tile::after { background: #bcd6f7; }
 [data-theme="hell"] .btn.primary:hover, [data-theme="hell"] nav button.active:hover { background: #164fb0; filter: none; }
@@ -351,7 +349,8 @@ main { padding-bottom: max(60px, env(safe-area-inset-bottom)); }
 @media (max-width: 640px) {
   /* Kopfzeile: Logo + Design in einer Zeile, Navigation als wischbare Leiste */
   .topbar { gap: 8px 10px; padding: max(8px, env(safe-area-inset-top)) 12px 8px; }
-  .brand { order: 1; font-size: 1.15rem; }
+  .brand { order: 1; }
+  .brand-logo { height: 27px; }
   #themeToggle { order: 2; margin-left: auto; padding: 6px 10px; font-size: .78rem; }
   nav { order: 3; flex: 0 0 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 2px 4px; }
   nav::-webkit-scrollbar { display: none; }
