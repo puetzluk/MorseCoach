@@ -630,14 +630,16 @@
     html[data-theme="funk"] .k-zettel,html[data-theme="funk"] .k-zettel.bild{top:10px;left:4vw;width:150px}
   }
   html[data-theme="funk"] .k-zettel.bild p{margin-bottom:4px}
-  html[data-theme="funk"] .k-zettel.bild .z-t{font-size:14px}
   html[data-theme="funk"] .k-zettel.bild::before{display:none}
-  .k-zettel p{margin:0 0 10px;position:relative;transition:opacity .6s ease}
+  .k-zettel p{margin:0;position:relative;transition:opacity .6s ease}
   .k-zettel p.weg{opacity:0}
-  .k-zettel .z-m{display:block;letter-spacing:.06em;word-spacing:.15em;transition:opacity .4s}
-  .k-zettel .z-t{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;
+  /* Morsecode fett und schwarz; die Schriftgröße setzt das Skript so, dass alles auf den Zettel passt */
+  .k-zettel .z-m{display:block;color:#111;font:800 12px/1.35 Arial,Helvetica,sans-serif;letter-spacing:.08em;text-align:center;transition:opacity .4s}
+  .k-zettel .z-m .w{display:inline-block;white-space:nowrap;margin:0 .22em}
+  .k-zettel .z-m .tr{display:inline-block;margin:0 .3em;color:#7a5a32;font-weight:400}
+  .k-zettel .z-t{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;line-height:1.2;
     font:700 14px/1.2 Georgia,"Times New Roman",serif;letter-spacing:.04em;color:#7a1f10;opacity:0;transition:opacity .5s}
-  .k-zettel.zeigt .z-m{opacity:.15}
+  .k-zettel.zeigt .z-m{opacity:0}
   .k-zettel.zeigt .z-t{opacity:1}
 
   /* Funk: kleines rundes Loch in der Holzwand rechts mittig, dahinter eine Glühbirne */
@@ -668,11 +670,8 @@
     .k-fisch{transform-origin:0 0}
     html[data-theme="dunkel"] .k-wrack{width:46vw;left:2vw}
     html[data-theme="funk"] .k-zettel,html[data-theme="funk"] .k-zettel.bild{top:4px;left:10px;width:96px;max-width:none;min-height:0;padding:14px 7px 3px;font-size:6.5px;line-height:1.35;transform:rotate(-2deg);display:flex;flex-direction:column;justify-content:center}
-    html[data-theme="funk"] .k-zettel.bild .z-t{font-size:9px}
     html[data-theme="funk"] .k-buehne{padding-top:92px}
     html[data-theme="funk"] .k-raster{height:calc(100svh - 106px)}
-    .k-zettel p{margin-bottom:4px}
-    .k-zettel .z-t{font-size:10px}
     html[data-theme="funk"] .k-loch{top:4px;right:58px;width:58px;height:58px}
     /* Handy: Loch oben neben dem Design-Knopf → Samuel Morse steht darunter am rechten Rand, Sprechblase links daneben */
     .k-buehne{--sh:170px;--mr:6px}
@@ -1273,7 +1272,25 @@
   { const bild=new Image(); bild.onload=()=>zettel.classList.add('bild'); bild.src='img/see/zettel.webp'; }
   const zuMorse=t=>t.split(' ').map(w=>[...w].map(c=>(MC[c]||'').replace(/\./g,'·').replace(/-/g,'−')).join(' ')).join(' / ');
   let spruchNr=Math.floor(Math.random()*SPRUECHE.length);
-  function spruchSetzen(){ const [m,t]=SPRUECHE[spruchNr]; zp.querySelector('.z-m').textContent=zuMorse(m); zp.querySelector('.z-t').textContent=t; }
+  // jedes Wort bleibt zusammen in einer Zeile (Buchstaben mit Leerzeichen, Wörter mit Abstand)
+  function spruchSetzen(){
+    const [m,t]=SPRUECHE[spruchNr];
+    zp.querySelector('.z-m').innerHTML=m.split(' ').map(w=>[...w].map(c=>'<span class="w">'+(MC[c]||'').replace(/\./g,'•').replace(/-/g,'–')+'</span>').join(' ')).join(' <span class="tr">/</span> ');
+    zp.querySelector('.z-t').textContent=t; zettelPassen();
+  }
+  /* Schriftgröße so groß wie möglich, ohne dass der Text über den Zettel hinausragt */
+  function zettelPassen(){
+    const zm=zp.querySelector('.z-m'), zt=zp.querySelector('.z-t');
+    const cs=getComputedStyle(zettel), w=zettel.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),
+          h=zettel.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+    if(w<10||h<10) return;
+    let f=Math.min(26,h*.45);
+    zm.style.fontSize=f+'px'; zm.style.lineHeight='1.35';
+    while(f>6&&(zm.scrollWidth>w+1||zm.offsetHeight>h)){ f-=.5; zm.style.fontSize=f+'px'; }
+    let g=Math.min(24,h*.4); zt.style.fontSize=g+'px';
+    while(g>7&&(zt.scrollWidth>w+1||zt.offsetHeight>h)){ g-=.5; zt.style.fontSize=g+'px'; }
+  }
+  new ResizeObserver(zettelPassen).observe(zettel);
   spruchSetzen();
   setInterval(()=>{
     zp.classList.add('weg');
