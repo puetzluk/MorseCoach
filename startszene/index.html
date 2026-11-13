@@ -1142,7 +1142,8 @@
   }
   requestAnimationFrame(tick);
   /* Eingebettet in die App (index.html?eingebettet): Steuerleiste weg; am Ende der App Bescheid geben */
-  const eingebettet=window.parent!==window;
+  // nur in der App (index.html lädt die Szene mit ?eingebettet), nicht in anderen Vorschau-Rahmen
+  const eingebettet=window.parent!==window&&/eingebettet/.test(location.search);
   if(eingebettet&&ui) ui.remove();
 
   /* ---------- Kartenbereich: Design, Klicks, Überspringen ----------
@@ -1153,10 +1154,11 @@
   const MC={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',
     O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',"'":'.----.'};
   function themeLesen(){ try{ const d=JSON.parse(localStorage.getItem('morse.v1')||'{}'); return (d.settings&&d.settings.theme)||'dunkel'; }catch(e){ return 'dunkel'; } }
+  let kartenBereit=false;   // erst true, wenn alles unten aufgebaut ist (vorher keine Aufräum-Aktionen)
   function themeSetzen(t){
     if(THEMES.indexOf(t)<0) t='dunkel';
     const vorher=document.documentElement.dataset.theme; document.documentElement.dataset.theme=t;
-    if(vorher&&vorher!==t){
+    if(vorher&&vorher!==t&&kartenBereit){
       if(typeof sprecherWeg==='function') sprecherWeg();
       // Cursor sofort im neuen Design zeigen (Browser aktualisieren ihn sonst erst beim nächsten Bewegen)
       const h=document.documentElement; h.classList.add('cur-neu'); requestAnimationFrame(()=>h.classList.remove('cur-neu'));
@@ -1343,6 +1345,7 @@
     })();
   });
 
+  kartenBereit=true;
   // Jeder Besuch beginnt oben im Meer
   if('scrollRestoration' in history) history.scrollRestoration='manual';
   scrollTo(0,0);
