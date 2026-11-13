@@ -2,7 +2,7 @@
 
 Öffnen: `index.html` per Doppelklick im Browser.
 
-- Startseite (Ordner `startszene/`, Vollbild über der App): Meer-Animation → Titel „Morse Coach“ → weiterscrollen → Karten der Lernbereiche (Lernen, Hören, Senden, Games groß; Übersetzer, Statistik kleiner; Einstellungen). Ein Klick auf eine Karte öffnet den Bereich mit der Leiste oben; „Startseite“ führt zurück zu den Karten, von dort geht es per Hochscrollen ins Meer. „Überspringen“ springt zu den Karten, der runde Knopf oben rechts wechselt das Design. Mit `index.html#lernen` (usw.) öffnet sich ein Bereich direkt.
+- Startseite (Ordner `startszene/`, Vollbild über der App): Meer-Animation → Titel „Morse Coach“ → weiterscrollen → Karten der Lernbereiche (Lernen, Hören, Senden, Games groß; Übersetzer, Statistik kleiner; Einstellungen). Ein Klick auf eine Karte öffnet den Bereich mit der Leiste oben; Das Logo „Morse Coach“ führt zurück zu den Karten, von dort geht es per Hochscrollen ins Meer. „Überspringen“ springt zu den Karten, der runde Knopf oben rechts wechselt das Design. Mit `index.html#lernen` (usw.) öffnet sich ein Bereich direkt.
 - Lernen: Koch-Methode oder eigene Zeichenauswahl
 - Hören: fünf Stufen (Zeichengruppen, Wörter, Sätze), eigene Zeichenauswahl
 - Senden: Taste E = kurz, T = lang, oder Knöpfe; eigene Zeichenauswahl
