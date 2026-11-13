@@ -20,7 +20,7 @@ const Store = (() => {
     levelRecent: [],        // letzte Antworten auf der aktuellen Koch-Stufe (Lernen)
     hoerLevel: 'mittel',
     hoerenWpm: 10,
-    game: { best: 0 },      // Morse-Flug: Rekord (Anzahl Hindernisse)
+    idle: null,             // Games (Idle-Spiel): Spielstand, wird in js/idle-logic.js aufgefüllt
     chars: {},   // { K: { n, ok, last: [1,0,...] } }
     days: {},    // { '2026-11-07': { n, ok } }
     hours: {}    // { '2026-11-07T19': { n, ok } }  (nur die letzten ~31 Tage)
