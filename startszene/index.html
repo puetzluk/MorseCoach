@@ -483,7 +483,24 @@
   #titel{position:fixed;left:0;right:0;top:50%;z-index:7;text-align:center;color:#eaf6ff;opacity:0;pointer-events:none;
     font-family:Georgia,'Times New Roman',serif;transform:translateY(-50%)}
   #titel h1{margin:0;font-weight:400;font-size:clamp(40px,11vw,132px);letter-spacing:.04em;line-height:1.05}
-  #titel p{margin:.6em 0 0;font:400 clamp(14px,1.6vw,22px)/1.4 system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;opacity:.7}
+  #titel p{margin:.6em 0 0;font:400 clamp(14px,1.6vw,22px)/1.4 system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;opacity:0;transition:opacity 1.2s ease .2s}
+  #titel.fertig p{opacity:.7}
+  /* Titel wird Buchstabe für Buchstabe „gemorst“ */
+  #titel h1 span{display:inline-block;opacity:0;transform:translateY(.12em);filter:blur(6px);
+    transition:opacity .35s ease,transform .45s cubic-bezier(.2,.8,.2,1),filter .45s ease;position:relative}
+  #titel h1 span.da{opacity:1;transform:none;filter:none;animation:tAufblitz .9s ease-out}
+  #titel h1 span.jetzt::after{content:"";position:absolute;left:8%;right:8%;bottom:.02em;height:.06em;border-radius:1em;
+    background:#9fe3ff;box-shadow:0 0 .3em #6fd0ff;animation:tCursor .5s steps(2) infinite}
+  @keyframes tAufblitz{0%{text-shadow:0 0 .45em #bfefff,0 0 1em #6fd0ff}100%{text-shadow:0 0 0 transparent}}
+  @keyframes tCursor{50%{opacity:.25}}
+  #tcode{height:clamp(16px,2.6vw,30px);margin-top:.35em;display:flex;justify-content:center;align-items:center;gap:.35em;
+    font-size:clamp(16px,2.6vw,30px)}
+  #tcode i{display:block;height:.32em;width:.32em;border-radius:1em;background:rgba(234,246,255,.18);transition:background .08s,box-shadow .08s}
+  #tcode i.s{width:1em}
+  #tcode i.an{background:#eaf6ff;box-shadow:0 0 .5em #8fdcff,0 0 1.1em rgba(111,208,255,.6)}
+  #tcode i.lu{width:.5em;background:none}
+  #tcode.ruhe i{background:rgba(234,246,255,.35);box-shadow:none;transition:background 1s}
+  #tcode.ruhe{font-size:clamp(9px,1.1vw,13px);transition:font-size .6s}
 
   /* ================= Kartenbereich unter dem Titel =================
      Nach dem Titel scrollt man weiter: der Bereich schiebt sich von unten herein (Übergang je nach Design),
@@ -846,7 +863,7 @@
     <div id="glass"></div>
   </div>
 </div>
-<div id="titel"><h1>Morse Coach</h1><p>Lerne die Zeichen</p></div>
+<div id="titel"><h1 aria-label="Morse Coach"></h1><div id="tcode" aria-hidden="true"></div><p>Lerne die Zeichen</p></div>
 <div id="scrollspace"></div>
 <section id="karten" aria-label="Lernbereiche">
   <div class="k-ueber"></div>
@@ -944,6 +961,54 @@
   const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
   const touch=matchMedia('(pointer: coarse)').matches;
   const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a));return t*t*(3-2*t)};
+  /* ---------- Titel: wird wie mit einer Morsetaste eingetippt ---------- */
+  const TMC={M:'--',O:'---',R:'.-.',S:'...',E:'.',C:'-.-.',A:'.-',H:'....'};
+  const TTEXT='Morse Coach', th1=titel.querySelector('h1'), tcode=document.getElementById('tcode');
+  th1.innerHTML=[...TTEXT].map(c=>c===' '?'<span>&nbsp;</span>':`<span>${c}</span>`).join('');
+  const tSpans=[...th1.children];
+  let tLauf=0, tStatus=0;           // 0 = leer, 1 = tippt, 2 = fertig
+  function tDit(){                  // Zeichentempo aus den Einstellungen, aber nicht zu langsam für den Titel
+    let cw=20; try{ const d=JSON.parse(localStorage.getItem('morse.v1')||'{}'); if(d.settings&&+d.settings.cwpm) cw=+d.settings.cwpm; }catch(e){}
+    return clamp(700/cw,26,36);
+  }
+  const warte=ms=>new Promise(r=>setTimeout(r,ms));
+  function codeZeigen(code){ tcode.className=''; tcode.innerHTML=[...code].map(e=>`<i class="${e==='-'?'s':'p'}"></i>`).join(''); return [...tcode.children]; }
+  function titelFertig(){
+    tSpans.forEach(sp=>{sp.classList.add('da');sp.classList.remove('jetzt');sp.style.animation='none';});
+    // zum Schluss steht der ganze Code klein unter dem Titel
+    tcode.innerHTML=TTEXT.toUpperCase().split(' ').map(w=>[...w].map(c=>[...TMC[c]].map(e=>`<i class="${e==='-'?'s':'p'}"></i>`).join('')).join('<i class="lu"></i>')).join('<i class="lu"></i><i class="lu"></i>');
+    tcode.className='ruhe'; titel.classList.add('fertig'); tStatus=2;
+  }
+  async function titelStart(){
+    const lauf=++tLauf; tStatus=1;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){ titelFertig(); return; }
+    const d=tDit(); await warte(250);
+    for(let i=0;i<tSpans.length;i++){
+      if(lauf!==tLauf) return;
+      const c=TTEXT[i].toUpperCase(), sp=tSpans[i];
+      if(c===' '){ sp.classList.add('da'); await warte(7*d); continue; }
+      sp.classList.add('jetzt');
+      const els=codeZeigen(TMC[c]);
+      await warte(d);
+      for(const el of els){
+        if(lauf!==tLauf) return;
+        el.classList.add('an'); await warte(el.classList.contains('s')?3*d:d);
+        el.classList.remove('an'); await warte(d);
+      }
+      if(lauf!==tLauf) return;
+      sp.classList.remove('jetzt'); sp.classList.add('da');
+      await warte(3*d+60);
+    }
+    if(lauf===tLauf){ await warte(300); if(lauf===tLauf) titelFertig(); }
+  }
+  function titelReset(){
+    tLauf++; tStatus=0; titel.classList.remove('fertig'); tcode.className=''; tcode.innerHTML='';
+    tSpans.forEach(sp=>{sp.className='';sp.style.animation='';});
+  }
+  function titelTippen(tt){
+    if(tStatus===0 && tt>.55) titelStart();
+    else if(tStatus!==0 && tt<.02) titelReset();   // ganz zurückgescrollt: beim nächsten Mal neu tippen
+  }
   const ease=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
 
   /* ---------- Bühne der Landschaft an das Fenster anpassen (füllt, unten verankert) ---------- */
@@ -1114,6 +1179,7 @@
     seaDark.style.opacity=(.82*smooth(SEE.sink[0],1,p)).toFixed(3);   // je tiefer, desto dunkler
     const tt=smooth(SEE.title[0],SEE.title[1],p);
     titel.style.opacity=tt.toFixed(3); titel.style.transform=`translateY(calc(-50% + ${((1-tt)*30-ueber).toFixed(1)}px))`;
+    titelTippen(tt);
     // Kartenbereich: Design-Schalter erst dort, „Überspringen“ verschwindet
     designKnopf.classList.toggle('an',ueber>innerHeight*.75);
     document.documentElement.classList.toggle('cursor-an',ueber>innerHeight*.5);   // Cursor im Design erst unter dem Titel
