@@ -801,12 +801,21 @@
     cur+=(target-cur)*.14; if(Math.abs(target-cur)<1e-4) cur=target;
     const p=clamp(cur), pop=popScale(p,dt), key=p.toFixed(5)+'|'+pop.toFixed(4);
     if(key!==lastKey){render(p,pop);lastKey=key}
+    meldeFertig(p);
     const t=(now-tLoad)/1000;
     fishAt(reduce?0:t);
     if(pop>0) drawFx(t,reduce?0:dt);
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
+  /* Eingebettet in die App (index.html?eingebettet): Steuerleiste weg; am Ende der App Bescheid geben */
+  const eingebettet=window.parent!==window;
+  if(eingebettet&&ui) ui.remove();
+  let fertigGemeldet=false;
+  function meldeFertig(p){
+    if(!eingebettet||fertigGemeldet||p<.96) return;
+    fertigGemeldet=true; window.parent.postMessage({type:'morse-intro-ende'},'*');
+  }
   window.__seeJump=p=>{cur=p;popP=p>=SEE.pAppear?1:0;scrollTo(0,p*(document.documentElement.scrollHeight-innerHeight))};
 </script>
 </body>
