@@ -252,6 +252,7 @@ textarea { resize: vertical; margin: 8px 0; }
   background: var(--chip-bg); border: 1px solid var(--line);
 }
 .seg button.active { background: var(--grad); color: var(--accent-text); font-weight: 700; border-color: transparent; }
+.gridctl .btn.active { background: var(--grad); color: var(--accent-text); font-weight: 700; border-color: transparent; }
 [data-theme="funk"] .seg button { border-radius: 3px; font-variant: small-caps; letter-spacing: .05em; border: 2px solid #120b05; }
 
 /* ===================== Chips, Balken, Ergebnis ===================== */
