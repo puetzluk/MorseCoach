@@ -489,7 +489,7 @@
      Nach dem Titel scrollt man weiter: der Bereich schiebt sich von unten herein (Übergang je nach Design),
      danach füllen die Karten den Bildschirm. Design = html[data-theme] (dunkel | hell | funk). */
   #karten{position:relative;z-index:8}
-  .k-ueber{height:55vh;height:55svh}
+  .k-ueber{height:90vh;height:90svh}
   .k-buehne{min-height:100vh;min-height:100svh;display:flex;align-items:center;justify-content:center;
     padding:76px 4vw 4vh;box-sizing:border-box}
   .k-raster{width:min(1180px,100%);height:min(600px,calc(100svh - 110px));display:grid;gap:16px;
@@ -524,14 +524,14 @@
     --licht:rgba(255,190,100,.14);--licht-rand:rgba(255,214,140,.95)}
 
   /* --- Dunkel: Tiefsee läuft weiter und wird fast schwarzblau, Karten aus dunklem Glas --- */
-  html[data-theme="dunkel"] .k-ueber{background:linear-gradient(rgba(0,6,16,0),rgba(0,6,16,.7))}
+  html[data-theme="dunkel"] .k-ueber{background:linear-gradient(rgba(0,6,16,0.000) 0.0%,rgba(0,6,16,0.002) 7.1%,rgba(0,6,16,0.016) 14.3%,rgba(0,6,16,0.049) 21.4%,rgba(0,6,16,0.101) 28.6%,rgba(0,6,16,0.172) 35.7%,rgba(0,6,16,0.258) 42.9%,rgba(0,6,16,0.350) 50.0%,rgba(0,6,16,0.442) 57.1%,rgba(0,6,16,0.528) 64.3%,rgba(0,6,16,0.599) 71.4%,rgba(0,6,16,0.651) 78.6%,rgba(0,6,16,0.684) 85.7%,rgba(0,6,16,0.698) 92.9%,rgba(0,6,16,0.700) 100.0%)}
   html[data-theme="dunkel"] .k-buehne{background:rgba(0,6,16,.7)}
   html[data-theme="dunkel"] .karte{background:rgba(12,30,52,.55);border-color:rgba(170,215,255,.16);color:#e6f3ff;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
   html[data-theme="dunkel"] .k-txt span{color:#a3bdd6}
 
   /* --- Hell: wie Auftauchen – Dunkelblau über Türkis zu sehr hellem Blau; Karten im Sandlook --- */
-  html[data-theme="hell"] .k-ueber{background:linear-gradient(rgba(0,33,58,0),rgba(6,62,96,.75) 25%,#0f7fa6 55%,#23a4c4 80%,#2fb2cf)}
+  html[data-theme="hell"] .k-ueber{background:linear-gradient(rgba(47,178,207,0.000) 0.0%,rgba(47,178,207,0.003) 7.1%,rgba(47,178,207,0.023) 14.3%,rgba(47,178,207,0.069) 21.4%,rgba(47,178,207,0.145) 28.6%,rgba(47,178,207,0.246) 35.7%,rgba(47,178,207,0.368) 42.9%,rgba(47,178,207,0.500) 50.0%,rgba(47,178,207,0.632) 57.1%,rgba(47,178,207,0.754) 64.3%,rgba(47,178,207,0.855) 71.4%,rgba(47,178,207,0.931) 78.6%,rgba(47,178,207,0.977) 85.7%,rgba(47,178,207,0.997) 92.9%,rgba(47,178,207,1.000) 100.0%)}
   html[data-theme="hell"] .k-buehne{background:linear-gradient(#2fb2cf,#3cc0d8 60%,#4ccbdf)}
   html[data-theme="hell"] .karte{color:#3a2d1a;border-color:rgba(140,110,60,.25);background:#efe4cd;
     box-shadow:0 2px 4px rgba(6,60,90,.10),0 12px 26px rgba(6,60,90,.20)}
@@ -541,7 +541,7 @@
   html[data-theme="hell"] .k-txt span{color:#5e4d33}
 
   /* --- Funkgerät: Übergang in dunkles Holz; Karten als Messingschilder mit Schrauben --- */
-  html[data-theme="funk"] .k-ueber{background:linear-gradient(rgba(27,18,10,0),#2d1e12)}
+  html[data-theme="funk"] .k-ueber{background:linear-gradient(rgba(45,30,18,0.000) 0.0%,rgba(45,30,18,0.003) 7.1%,rgba(45,30,18,0.023) 14.3%,rgba(45,30,18,0.069) 21.4%,rgba(45,30,18,0.145) 28.6%,rgba(45,30,18,0.246) 35.7%,rgba(45,30,18,0.368) 42.9%,rgba(45,30,18,0.500) 50.0%,rgba(45,30,18,0.632) 57.1%,rgba(45,30,18,0.754) 64.3%,rgba(45,30,18,0.855) 71.4%,rgba(45,30,18,0.931) 78.6%,rgba(45,30,18,0.977) 85.7%,rgba(45,30,18,0.997) 92.9%,rgba(45,30,18,1.000) 100.0%)}
   html[data-theme="funk"] .k-buehne{background:
     repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 2px,transparent 2px 7px),
     repeating-linear-gradient(90deg,rgba(255,190,110,.035) 0 1px,transparent 1px 13px),linear-gradient(#2d1e12,#1b120a)}
@@ -594,6 +594,8 @@
   .k-fische,.k-wrack,.k-zettel,.k-loch{display:none}
   html[data-theme="hell"] .k-fische,html[data-theme="dunkel"] .k-fische{display:block;position:absolute;inset:0;pointer-events:none}
   .k-fisch{position:absolute;left:0;top:0;will-change:transform}
+  .k-fx{display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  html[data-theme="hell"] .k-fx{display:block}
   .k-fisch .fishin{position:relative}
   .k-fisch img{display:block;width:100%;height:auto}
   .k-fisch.rechts .fishin{transform:scaleX(-1)}
@@ -601,10 +603,15 @@
   html[data-theme="dunkel"] .k-fisch{opacity:.38;filter:brightness(.85) saturate(.8)}
 
   /* Wrack (Dunkel): unten links, schräg am Grund, blass; wird beim Darüberfahren heller */
-  html[data-theme="dunkel"] .k-wrack{display:block;position:absolute;left:1.2vw;bottom:0;width:min(22vw,360px);height:auto;
-    opacity:.32;filter:brightness(.75) saturate(.7);transform:rotate(-4deg);transform-origin:50% 100%;
-    transition:opacity .5s ease,filter .5s ease}
-  html[data-theme="dunkel"] .k-wrack:hover{opacity:.6;filter:brightness(1) saturate(.9)}
+  html[data-theme="dunkel"] .k-wrack{display:block;position:absolute;left:1.2vw;bottom:0;width:min(22vw,360px);
+    transform:rotate(-4deg);transform-origin:50% 100%}
+  .k-wrack img{display:block;width:100%;height:auto}
+  .k-wrack img:first-child{opacity:.32;filter:brightness(.75) saturate(.7)}
+  /* heller Ausschnitt nur um den Cursor (Maske folgt der Maus) */
+  .k-wrack .w-licht{position:absolute;inset:0;opacity:0;filter:brightness(1.05) saturate(.95);transition:opacity .4s ease;
+    -webkit-mask:radial-gradient(circle 110px at var(--wx,50%) var(--wy,50%),#000 0,rgba(0,0,0,.6) 45%,transparent 100%);
+    mask:radial-gradient(circle 110px at var(--wx,50%) var(--wy,50%),#000 0,rgba(0,0,0,.6) 45%,transparent 100%)}
+  @media (hover:hover){ .k-wrack:hover .w-licht{opacity:.75} }
 
   /* Funk: Notizzettel links neben den Karten (bis das Bild da ist als gezeichneter Platzhalter) */
   html[data-theme="funk"] .k-zettel{display:block;position:absolute;top:13vh;
@@ -615,7 +622,7 @@
     transform:translateX(-50%) rotate(2deg);background:rgba(255,250,230,.45);box-shadow:0 1px 2px rgba(0,0,0,.2)}
   html[data-theme="funk"] .k-zettel.bild{background:url(img/see/zettel.webp) center/100% 100% no-repeat;box-shadow:none;
     width:min(210px,calc((100vw - min(1180px,92vw)) / 2 - 22px));height:auto;min-height:0;aspect-ratio:420/357;overflow:hidden;
-    padding:24px 12px 6px;font-size:8.5px;line-height:1.35;filter:drop-shadow(2px 6px 8px rgba(0,0,0,.55))}
+    padding:26px 12px 6px;font-size:11px;line-height:1.4;display:flex;flex-direction:column;justify-content:center;filter:drop-shadow(2px 6px 8px rgba(0,0,0,.55))}
   /* schmalere Laptops: kein Platz links neben den Karten → Zettel in einem Streifen über den Karten */
   @media (min-width:701px) and (max-width:1499px){
     html[data-theme="funk"] .k-buehne{padding-top:150px}
@@ -623,51 +630,55 @@
     html[data-theme="funk"] .k-zettel,html[data-theme="funk"] .k-zettel.bild{top:10px;left:4vw;width:150px}
   }
   html[data-theme="funk"] .k-zettel.bild p{margin-bottom:4px}
-  html[data-theme="funk"] .k-zettel.bild .z-t{font-size:12px}
+  html[data-theme="funk"] .k-zettel.bild .z-t{font-size:14px}
   html[data-theme="funk"] .k-zettel.bild::before{display:none}
-  .k-zettel p{margin:0 0 10px;position:relative}
+  .k-zettel p{margin:0 0 10px;position:relative;transition:opacity .6s ease}
+  .k-zettel p.weg{opacity:0}
   .k-zettel .z-m{display:block;letter-spacing:.06em;word-spacing:.15em;transition:opacity .4s}
   .k-zettel .z-t{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;
     font:700 14px/1.2 Georgia,"Times New Roman",serif;letter-spacing:.04em;color:#7a1f10;opacity:0;transition:opacity .5s}
-  .k-zettel.zeigt p.da .z-m{opacity:.15}
-  .k-zettel.zeigt p.da .z-t{opacity:1}
+  .k-zettel.zeigt .z-m{opacity:.15}
+  .k-zettel.zeigt .z-t{opacity:1}
 
   /* Funk: kleines rundes Loch in der Holzwand rechts mittig, dahinter eine Glühbirne */
+  /* Funk: rundes Loch in der Holzwand rechts mittig mit Glühbirne (zwei Fotos: aus / an, werden übereinander umgeschaltet) */
   html[data-theme="funk"] .k-loch{display:block;position:absolute;top:calc(50% + 4vh);
-    right:max(8px,calc((100vw - min(1180px,92vw)) / 4 - 27px));width:54px;height:54px;padding:0;border:0;border-radius:50%;
-    background:radial-gradient(circle,#070402 0 52%,#1d1207 58%,#5a3d1e 63%,#3a2612 68%,transparent 72%);
-    box-shadow:inset 0 3px 8px rgba(0,0,0,.9)}
-  .k-birne{position:absolute;left:50%;top:50%;width:18px;height:22px;transform:translate(-50%,-55%);
-    border-radius:50% 50% 45% 45%/60% 60% 40% 40%;
-    background:radial-gradient(circle at 40% 35%,#6b5a3a,#2e2414 70%);transition:background .06s,box-shadow .06s}
-  .k-birne::after{content:"";position:absolute;left:4px;right:4px;bottom:-5px;height:6px;border-radius:0 0 3px 3px;background:#3d3326}
-  .k-loch.an .k-birne{background:radial-gradient(circle at 40% 35%,#fffbe6,#ffd36b 45%,#f59e0b 75%);
-    box-shadow:0 0 14px 6px rgba(255,200,90,.85),0 0 46px 18px rgba(255,170,60,.45)}
-  .k-loch.an{box-shadow:inset 0 3px 8px rgba(0,0,0,.6),0 0 60px 24px rgba(255,170,60,.25)}
+    right:max(4px,calc((100vw - min(1180px,92vw)) / 4 - 50px));width:100px;height:100px;padding:0;border:0;background:none}
+  .k-loch img{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+  .k-loch .l-an{opacity:0;transition:opacity .04s linear;filter:drop-shadow(0 0 14px rgba(255,180,80,.55))}
+  .k-loch.an .l-an{opacity:1}
 
   /* Sprechblase mit Samuel Morse (übersetzt das Zitat) */
-  .k-blase{position:absolute;z-index:6;right:max(70px,calc((100vw - min(1180px,92vw)) / 2 + 10px));top:calc(50% - 40px);
-    display:flex;align-items:flex-end;gap:10px;max-width:min(420px,70vw);opacity:0;transform:translateY(8px);
-    transition:opacity .35s,transform .35s;pointer-events:none}
+  .k-buehne{--sh:min(32vh,240px);--sw:calc(var(--sh) * .4125);
+    --mr:max(4px,calc((100vw - min(1180px,92vw)) / 4 - var(--sw) / 2));--lochTop:calc(50% + 4vh)}
+  .k-sprecher{display:none;position:absolute;z-index:6;height:var(--sh);width:auto;right:var(--mr);
+    top:calc(var(--lochTop) - var(--sh) - 2px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.55));
+    opacity:0;transform:translateY(10px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
+  html[data-theme="funk"] .k-sprecher{display:block}
+  .k-sprecher.da{opacity:1;transform:none}
+  .k-blase{position:absolute;z-index:6;right:calc(var(--mr) + var(--sw) + 6px);top:calc(var(--lochTop) - var(--sh) + 6px);
+    max-width:min(420px,60vw);opacity:0;transform:translateX(8px);transition:opacity .35s,transform .35s;pointer-events:none}
   .k-blase.da{opacity:1;transform:none}
-  .k-sprecher{width:110px;height:auto;order:2;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
   .k-blase p{position:relative;margin:0;padding:12px 16px;border-radius:14px;background:#f3e6bf;color:#2a1c0c;
     font:600 1rem/1.35 Georgia,"Times New Roman",serif;box-shadow:0 6px 18px rgba(0,0,0,.45)}
   .k-blase p small{display:block;margin-top:4px;font:400 .78rem "Courier New",Courier,monospace;color:#6b5332}
-  .k-blase p::after{content:"";position:absolute;right:-9px;bottom:14px;border:9px solid transparent;border-right:0;border-left-color:#f3e6bf}
+  .k-blase p::after{content:"";position:absolute;right:-9px;top:16px;border:9px solid transparent;border-right:0;border-left-color:#f3e6bf}
 
   @media (max-width:700px){
     .k-fisch{transform-origin:0 0}
     html[data-theme="dunkel"] .k-wrack{width:46vw;left:2vw}
-    html[data-theme="funk"] .k-zettel,html[data-theme="funk"] .k-zettel.bild{top:4px;left:10px;width:96px;max-width:none;min-height:0;padding:13px 7px 3px;font-size:5px;line-height:1.3;transform:rotate(-2deg)}
-    html[data-theme="funk"] .k-zettel.bild .z-t{font-size:8px}
+    html[data-theme="funk"] .k-zettel,html[data-theme="funk"] .k-zettel.bild{top:4px;left:10px;width:96px;max-width:none;min-height:0;padding:14px 7px 3px;font-size:6.5px;line-height:1.35;transform:rotate(-2deg);display:flex;flex-direction:column;justify-content:center}
+    html[data-theme="funk"] .k-zettel.bild .z-t{font-size:9px}
     html[data-theme="funk"] .k-buehne{padding-top:92px}
     html[data-theme="funk"] .k-raster{height:calc(100svh - 106px)}
     .k-zettel p{margin-bottom:4px}
     .k-zettel .z-t{font-size:10px}
-    html[data-theme="funk"] .k-loch{top:14px;right:66px;width:40px;height:40px}
-    .k-blase{right:12px;left:12px;top:70px;max-width:none;justify-content:flex-end}
-    .k-sprecher{width:72px}
+    html[data-theme="funk"] .k-loch{top:4px;right:58px;width:58px;height:58px}
+    /* Handy: Loch oben neben dem Design-Knopf → Samuel Morse steht darunter am rechten Rand, Sprechblase links daneben */
+    .k-buehne{--sh:170px;--mr:6px}
+    .k-sprecher{top:58px}
+    .k-blase{top:66px}
+    .k-blase{max-width:calc(100vw - var(--sw) - 30px)}
   }
 
   /* --- Handy: kompaktes 2er-Raster, alles auf einem Bildschirm --- */
@@ -693,10 +704,13 @@
 
   /* --- Cursor je Design (auch über die App) --- */
   html[data-theme="dunkel"]{--cur:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2228%22 height=%2228%22%3E%3Ccircle cx=%2214%22 cy=%2214%22 r=%229%22 fill=%22none%22 stroke=%22%237dd3fc%22 stroke-opacity=%22.7%22 stroke-width=%221.5%22/%3E%3Ccircle cx=%2214%22 cy=%2214%22 r=%223.2%22 fill=%22%23bae6fd%22/%3E%3C/svg%3E") 14 14,auto;--cur-zeiger:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%2338bdf8%22 fill-opacity=%22.18%22 stroke=%22%237dd3fc%22 stroke-width=%221.8%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%223.6%22 fill=%22%23e0f2fe%22/%3E%3C/svg%3E") 16 16,pointer}
-  html[data-theme="hell"]{--cur:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2228%22 height=%2228%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3l3.2 8.4 8.9.6-6.9 5.7 2.3 8.7L16 21.5l-7.5 4.9 2.3-8.7-6.9-5.7 8.9-.6z%22 fill=%22%23fb923c%22 stroke=%22%239a3412%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%2216%22 cy=%2215%22 r=%221.6%22 fill=%22%23fed7aa%22/%3E%3C/svg%3E") 14 13,auto;--cur-zeiger:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3l3.2 8.4 8.9.6-6.9 5.7 2.3 8.7L16 21.5l-7.5 4.9 2.3-8.7-6.9-5.7 8.9-.6z%22 fill=%22%23f97316%22 stroke=%22%23fff%22 stroke-width=%221.8%22 stroke-linejoin=%22round%22 transform=%22rotate(18 16 15)%22/%3E%3Ccircle cx=%2216%22 cy=%2215%22 r=%221.8%22 fill=%22%23fff7ed%22/%3E%3C/svg%3E") 17 15,pointer}
-  html[data-theme="funk"]{--cur:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2226%22 height=%2230%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23f6dc95%22/%3E%3Cstop offset=%221%22 stop-color=%22%23a87726%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d=%22M3 2l0 20 5.5-5.2 3.6 8.2 3.4-1.5-3.6-8 7.6-.4z%22 fill=%22url(%23g)%22 stroke=%22%233a250c%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") 3 2,auto;--cur-zeiger:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2230%22 height=%2232%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff0b8%22/%3E%3Cstop offset=%221%22 stop-color=%22%23c8902e%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx=%2221%22 cy=%2224%22 r=%225%22 fill=%22%23ffb347%22 fill-opacity=%22.55%22/%3E%3Cpath d=%22M3 2l0 20 5.5-5.2 3.6 8.2 3.4-1.5-3.6-8 7.6-.4z%22 fill=%22url(%23g)%22 stroke=%22%233a250c%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") 3 2,pointer}
-  html,body{cursor:var(--cur,auto)}
-  button,.karte,.k-zettel,.k-wrack,[role="button"],a{cursor:var(--cur-zeiger,pointer)}
+  html[data-theme="hell"]{--cur:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2228%22 height=%2228%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3l3.2 8.4 8.9.6-6.9 5.7 2.3 8.7L16 21.5l-7.5 4.9 2.3-8.7-6.9-5.7 8.9-.6z%22 fill=%22%23fb923c%22 stroke=%22%239a3412%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%2216%22 cy=%2215%22 r=%221.6%22 fill=%22%23fed7aa%22/%3E%3C/svg%3E") 14 13,auto;--cur-zeiger:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2230%22 height=%2230%22 viewBox=%220 0 32 32%22%3E%3Cpath d=%22M16 3l3.2 8.4 8.9.6-6.9 5.7 2.3 8.7L16 21.5l-7.5 4.9 2.3-8.7-6.9-5.7 8.9-.6z%22 fill=%22%23f97316%22 stroke=%22%23fff%22 stroke-width=%221.8%22 stroke-linejoin=%22round%22 transform=%22rotate(18 16 15)%22/%3E%3Ccircle cx=%2216%22 cy=%2215%22 r=%221.8%22 fill=%22%23fff7ed%22/%3E%3C/svg%3E") 15 13,pointer}
+  html[data-theme="funk"]{--cur:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2226%22 height=%2230%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23f6dc95%22/%3E%3Cstop offset=%221%22 stop-color=%22%23a87726%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d=%22M3 2l0 20 5.5-5.2 3.6 8.2 3.4-1.5-3.6-8 7.6-.4z%22 fill=%22url(%23g)%22 stroke=%22%233a250c%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") 3 2,auto;--cur-zeiger:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2230%22 height=%2232%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff0b8%22/%3E%3Cstop offset=%221%22 stop-color=%22%23c8902e%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d=%22M3 2l0 20 5.5-5.2 3.6 8.2 3.4-1.5-3.6-8 7.6-.4z%22 fill=%22url(%23g)%22 stroke=%22%233a250c%22 stroke-width=%221.4%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E") 3 2,pointer}
+  /* erst unter dem Titel (Klasse cursor-an setzt das Skript), vorher normaler Cursor */
+  html.cursor-an,html.cursor-an body{cursor:var(--cur,auto)}
+  html.cursor-an :is(button,.karte,.k-zettel,.k-wrack,[role="button"],a){cursor:var(--cur-zeiger,pointer)}
+  /* kurz anstoßen, damit der Cursor beim Designwechsel sofort umspringt */
+  html.cursor-an.cur-neu,html.cursor-an.cur-neu *{cursor:var(--cur,auto)!important}
 
 
   #hint{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:6;pointer-events:none;
@@ -837,9 +851,10 @@
     <!-- Deko hinter den Karten: Fische (Hell/Dunkel), Wrack (Dunkel), Zettel und Glühbirne (Funk) -->
     <div class="k-deko">
       <div class="k-fische"></div>
-      <img class="k-wrack" src="img/see/wrack.webp" alt="" onerror="this.remove()">
-      <div class="k-zettel" tabindex="0" aria-label="Notizzettel in Morsecode"><p><span class="z-m">−· −−− / ·−−· ·− ·· −· / −· −−− / −−· ·− ·· −·</span><span class="z-t">NO PAIN NO GAIN</span></p><p><span class="z-m">·− ·−·· ·−·· · ··· / −− ·· −· −·· ··· · −</span><span class="z-t">ALLES MINDSET</span></p></div>
-      <button class="k-loch" type="button" aria-label="Glühbirne: Filmzitat in Morse"><span class="k-birne"></span></button>
+      <div class="k-wrack"><img src="img/see/wrack.webp" alt=""><img class="w-licht" src="img/see/wrack.webp" alt=""></div>
+      <div class="k-zettel" tabindex="0" aria-label="Notizzettel in Morsecode"><p><span class="z-m"></span><span class="z-t"></span></p></div>
+      <canvas class="k-fx"></canvas>
+      <button class="k-loch" type="button" aria-label="Glühbirne: Filmzitat in Morse"><img class="l-aus" src="img/see/loch_aus.webp" alt=""><img class="l-an" src="img/see/loch_an.webp" alt=""></button>
     </div>
     <div class="k-raster">
       <button class="karte k-gross k-lernen" data-tab="lernen" type="button" style="--sx:8%;--sy:20%;--rot:-3deg;--sh:1.02"><span class="k-licht"></span><span class="k-sym" style="--kf:#14b8a6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z"/><path d="M12 6v13.5"/></svg></span><span class="k-txt"><b>Lernen</b><span class="lang">Zeichen für Zeichen nach der Koch-Methode oder mit deiner eigenen Auswahl.</span><span class="kurz">Koch-Methode oder eigene Auswahl</span></span></button>
@@ -850,7 +865,8 @@
       <button class="karte k-klein k-statistik" data-tab="statistik" type="button" style="--sx:15%;--sy:60%;--rot:-2deg;--sh:0.98"><span class="k-licht"></span><span class="k-sym" style="--kf:#eab308"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><rect x="5.5" y="12" width="3" height="6" rx=".8"/><rect x="10.5" y="7" width="3" height="11" rx=".8"/><rect x="15.5" y="10" width="3" height="8" rx=".8"/></svg></span><span class="k-txt"><b>Statistik</b><span class="lang">Dein Fortschritt nach Tag, Woche, Monat und Jahr.</span><span class="kurz">Dein Fortschritt</span></span></button>
       <button class="karte k-mini k-einstellungen" data-tab="einstellungen" type="button" style="--sx:75%;--sy:90%;--rot:5deg;--sh:1.03"><span class="k-licht"></span><span class="k-sym" style="--kf:#64748b"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h3M12 17h7"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><span class="k-txt"><b>Einstellungen</b><span class="lang">Ton, Tempo, Design</span><span class="kurz">Ton, Tempo, Design</span></span></button>
     </div>
-    <div class="k-blase" hidden><img class="k-sprecher" src="img/see/sprecher.webp" alt="" onerror="this.remove()"><p></p></div>
+    <img class="k-sprecher" src="img/see/sprecher.webp" alt="Samuel Morse">
+    <div class="k-blase" hidden><p></p></div>
   </div>
 </section>
 <button id="designKnopf" type="button" aria-label="Design wechseln"><span></span></button>
@@ -1097,6 +1113,7 @@
     titel.style.opacity=tt.toFixed(3); titel.style.transform=`translateY(calc(-50% + ${((1-tt)*30-ueber).toFixed(1)}px))`;
     // Kartenbereich: Design-Schalter erst dort, „Überspringen“ verschwindet
     designKnopf.classList.toggle('an',ueber>innerHeight*.75);
+    document.documentElement.classList.toggle('cursor-an',ueber>innerHeight*.5);   // Cursor im Design erst unter dem Titel
     skipKnopf.classList.toggle('weg',ueber>innerHeight*.2);
     // Insel-Szene außen wird langsamer und hält an, sobald sie verdeckt ist
     const rate=1-smooth(0,SEE.pPass,p); window.sceneRate=rate;
@@ -1125,7 +1142,8 @@
   }
   requestAnimationFrame(tick);
   /* Eingebettet in die App (index.html?eingebettet): Steuerleiste weg; am Ende der App Bescheid geben */
-  const eingebettet=window.parent!==window;
+  // nur in der App (index.html lädt die Szene mit ?eingebettet), nicht in anderen Vorschau-Rahmen
+  const eingebettet=window.parent!==window&&/eingebettet/.test(location.search);
   if(eingebettet&&ui) ui.remove();
 
   /* ---------- Kartenbereich: Design, Klicks, Überspringen ----------
@@ -1133,8 +1151,19 @@
        raus: morse-open {tab}, morse-theme-set {theme}
        rein: morse-theme {theme}, morse-zu-karten */
   const THEMES=['dunkel','hell','funk'];
+  const MC={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',
+    O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',"'":'.----.'};
   function themeLesen(){ try{ const d=JSON.parse(localStorage.getItem('morse.v1')||'{}'); return (d.settings&&d.settings.theme)||'dunkel'; }catch(e){ return 'dunkel'; } }
-  function themeSetzen(t){ if(THEMES.indexOf(t)<0) t='dunkel'; document.documentElement.dataset.theme=t; }
+  let kartenBereit=false;   // erst true, wenn alles unten aufgebaut ist (vorher keine Aufräum-Aktionen)
+  function themeSetzen(t){
+    if(THEMES.indexOf(t)<0) t='dunkel';
+    const vorher=document.documentElement.dataset.theme; document.documentElement.dataset.theme=t;
+    if(vorher&&vorher!==t&&kartenBereit){
+      if(typeof sprecherWeg==='function') sprecherWeg();
+      // Cursor sofort im neuen Design zeigen (Browser aktualisieren ihn sonst erst beim nächsten Bewegen)
+      const h=document.documentElement; h.classList.add('cur-neu'); requestAnimationFrame(()=>h.classList.remove('cur-neu'));
+    }
+  }
   themeSetzen(themeLesen());
   const karten=document.getElementById('karten'), designKnopf=document.getElementById('designKnopf'), skipKnopf=document.getElementById('skipKnopf');
   const scrollspace=document.getElementById('scrollspace');
@@ -1202,21 +1231,68 @@
   }
   requestAnimationFrame(bgSchritt);
 
-  /* ---------- Funk: Notizzettel – beim Darüberfahren erst „NO PAIN NO GAIN“, dann „ALLES MINDSET“ ---------- */
-  const zettel=karten.querySelector('.k-zettel'); let zTimer=[];
-  { const bild=new Image(); bild.onload=()=>zettel.classList.add('bild'); bild.src='img/see/zettel.webp'; }
-  function zettelZeigen(an){
-    zTimer.forEach(clearTimeout); zTimer=[];
-    const ps=[...zettel.querySelectorAll('p')];
-    if(!an){ zettel.classList.remove('zeigt'); ps.forEach(p=>p.classList.remove('da')); return; }
-    zettel.classList.add('zeigt');
-    ps.forEach((p,i)=>zTimer.push(setTimeout(()=>p.classList.add('da'),i*1300)));
+
+  /* ---------- Hell: Glitzern und vereinzelt Blasen im Hintergrund des Kartenbereichs (dezent) ---------- */
+  const kfx=karten.querySelector('.k-fx'), kctx=kfx.getContext('2d'); let kW=0,kH=0,kSterne=[],kBlasen=[],kNaechste=2,kLast=null;
+  function kGroesse(){
+    const dpr=Math.min(devicePixelRatio||1,2); kW=buehne.clientWidth; kH=buehne.clientHeight;
+    kfx.width=Math.round(kW*dpr); kfx.height=Math.round(kH*dpr); kctx.setTransform(dpr,0,0,dpr,0,0);
+    kSterne=Array.from({length:Math.min(40,Math.max(14,Math.round(kW*kH*5e-5)))},()=>{const a=Math.random()*6.283,v=3*(.25+.75*Math.random());
+      return {x:Math.random()*kW,y:Math.random()*kH,r:.4+.7*Math.random(),vx:Math.cos(a)*v,vy:Math.sin(a)*v,o:.25+.45*Math.random(),bs:.8+2*Math.random(),bo:Math.random()*6.3};});
   }
+  addEventListener('resize',kGroesse); kGroesse();
+  function kSchritt(now){
+    const dt=kLast===null?0:Math.min(.1,(now-kLast)/1000); kLast=now;
+    if(ueber>0&&document.documentElement.dataset.theme==='hell'){
+      if(kfx.width<2) kGroesse();
+      kctx.clearRect(0,0,kW,kH); const t=now/1000;
+      for(const s of kSterne){
+        s.x+=s.vx*dt; s.y+=s.vy*dt;
+        if(s.x<-3)s.x=kW+3; if(s.x>kW+3)s.x=-3; if(s.y<-3)s.y=kH+3; if(s.y>kH+3)s.y=-3;
+        const o=s.o*(.55+.45*Math.sin(t*s.bs+s.bo));
+        kctx.beginPath(); kctx.arc(s.x,s.y,s.r,0,6.2832); kctx.fillStyle=`rgba(255,255,255,${o})`; kctx.fill();
+      }
+      kNaechste-=dt;
+      if(kNaechste<=0&&kBlasen.length<3){ const r=1.8+3.5*Math.random(); kBlasen.push({x:kW*(.05+.9*Math.random()),y:kH+10,r,v:20+25*Math.random(),w:2+4*Math.random(),f:1+Math.random(),p:Math.random()*6}); kNaechste=2+3*Math.random(); }
+      kBlasen=kBlasen.filter(b=>b.y>-15);
+      for(const b of kBlasen){
+        b.y-=b.v*dt; const x=b.x+Math.sin(t*b.f+b.p)*b.w, a=.45*Math.min(1,b.y/(kH*.25));
+        kctx.beginPath(); kctx.arc(x,b.y,b.r,0,6.2832); kctx.fillStyle=`rgba(255,255,255,${a*.12})`; kctx.fill();
+        kctx.lineWidth=.9; kctx.strokeStyle=`rgba(255,255,255,${a})`; kctx.stroke();
+      }
+    }
+    requestAnimationFrame(kSchritt);
+  }
+  requestAnimationFrame(kSchritt);
+
+  /* ---------- Funk: Notizzettel – ein Spruch in Morse, alle 30 s ein neuer; darüberfahren/antippen zeigt die Übersetzung ---------- */
+  const SPRUECHE=[['NO PAIN NO GAIN','No pain, no gain'],['ALLES MINDSET','Alles Mindset'],['STAY HUNGRY','Stay hungry'],
+    ['JEDEN TAG EIN ZEICHEN','Jeden Tag ein Zeichen'],['NEVER GIVE UP','Never give up'],['UEBUNG MACHT DEN MEISTER','Übung macht den Meister'],
+    ['DRANBLEIBEN','Dranbleiben'],['ONE MORE TIME','One more time'],['KEEP GOING','Keep going'],['KLEINE SCHRITTE','Kleine Schritte']];
+  const zettel=karten.querySelector('.k-zettel'), zp=zettel.querySelector('p');
+  { const bild=new Image(); bild.onload=()=>zettel.classList.add('bild'); bild.src='img/see/zettel.webp'; }
+  const zuMorse=t=>t.split(' ').map(w=>[...w].map(c=>(MC[c]||'').replace(/\./g,'·').replace(/-/g,'−')).join(' ')).join(' / ');
+  let spruchNr=Math.floor(Math.random()*SPRUECHE.length);
+  function spruchSetzen(){ const [m,t]=SPRUECHE[spruchNr]; zp.querySelector('.z-m').textContent=zuMorse(m); zp.querySelector('.z-t').textContent=t; }
+  spruchSetzen();
+  setInterval(()=>{
+    zp.classList.add('weg');
+    setTimeout(()=>{ let n; do{ n=Math.floor(Math.random()*SPRUECHE.length); }while(n===spruchNr); spruchNr=n; spruchSetzen(); zp.classList.remove('weg'); },650);
+  },30000);
+  const zettelZeigen=an=>zettel.classList.toggle('zeigt',an);
   zettel.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') zettelZeigen(true); });
   zettel.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse') zettelZeigen(false); });
   zettel.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); zettelZeigen(!zettel.classList.contains('zeigt')); } });
   zettel.addEventListener('blur',()=>zettelZeigen(false));
   zettel.addEventListener('pointerup',e=>{ if(e.pointerType!=='mouse') zettelZeigen(!zettel.classList.contains('zeigt')); });
+
+  /* ---------- Dunkel: Wrack wird nur um den Cursor herum heller ---------- */
+  const wrack=karten.querySelector('.k-wrack');
+  wrack.addEventListener('pointermove',e=>{
+    const r=wrack.getBoundingClientRect();
+    wrack.style.setProperty('--wx',(e.clientX-r.left)+'px'); wrack.style.setProperty('--wy',(e.clientY-r.top)+'px');
+  });
+  { const t=new Image(); t.onerror=()=>wrack.remove(); t.src='img/see/wrack.webp'; }
 
   /* ---------- Funk: Glühbirne blinkt ein Filmzitat in Morse, danach übersetzt Samuel Morse in einer Sprechblase ---------- */
   const ZITATE=[
@@ -1229,37 +1305,47 @@
     ['HOUSTON WE HAVE A PROBLEM','„Houston, we have a problem.“','Apollo 13'],
     ['MOEGE DIE MACHT MIT DIR SEIN','„Möge die Macht mit dir sein.“','Star Wars']
   ];
-  const MC={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',
-    O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',"'":'.----.'};
-  const loch=karten.querySelector('.k-loch'), blase=karten.querySelector('.k-blase');
-  const EINHEIT=50;   // ms für einen Punkt (längstes Zitat ca. 11 s)
-  let zitatNr=-1, blinkt=false, blaseTimer=null;
-  function folge(text){   // [an/aus, Einheiten]
-    const f=[];
+  const loch=karten.querySelector('.k-loch'), blase=karten.querySelector('.k-blase'), sprecher=karten.querySelector('.k-sprecher');
+  let zitatNr=-1, blinkt=false, blaseTimer=null, blinkTimer=null;
+  /* Tempo wie in den Einstellungen der App (Zeichentempo cwpm, Gesamttempo wpm, Farnsworth wie js/morse.js) */
+  function tempo(){
+    let cw=20, w=12;
+    try{ const d=JSON.parse(localStorage.getItem('morse.v1')||'{}'); if(d.settings){ cw=+d.settings.cwpm||cw; w=+d.settings.wpm||w; } }catch(e){}
+    const dit=1200/cw, ta=w>=cw?dit:(60*cw-37.2*w)/(19*cw*w)*1000;
+    return {dit,zeichen:3*ta,wort:7*ta};
+  }
+  function folge(text){   // [an/aus, Millisekunden]
+    const t=tempo(), f=[];
     text.split(' ').forEach((w,wi)=>{
-      if(wi) f.push([0,7]);
+      if(wi) f.push([0,t.wort]);
       [...w].forEach((c,ci)=>{
         const m=MC[c]; if(!m) return;
-        if(ci) f.push([0,3]);
-        [...m].forEach((z,zi)=>{ if(zi) f.push([0,1]); f.push([1,z==='.'?1:3]); });
+        if(ci) f.push([0,t.zeichen]);
+        [...m].forEach((z,zi)=>{ if(zi) f.push([0,t.dit]); f.push([1,z==='.'?t.dit:3*t.dit]); });
       });
     });
     return f;
   }
+  function sprecherWeg(){
+    clearTimeout(blaseTimer); clearTimeout(blinkTimer); blinkt=false; loch.classList.remove('an');
+    blase.classList.remove('da'); sprecher.classList.remove('da'); setTimeout(()=>{ if(!blase.classList.contains('da')) blase.hidden=true; },400);
+  }
   loch.addEventListener('click',()=>{
     if(blinkt) return;
-    blinkt=true; clearTimeout(blaseTimer); blase.classList.remove('da'); blase.hidden=true;
+    sprecherWeg(); blinkt=true;
     let n; do{ n=Math.floor(Math.random()*ZITATE.length); }while(n===zitatNr&&ZITATE.length>1); zitatNr=n;
     const [morseText,anzeige,film]=ZITATE[n], f=folge(morseText); let i=0;
     (function weiter(){
+      if(!blinkt) return;
       if(i>=f.length){ loch.classList.remove('an'); blinkt=false;
         blase.querySelector('p').innerHTML=`${anzeige}<small>– ${film}</small>`; blase.hidden=false;
-        requestAnimationFrame(()=>blase.classList.add('da'));
-        blaseTimer=setTimeout(()=>{blase.classList.remove('da'); setTimeout(()=>blase.hidden=true,400);},7000); return; }
-      const [an,u]=f[i++]; loch.classList.toggle('an',!!an); setTimeout(weiter,u*EINHEIT);
+        requestAnimationFrame(()=>{ blase.classList.add('da'); sprecher.classList.add('da'); });
+        blaseTimer=setTimeout(sprecherWeg,7000); return; }
+      const [an,ms]=f[i++]; loch.classList.toggle('an',!!an); blinkTimer=setTimeout(weiter,ms);
     })();
   });
 
+  kartenBereit=true;
   // Jeder Besuch beginnt oben im Meer
   if('scrollRestoration' in history) history.scrollRestoration='manual';
   scrollTo(0,0);
