@@ -106,7 +106,7 @@
     clearTimeout(L.timer);
     clearTimeout(T.timer);
     clearTimeout(T.auto);
-    if (name !== 'spiel') Game.hide();
+    if (name !== 'spiel') Idle.hide();
     $$('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
     $$('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
     const sound = SOUND_TABS.indexOf(name) >= 0;
@@ -118,7 +118,7 @@
     if (name === 'lernen') { pickers.lernen.render(); renderLernMeter(); }
     if (name === 'hoeren') { pickers.hoeren.render(); renderHoer(); }
     if (name === 'senden') { pickers.senden.render(); sendNext(); }
-    if (name === 'spiel') Game.show();
+    if (name === 'spiel') Idle.show();
     if (name === 'statistik') renderStats();
     updateHeaderHeight();
     window.scrollTo(0, 0);
@@ -788,8 +788,8 @@
     }
   });
 
-  /* ---------- Spiel (js/game.js) ---------- */
-  Game.init({ getState: () => S, save: save, audioOpts: audioOpts });
+  /* ---------- Games: Idle-Spiel (js/idle.js) ---------- */
+  Idle.init({ getState: () => S, save: save, audioOpts: audioOpts });
 
   // Schnittstelle für js/intro.js (Intro der Meer-Animation)
   window.MorseApp = { showTab: showTab, audioOpts: audioOpts, setTheme: setTheme, theme: () => S.settings.theme };

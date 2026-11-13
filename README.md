@@ -6,7 +6,7 @@
 - Lernen: Koch-Methode oder eigene Zeichenauswahl
 - Hören: fünf Stufen (Zeichengruppen, Wörter, Sätze), eigene Zeichenauswahl
 - Senden: Taste E = kurz, T = lang, oder Knöpfe; eigene Zeichenauswahl
-- Games (Morse-Flug): Hindernisse mit Buchstaben, Code mit E/T eingeben, Stufen, Rekord
+- Games (Idle-Spiel, im Aufbau): Aufgaben lösen (Morse erkennen oder mit E/T eingeben), Dots sammeln, Combo mit Zeitfenster, Tempo-Regler, Buchstaben nach der Koch-Methode. Upgrades, Prestige und Welten folgen
 - Übersetzer: Text <-> Morse
 - Statistik: Verlauf nach Tag, Woche, Monat, Jahr
 - Fortschritt wird im Browser gespeichert (localStorage)
@@ -30,7 +30,8 @@ Einzeln aufrufbar: `startszene/index.html` (online: https://puetzluk.github.io/M
 - `css/intro.css` – Startseite als Vollbild über der App, Leiste nur in den Bereichen
 - `js/morse.js` – Morsetabelle und Ton (Web Audio)
 - `js/storage.js` – Speicherung (Fortschritt)
-- `js/game.js` – Morse-Flug
+- `js/idle-logic.js` – Regeln des Idle-Spiels (alle Zahlen oben in `CFG`)
+- `js/idle.js` – Oberfläche des Idle-Spiels
 - `js/intro.js` – verbindet Startseite (Meer + Karten) und App: Bereiche öffnen, Design abgleichen, zurück zu den Karten
 - `js/app.js` – Bedienung und Trainingsmodi
 - `sw.js` – Offline-Cache (PWA)

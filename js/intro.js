@@ -38,7 +38,11 @@
     if (e.detail === 'start') {
       if (warSchonDa) senden({ type: 'morse-zu-karten' });
       try { frame.contentWindow.focus(); } catch (err) { /* egal */ }
-    } else warSchonDa = true;
+    } else {
+      warSchonDa = true;
+      // Tastatur zurück an die App geben (sonst landen E/T usw. noch in der unsichtbaren Startszene)
+      if (document.activeElement === frame) { frame.blur(); window.focus(); }
+    }
   });
 
   // Direktaufruf eines Bereichs über die Adresse, z. B. index.html#statistik
