@@ -114,7 +114,7 @@
     if (name === 'statistik') renderStats();
     updateHeaderHeight();
     window.scrollTo(0, 0);
-    // Meldung für die Startseiten-Szene (js/scene.js)
+    // Meldung an andere Skripte, welcher Bereich gerade offen ist
     document.dispatchEvent(new CustomEvent('morse:tab', { detail: name }));
   }
   $$('#tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
@@ -768,7 +768,7 @@
   /* ---------- Spiel (js/game.js) ---------- */
   Game.init({ getState: () => S, save: save, audioOpts: audioOpts });
 
-  // Schnittstelle für die Startseiten-Szene (js/scene.js)
+  // Schnittstelle für js/intro.js (Intro der Meer-Animation)
   window.MorseApp = { showTab: showTab, audioOpts: audioOpts };
 
   /* ---------- Start ---------- */

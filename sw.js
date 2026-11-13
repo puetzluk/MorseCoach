@@ -1,8 +1,9 @@
 /* Einfacher Offline-Cache: die Seite funktioniert nach dem ersten Laden auch ohne Netz. */
-const CACHE = 'morse-v7';
-const FILES = ['./', 'index.html', 'css/style.css', 'css/scene.css', 'js/morse.js', 'js/storage.js', 'js/game.js',
-  'js/scene-art.js', 'js/scene.js', 'js/app.js',
-  'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
+const CACHE = 'morse-v8';
+// Grundgerüst der App; die Bilder der Meer-Animation (startszene/) landen beim ersten Laden automatisch im Cache.
+// (Die Icons fehlen im Repo noch – sobald der Ordner icons/ da ist, hier wieder eintragen.)
+const FILES = ['./', 'index.html', 'css/style.css', 'css/intro.css', 'js/morse.js', 'js/storage.js', 'js/game.js',
+  'js/app.js', 'js/intro.js', 'startszene/index.html', 'manifest.webmanifest'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
