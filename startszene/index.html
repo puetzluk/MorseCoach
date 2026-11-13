@@ -9,11 +9,11 @@
   body{overflow-x:hidden}
   /* Die Bühne hat immer die Originalgröße der Bilder (1376 × 768).
      Per JavaScript wird sie auf die Fenstergröße skaliert. */
-  #stage{position:fixed;left:50%;top:50%;width:1376px;height:768px;transform-origin:center center;overflow:hidden}
+  #stage{position:fixed;left:50%;top:50%;width:1376px;height:768px;transform-origin:center center;overflow:hidden;will-change:transform}
   .layer{position:absolute;display:block;pointer-events:none}
   /* Wolken: zwei gleiche Bilder nebeneinander, die Reihe zieht um eine Bildbreite nach links → nahtlose Schleife
      (die Wolken-Bilder laufen an beiden Rändern weich aus, deshalb keine sichtbare Naht) */
-  .wolken{position:absolute;left:0;top:0;width:2752px;height:274px;pointer-events:none;animation:wolken linear infinite}
+  .wolken{position:absolute;left:0;top:0;width:2752px;height:274px;pointer-events:none;animation:wolken linear infinite;will-change:transform}
   .wolken img{display:block;float:left;width:1376px;height:274px}
   @keyframes wolken{from{transform:translateX(0)}to{transform:translateX(-1376px)}}
 
@@ -153,7 +153,7 @@
   #boom{position:absolute;left:286px;top:333px;width:0;height:0}
   #boom .flash{position:absolute;left:-45px;top:-45px;width:90px;height:90px;border-radius:50%;
     background:radial-gradient(circle,#fffbe0 0%,#ffd45a 25%,#ff8a1e 50%,rgba(255,90,0,0) 72%);
-    mix-blend-mode:screen;opacity:0;transform:scale(0);
+    opacity:0;transform:scale(0);
     animation:flash 62.8s infinite 4s}
   @keyframes flash{
     0%    {opacity:0;transform:scale(.2)}
@@ -164,7 +164,7 @@
   #boom .puff{position:absolute;left:calc(var(--s) / -2);top:calc(var(--s) / -2);
     width:var(--s);height:var(--s);border-radius:50%;
     background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.95),rgba(225,225,225,.85) 45%,rgba(160,160,165,.55) 70%,rgba(140,140,145,0) 72%);
-    filter:blur(2px);opacity:0;animation:puff 62.8s infinite 4s;animation-delay:calc(4s + var(--d))}
+    opacity:0;animation:puff 62.8s infinite 4s;animation-delay:calc(4s + var(--d))}
   @keyframes puff{
     0%    {opacity:0;   transform:translate(0,0) scale(.3)}
     0.22% {opacity:.95; transform:translate(calc(var(--dx)*.4),calc(var(--dy)*.4)) scale(.9)}
@@ -443,15 +443,15 @@
   @media (max-width:700px),(pointer:coarse){ #ui{display:none !important} #hint{bottom:28px} }
   html{scrollbar-width:none} html::-webkit-scrollbar{display:none}
   #pb{position:fixed;inset:0;pointer-events:none;z-index:5;visibility:hidden;transform-origin:50% 50%}
-  #wclip{position:absolute;inset:0}
-  #world{position:absolute;inset:0;overflow:hidden}
-  #sea{position:absolute;inset:-6% 0;background:#0a4f7a url(img/see/meer_bg.jpg) center/cover no-repeat;will-change:transform}
-  #seaDark{position:absolute;inset:0;background:#021830;opacity:0}
+  #wclip{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+  #world{position:absolute;inset:0;overflow:hidden;transform-origin:50% 50%;will-change:transform}
+  #sea{position:absolute;inset:-6% 0;background:#014a79 url(img/see/meer_bg.jpg) center/cover no-repeat;will-change:transform}
+  #seaDark{position:absolute;inset:0;background:#00213a;opacity:0}   /* tiefes Blau aus dem Farbton des Hintergrunds */
   #zoom{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
   #see{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
   .grp{position:absolute;left:0;top:0;width:1920px;height:1080px;will-change:transform}
   .grp>img{position:absolute;display:block}
-  .pf{position:absolute;transform-origin:50% 100%}
+  .pf{position:absolute;transform-origin:50% 100%;will-change:transform}
   .pf img{display:block;width:100%;height:100%}
   .pf img.fl{transform:scaleX(-1)}
   .pf.rot{animation:seeRot ease-in-out infinite}
@@ -464,8 +464,11 @@
   /* Rahmen: freigestelltes Messing-Bullauge. Maße im Foto gemessen: Außenring 535 px,
      Öffnung 345 px (= 64,5 %), Mitte der Öffnung bei (301|271) von 664 × 542 px. */
   #pz{position:absolute;left:50%;top:50%;width:0;height:0}
-  #frame,#pshadow{position:absolute;left:calc(var(--D) * -.5632);top:calc(var(--D) * -.506);width:calc(var(--D) * 1.241);height:auto;display:block}
-  #pshadow{filter:brightness(0) blur(.8vmin);transform:translate(1vmin,1.3vmin);opacity:.5}
+  #frame{position:absolute;left:calc(var(--D) * -.5632);top:calc(var(--D) * -.506);width:calc(var(--D) * 1.241);height:auto;display:block}
+  /* Schatten als fertiges Bild (Rahmen 664 px breit + 40 px Rand je Seite) – kein Filter, damit nichts ruckelt */
+  #pshadow{position:absolute;left:calc(var(--D) * (-.5632 - 1.241 * 40 / 664));top:calc(var(--D) * (-.506 - 1.241 * 40 / 664));
+    width:calc(var(--D) * 1.241 * 744 / 664);height:auto;display:block;transform:translate(1vmin,1.3vmin)}
+  #pz{will-change:transform}
   #glass{position:absolute;border-radius:50%;left:calc(var(--D) * -.3227);top:calc(var(--D) * -.3227);
     width:calc(var(--D) * .6454);height:calc(var(--D) * .6454);
     background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.05));
@@ -590,7 +593,7 @@
     <canvas id="fx"></canvas>
   </div></div>
   <div id="pz">
-    <img id="pshadow" src="img/bullauge_rahmen.webp" alt="">
+    <img id="pshadow" src="img/bullauge_schatten.webp" alt="">
     <img id="frame" src="img/bullauge_rahmen.webp" alt="">
     <div id="glass"></div>
   </div>
@@ -751,19 +754,32 @@
   }
   /* ---------- Steuerung beim Scrollen ---------- */
   window.sceneRate=1;
-  const sceneAnims=()=>stage.getAnimations({subtree:true});
+  // Animationen der Inselszene nur einmal einsammeln und ihr Tempo nur bei spürbarer Änderung neu setzen
+  // (alle ~80 Animationen in jedem Bild umzustellen hat stark geruckelt)
+  let sceneList=null, lastRate=-1;
+  function setSceneRate(r){
+    if(!sceneList) sceneList=stage.getAnimations({subtree:true});
+    if(Math.abs(r-lastRate)<.04 && !(r===0&&lastRate!==0) && !(r===1&&lastRate!==1)) return;
+    lastRate=r; sceneList.forEach(a=>a.playbackRate=r*speed);
+  }
   function render(p,pop){
     const g=geo();
     // 0) erst in die Inselszene hineinzoomen, dann (langsamer) weiter, bis man durch das Glas ist
-    window.stageZoom=1+(SEE.stageZoom-1)*ease(clamp(p/SEE.pZoom))+.15*smooth(SEE.pZoom,SEE.pPass,p); fit();
+    const sz=1+(SEE.stageZoom-1)*ease(clamp(p/SEE.pZoom))+.15*smooth(SEE.pZoom,SEE.pPass,p);
+    if(sz!==window.stageZoom){window.stageZoom=sz; fit();}
     const S=Math.exp(Math.log(g.Spass)*clamp((p-SEE.pZoom)/(SEE.pPass-SEE.pZoom)));
     pb.style.visibility=pop>0?'visible':'hidden';
     pb.style.transform=pop<1?`scale(${pop.toFixed(4)})`:'none';
     pb.style.setProperty('--D',g.D+'px');
     pz.style.transform=`scale(${S.toFixed(4)})`;
     pz.style.display=p<SEE.pPass+.01?'block':'none';
-    const R=g.D*SEE.open/2*S;
-    wclip.style.clipPath=R<g.diag/2*1.02?`circle(${R.toFixed(1)}px at 50% 50%)`:'none';
+    // Kreis: fester Radius R0 und nur per transform vergrößert (wird nicht neu gezeichnet); die Welt darin wird
+    // gegenskaliert, damit sie nicht mitwächst
+    const R0=g.D*SEE.open/2, R=R0*S;
+    if(R<g.diag/2*1.02){
+      wclip.style.clipPath=`circle(${R0.toFixed(1)}px at 50% 50%)`;
+      wclip.style.transform=`scale(${S.toFixed(5)})`; world.style.transform=`scale(${(1/S).toFixed(6)})`;
+    } else { wclip.style.clipPath='none'; wclip.style.transform='none'; world.style.transform='none'; }
     // Landschaft füllt den Kreis immer ganz aus (keine leere Fläche unter dem Boden)
     const zf=x=>Math.min(1,x*g.D*SEE.open*1.02/Math.min(innerWidth,innerHeight));
     const zNow=zf(S);
@@ -772,8 +788,6 @@
     const ty=-(yc-innerHeight/2)*zNow*(1-smooth(.55,1,tz));
     zoomEl.style.transform=`translateY(${ty.toFixed(1)}px) scale(${zNow.toFixed(5)})`;
     fxK=zNow/zf(1);
-    const blur=1.2*(1-smooth(SEE.pPass-.1,SEE.pPass,p));
-    zoomEl.style.filter=blur>.05&&!touch?`blur(${blur.toFixed(2)}px)`:'none';   // am Handy ohne Unschärfe (spart Rechenzeit)
     // Absinken: hinten etwas langsamer als vorn
     const u=ease(clamp((p-SEE.sink[0])/(SEE.sink[1]-SEE.sink[0])));
     gFar.style.transform=`translateY(${(u*SEE.SINK*.92).toFixed(1)}px)`;
@@ -786,7 +800,7 @@
     titel.style.opacity=tt.toFixed(3); titel.style.transform=`translateY(calc(-50% + ${((1-tt)*30).toFixed(1)}px))`;
     // Insel-Szene außen wird langsamer und hält an, sobald sie verdeckt ist
     const rate=1-smooth(0,SEE.pPass,p); window.sceneRate=rate;
-    sceneAnims().forEach(a=>a.playbackRate=rate*speed);
+    setSceneRate(rate);
     stage.style.visibility=p>=SEE.pPass+.01?'hidden':'visible';
     hint.style.opacity=(1-smooth(0,.03,p)).toFixed(3);
     if(ui) ui.style.display=p>.02?'none':'';
