@@ -12,6 +12,12 @@
   const THEME_COLORS = { dunkel: '#171a33', hell: '#ffffff', funk: '#2a1c10' };
   const SOUND_TABS = ['lernen', 'hoeren', 'senden', 'spiel', 'uebersetzer'];
   const POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789.,?/=-'.split('');
+  // Gruppen für die eigene Auswahl
+  const GROUPS = {
+    letters: POOL.filter(c => /[A-ZÄÖÜ]/.test(c)),
+    digits: POOL.filter(c => /[0-9]/.test(c)),
+    signs: POOL.filter(c => !/[A-ZÄÖÜ0-9]/.test(c))
+  };
 
   // Funksprüche für das Funkgerät auf der Startseite (hier lassen sich weitere ergänzen)
   const RADIO_MSGS = ['SOS', 'HI'];
@@ -227,6 +233,13 @@
         $('.pk-label', root).textContent = 'Stufe ' + s.level + ' von ' + Morse.KOCH.length;
       } else {
         $('.pk-info', root).textContent = 'Tippe die Zeichen an, die du üben möchtest (' + s.custom.length + ' gewählt, mindestens 1).';
+        // Gruppen-Knöpfe zeigen an, ob die Gruppe ganz gewählt ist
+        $$('.pk-group', root).forEach(btn => {
+          const g = GROUPS[btn.dataset.group], alle = g.every(c => s.custom.indexOf(c) >= 0);
+          btn.classList.toggle('active', alle);
+          btn.setAttribute('aria-pressed', alle ? 'true' : 'false');
+          btn.title = alle ? 'Klick: alle wieder abwählen' : 'Klick: alle dazuwählen';
+        });
       }
     }
 
@@ -239,8 +252,13 @@
       const s = sel();
       if (s.level > 1) { s.level--; if (area === 'lernen') S.levelRecent = []; onChange(); }
     });
-    $('.pk-letters', root).addEventListener('click', () => { sel().custom = POOL.filter(c => /[A-Z]/.test(c)); onChange(); });
-    $('.pk-digits', root).addEventListener('click', () => { sel().custom = POOL.filter(c => /[0-9]/.test(c)); onChange(); });
+    // Gruppen-Knöpfe: unabhängig voneinander. Ist die Gruppe schon ganz gewählt → abwählen, sonst ganz dazuwählen.
+    $$('.pk-group', root).forEach(btn => btn.addEventListener('click', () => {
+      const s = sel(), g = GROUPS[btn.dataset.group];
+      const alle = g.every(c => s.custom.indexOf(c) >= 0);
+      s.custom = alle ? s.custom.filter(c => g.indexOf(c) < 0) : s.custom.concat(g.filter(c => s.custom.indexOf(c) < 0));
+      onChange();
+    }));
     $('.pk-none', root).addEventListener('click', () => { sel().custom = []; onChange(); });
 
     pickers[area] = { render: render };
