@@ -480,10 +480,12 @@
     width:calc(var(--D) * .6454);height:calc(var(--D) * .6454);
     background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.05));
     box-shadow:inset 0 0 2.5vmin rgba(0,10,20,.6),inset .5vmin .7vmin 1.2vmin rgba(0,0,0,.4)}
-  #titel{position:fixed;left:0;right:0;top:50%;z-index:9;text-align:center;color:#eaf6ff;opacity:0;pointer-events:none;
-    font-family:Georgia,'Times New Roman',serif;transform:translateY(-50%)}
+  #titel{position:fixed;left:0;right:0;top:0;z-index:9;text-align:center;opacity:0;pointer-events:none;transform-origin:50% 0;will-change:transform,opacity}
   #titel h1{margin:0 auto;position:relative;width:min(92vw,940px);aspect-ratio:1946/334}
-  #titel h1 img{position:absolute;top:0;height:100%;display:block}
+  #titel h1 .tb{position:absolute;top:0;height:100%;display:block}
+  #titel h1 .tb img{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* im Wasser eisweiß, über den Karten in den Farben des Designs (--k = 0 … 1) */
+  #titel h1 .tb .eis{opacity:calc(1 - var(--k,0))} #titel h1 .tb .th{opacity:var(--k,0)}
   /* Titel wird Buchstabe für Buchstabe „gemorst“ */
   #titel h1 .tb{opacity:0;transform:translateY(6%);filter:blur(6px);
     transition:opacity .35s ease,transform .45s cubic-bezier(.2,.8,.2,1),filter .45s ease}
@@ -503,8 +505,8 @@
   #karten{position:relative;z-index:8}
   .k-ueber{height:40vh;height:40svh;margin-top:-140vh;margin-top:-140svh}
   .k-buehne{min-height:100vh;min-height:100svh;display:flex;align-items:center;justify-content:center;
-    padding:76px 4vw 4vh;box-sizing:border-box}
-  .k-raster{width:min(1180px,100%);height:min(600px,calc(100svh - 110px));display:grid;gap:16px;
+    padding:130px 4vw 4vh;box-sizing:border-box}   /* oben Platz für den Titel */
+  .k-raster{width:min(1080px,100%);height:min(540px,calc(100svh - 170px));display:grid;gap:16px;
     grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:minmax(0,1.7fr) minmax(0,1fr)}
   .k-txt .kurz{display:none}
   .karte{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;
@@ -627,14 +629,14 @@
 
   /* Funk: Notizzettel links neben den Karten (bis das Bild da ist als gezeichneter Platzhalter) */
   html[data-theme="funk"] .k-zettel{display:block;position:absolute;top:13vh;
-    left:max(10px,calc((100vw - min(1180px,92vw)) / 4 - 75px));width:150px;min-height:170px;padding:24px 12px 12px;box-sizing:border-box;
+    left:max(10px,calc((100vw - min(1080px,92vw)) / 4 - 75px));width:150px;min-height:170px;padding:24px 12px 12px;box-sizing:border-box;
     background:linear-gradient(170deg,#f3e6bf,#e2cf9c);color:#2a1c0c;transform:rotate(-3deg);
     box-shadow:2px 6px 14px rgba(0,0,0,.5);font:11px/1.45 "Courier New",Courier,monospace;outline:none}
   html[data-theme="funk"] .k-zettel::before{content:"";position:absolute;top:-8px;left:50%;width:70px;height:22px;
     transform:translateX(-50%) rotate(2deg);background:rgba(255,250,230,.45);box-shadow:0 1px 2px rgba(0,0,0,.2)}
   /* Zettel-Foto als eigene Ebene GANZ HINTEN im Zettel (isolation), der Text liegt immer davor */
   html[data-theme="funk"] .k-zettel.bild{background:none;box-shadow:none;isolation:isolate;
-    width:min(210px,calc((100vw - min(1180px,92vw)) / 2 - 22px));height:auto;min-height:0;aspect-ratio:420/357;overflow:hidden;
+    width:min(210px,calc((100vw - min(1080px,92vw)) / 2 - 22px));height:auto;min-height:0;aspect-ratio:420/357;overflow:hidden;
     padding:26px 12px 6px;font-size:11px;line-height:1.4;display:flex;flex-direction:column;justify-content:center}
   html[data-theme="funk"] .k-zettel.bild::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
     background:url(img/see/zettel.webp) center/100% 100% no-repeat;filter:drop-shadow(2px 6px 8px rgba(0,0,0,.55))}
@@ -642,7 +644,7 @@
   /* schmalere Laptops: kein Platz links neben den Karten → Zettel in einem Streifen über den Karten */
   @media (min-width:701px) and (max-width:1499px){
     html[data-theme="funk"] .k-buehne{padding-top:150px}
-    html[data-theme="funk"] .k-raster{height:min(600px,calc(100svh - 180px))}
+    html[data-theme="funk"] .k-raster{height:min(540px,calc(100svh - 190px))}
     html[data-theme="funk"] .k-zettel,html[data-theme="funk"] .k-zettel.bild{top:10px;left:4vw;width:150px}
   }
   html[data-theme="funk"] .k-zettel.bild p{margin-bottom:4px}
@@ -661,14 +663,14 @@
   /* Funk: kleines rundes Loch in der Holzwand rechts mittig, dahinter eine Glühbirne */
   /* Funk: rundes Loch in der Holzwand rechts mittig mit Glühbirne (zwei Fotos: aus / an, werden übereinander umgeschaltet) */
   html[data-theme="funk"] .k-loch{display:block;position:absolute;top:calc(50% + 4vh);
-    right:max(4px,calc((100vw - min(1180px,92vw)) / 4 - 50px));width:100px;height:100px;padding:0;border:0;background:none}
+    right:max(4px,calc((100vw - min(1080px,92vw)) / 4 - 50px));width:100px;height:100px;padding:0;border:0;background:none}
   .k-loch img{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
   .k-loch .l-an{opacity:0;transition:opacity .04s linear;filter:drop-shadow(0 0 14px rgba(255,180,80,.55))}
   .k-loch.an .l-an{opacity:1}
 
   /* Sprechblase mit Samuel Morse (übersetzt das Zitat) */
   .k-buehne{--sh:min(32vh,240px);--sw:calc(var(--sh) * .4125);
-    --mr:max(4px,calc((100vw - min(1180px,92vw)) / 4 - var(--sw) / 2));--lochTop:calc(50% + 4vh)}
+    --mr:max(4px,calc((100vw - min(1080px,92vw)) / 4 - var(--sw) / 2));--lochTop:calc(50% + 4vh)}
   .k-sprecher{display:none;position:absolute;z-index:6;height:var(--sh);width:auto;right:var(--mr);
     top:calc(var(--lochTop) - var(--sh) - 2px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.55));
     opacity:0;transform:translateY(10px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
@@ -698,8 +700,8 @@
 
   /* --- Handy: kompaktes 2er-Raster, alles auf einem Bildschirm --- */
   @media (max-width:700px){
-    .k-buehne{padding:66px 12px 12px}
-    .k-raster{height:calc(100svh - 82px);gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1.25fr)) minmax(0,.9fr) minmax(0,.5fr)}
+    .k-buehne{padding:72px 12px 12px}
+    .k-raster{height:calc(100svh - 88px);gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1.25fr)) minmax(0,.9fr) minmax(0,.5fr)}
     .k-txt .lang{display:none} .k-txt .kurz{display:block}
     .k-gross,.k-klein{grid-column:span 1}
     .k-mini{grid-column:span 2;flex-direction:row;align-items:center;justify-content:flex-start}
@@ -938,7 +940,8 @@
     popDur:.75,     // Dauer des Aufploppens (s)
     pPass:.592,      // hier fliegt man durch das Glas
     sink:[.673,1],  // Landschaft + Fische sinken nach unten weg (die Karten schieben sich am Ende darüber)
-    title:[.75,.846],// Titel erscheint; danach scrollt er mit der Seite nach oben
+    title:[.597,.645],// Titel erscheint, sobald man durch das Bullauge in die Landschaft schaut (bleibt fest oben)
+    karten:.846,    // ab hier schieben sich die Karten herein, der Titel wird kleiner
     SINK:1350,      // so weit (px auf der 1920er-Bühne) sinkt die Landschaft
     laneTop:150, laneBottom:955,   // Bereich, in dem die Fische schwimmen (rote Linien der Skizze, px auf der Bühne)
     felsZeilen:[530, 787],   // Höhe des sichtbaren Felses: wer hier durchschwimmt, verschwindet hinter Fels und Korallen
@@ -961,9 +964,26 @@
   const TTEXT='Morse Coach', th1=titel.querySelector('h1');
   const TPOS=[{"l": 0.0, "w": 17.575}, {"l": 15.93, "w": 10.997}, {"l": 25.18, "w": 8.684}, {"l": 31.398, "w": 10.791}, {"l": 40.031, "w": 11.048}, {"l": 52.415, "w": 11.819}, {"l": 62.179, "w": 10.997}, {"l": 71.017, "w": 11.202}, {"l": 80.062, "w": 10.894}, {"l": 89.054, "w": 10.946}];   // Lage der Buchstabenbilder in % der Schriftzugbreite
   let bi=0;
-  th1.innerHTML=[...TTEXT].map(c=>{ if(c===' ') return '<b class="leer"></b>'; const d=TPOS[bi]; return `<img class="tb" alt="" src="img/titel/t${bi++}.webp" style="left:${d.l}%;width:${d.w}%">`; }).join('')+'<div id="tcode" class="weg" aria-hidden="true"></div>';
+  th1.innerHTML=[...TTEXT].map(c=>{ if(c===' ') return '<b class="leer"></b>'; const d=TPOS[bi]; const n=bi++; return `<span class="tb" style="left:${d.l}%;width:${d.w}%"><img class="eis" alt="" src="img/titel/t${n}.webp"><img class="th" alt="" data-n="${n}"></span>`; }).join('')+'<div id="tcode" class="weg" aria-hidden="true"></div>';
   const tSpans=[...th1.querySelectorAll('.tb,.leer')], tcode=th1.querySelector('#tcode');
   let tLauf=0, tStatus=0;           // 0 = leer, 1 = tippt, 2 = fertig
+  /* Fassung des Titels für das aktuelle Design (Dunkel = eisweiß wie im Wasser) */
+  function titelDesign(){
+    const t=document.documentElement.dataset.theme;
+    th1.querySelectorAll('img.th').forEach(im=>{ im.src=`img/titel/t${im.dataset.n}${t==='hell'||t==='funk'?'_'+t:''}.webp`; });
+  }
+  titelDesign();
+  new MutationObserver(()=>{ titelDesign(); tMass(); lastKey=''; }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  /* Größe: groß oben im Wasser, über den Karten kleiner (im Funk-Design am Handy zwischen Zettel und Glühbirne) */
+  let tW0=1, tWf=1;
+  function tMass(){
+    tW0=th1.offsetWidth||1;
+    const handy=innerWidth<=700, funk=document.documentElement.dataset.theme==='funk';
+    tWf=handy?(funk?150:innerWidth*.64):Math.min(innerWidth*.36,500);
+  }
+  tMass(); addEventListener('resize',tMass);
+  /* Wer über das Logo aus einem Lernbereich zurückkommt, sieht den Titel sofort fertig (kein Tippen) */
+  window.titelSofort=()=>{ if(tStatus!==2){ tLauf++; titelFertig(); } };
   function tDit(){                  // Zeichentempo aus den Einstellungen, aber nicht zu langsam für den Titel
     let cw=20; try{ const d=JSON.parse(localStorage.getItem('morse.v1')||'{}'); if(d.settings&&+d.settings.cwpm) cw=+d.settings.cwpm; }catch(e){}
     return clamp(700/cw,26,36);
@@ -1172,7 +1192,10 @@
     sea.style.transform=`translateY(${(u*innerHeight*.05).toFixed(1)}px)`;
     seaDark.style.opacity=(.82*smooth(SEE.sink[0],1,p)).toFixed(3);   // je tiefer, desto dunkler
     const tt=smooth(SEE.title[0],SEE.title[1],p);
-    titel.style.opacity=tt.toFixed(3); titel.style.transform=`translateY(calc(-50% + ${((1-tt)*30-ueber).toFixed(1)}px))`;
+    const tk=smooth(0,innerHeight*.7,ueber), tsk=1+(tWf/tW0-1)*tk;
+    const tyy=innerHeight*.05+((innerWidth<=700?10:18)-innerHeight*.05)*tk+(1-tt)*20;
+    titel.style.opacity=tt.toFixed(3); titel.style.transform=`translateY(${tyy.toFixed(1)}px) scale(${tsk.toFixed(4)})`;
+    titel.style.setProperty('--k',tk.toFixed(3));
     titelTippen(tt);
     // Kartenbereich: Design-Schalter erst dort, „Überspringen“ verschwindet
     designKnopf.classList.toggle('an',ueber>innerHeight*.45);
@@ -1194,7 +1217,7 @@
     const dt=last===null?0:Math.min(.1,(now-last)/1000); last=now;
     // Fortschritt der Animation: 0 … 1 über den Meer-Teil (#scrollspace); danach kommt der Kartenbereich
     const E=Math.max(1,scrollspace.offsetTop+scrollspace.offsetHeight-innerHeight);
-    const target=Math.min(scrollY,E)/E; ueber=Math.max(0,scrollY-E*SEE.title[1]);   // ab hier scrollt der Titel mit, die Karten rücken nach
+    const target=Math.min(scrollY,E)/E; ueber=Math.max(0,scrollY-E*SEE.karten);   // Weg in den Kartenbereich
     cur+=(target-cur)*.14; if(Math.abs(target-cur)<1e-4) cur=target;
     const p=clamp(cur), pop=popScale(p,dt), key=p.toFixed(5)+'|'+pop.toFixed(4)+'|'+Math.round(ueber);
     if(key!==lastKey){render(p,pop);lastKey=key}
@@ -1231,7 +1254,7 @@
   const karten=document.getElementById('karten'), designKnopf=document.getElementById('designKnopf'), skipKnopf=document.getElementById('skipKnopf');
   const scrollspace=document.getElementById('scrollspace');
   const kartenEnde=()=>document.documentElement.scrollHeight-innerHeight;
-  function zuKarten(sofort){ cur=1; scrollTo({top:kartenEnde(),behavior:sofort?'instant':'smooth'}); }
+  function zuKarten(sofort){ if(sofort&&window.titelSofort) window.titelSofort(); cur=1; scrollTo({top:kartenEnde(),behavior:sofort?'instant':'smooth'}); }
   karten.querySelectorAll('.karte').forEach(b=>b.addEventListener('click',()=>{
     const tab=b.dataset.tab; b.blur();
     if(eingebettet) window.parent.postMessage({type:'morse-open',tab},'*');
