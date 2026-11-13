@@ -656,6 +656,7 @@
     SINK:1350,      // so weit (px auf der 1920er-Bühne) sinkt die Landschaft
     lane:320,       // Höhe der Fischlinie (Mitte, px auf der Bühne)
     speed:70,       // Schwimmtempo (px/s auf der Bühne)
+    visible:4,      // so viele Fische sind immer gleichzeitig im Bild
     fish:[["hai", 430, 192], ["clownfisch", 230, 144], ["benno", 330, 182], ["mondfisch", 260, 290], ["taucherhelm", 280, 155], ["kugelfisch", 220, 175], ["feuerfisch", 320, 249], ["morsestreifen", 380, 114], ["tiefsee", 320, 162]],    // [name, breite, höhe] – Hai, Mondfisch, Feuerfisch im Papier-Look
   };
   const pb=document.getElementById('pb'), world=document.getElementById('world'), wclip=document.getElementById('wclip'),
@@ -678,13 +679,13 @@
     see.style.transform=`translate(${(innerWidth-1920*seeS)/2}px,${innerHeight-1080*seeS}px) scale(${seeS})`;
   }
   /* ---------- Fische: eine Linie, gleiche Abstände ----------
-     Abstand D (Mitte zu Mitte) = halbe sichtbare Breite + halbe mittlere Fischbreite:
-     ist ein Fisch links ganz draußen, ist der nächste genau in der Mitte und der dritte kommt rechts herein. */
-  const wAvg=SEE.fish.reduce((s,f)=>s+f[1],0)/SEE.fish.length;
+     Abstand D (Mitte zu Mitte) = (sichtbare Breite + Breite des schmalsten Fisches) / SEE.visible:
+     verlässt links ein Fisch das Bild, kommt rechts gleichzeitig der nächste herein → immer SEE.visible Fische im Bild. */
+  const wAvg=SEE.fish.reduce((s,f)=>s+f[1],0)/SEE.fish.length, wMin=Math.min(...SEE.fish.map(f=>f[1]));
   const fishEls=SEE.fish.map(([n,w,h])=>{const d=document.createElement('div');d.className='fish';d.style.width=w+'px';
     d.innerHTML=`<img src="img/see/f_${n}.webp" alt="">`;gFish.appendChild(d);return {d,w,h};});
   function fishAt(t){
-    const D=visW/2+wAvg/2, L=D*fishEls.length, xl=(1920-visW)/2;
+    const D=(visW+wMin)/SEE.visible, L=D*fishEls.length, xl=(1920-visW)/2;   // schmalster Fisch zählt → nie weniger als 4
     fishEls.forEach((f,i)=>{
       const c=(((i*D-SEE.speed*t+250)%L)+L)%L-250;
       const x=xl-wAvg/2+c-f.w/2, y=SEE.lane-f.h/2;
