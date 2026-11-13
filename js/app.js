@@ -94,6 +94,8 @@
   /* ---------- Tabs ---------- */
   function showTab(name) {
     activeTab = name;
+    // Startseite = Meer-Animation mit Karten (#intro); die Leiste erscheint nur in den Bereichen
+    document.body.classList.toggle('start-an', name === 'start');
     Morse.stop();
     clearTimeout(L.timer);
     clearTimeout(T.timer);
@@ -130,6 +132,7 @@
     const tc = document.querySelector('meta[name="theme-color"]');
     if (tc) tc.setAttribute('content', THEME_COLORS[S.settings.theme]);
     updateHeaderHeight();
+    document.dispatchEvent(new CustomEvent('morse:theme', { detail: S.settings.theme }));
   }
   function setTheme(t) { S.settings.theme = t; save(); applyTheme(); }
   $('#themeToggle').addEventListener('click', () => {
@@ -263,6 +266,7 @@
   function renderStart() {
     const t = totals();
     const box = $('#startStats');
+    if (!box) return;   // die Kurzstatistik gibt es auf der neuen Startseite nicht mehr
     box.textContent = '';
     box.appendChild(statCard('Tage in Folge', Store.streak(S)));
     box.appendChild(statCard('Genauigkeit', t.n ? Math.round(t.ok / t.n * 100) + ' %' : '–'));
@@ -769,7 +773,7 @@
   Game.init({ getState: () => S, save: save, audioOpts: audioOpts });
 
   // Schnittstelle für js/intro.js (Intro der Meer-Animation)
-  window.MorseApp = { showTab: showTab, audioOpts: audioOpts };
+  window.MorseApp = { showTab: showTab, audioOpts: audioOpts, setTheme: setTheme, theme: () => S.settings.theme };
 
   /* ---------- Start ---------- */
   applyTheme();

@@ -1,48 +1,47 @@
-/* Morse Coach – Intro mit der Meer-Animation (startszene/index.html).
-   Die Animation läuft in einem Vollbild-iframe über der App. Ist der Titel „Morse Coach“ erreicht,
-   meldet sie sich (postMessage 'morse-intro-ende'); dann blendet das Intro aus und die Lernseite erscheint.
-   „Überspringen“ beendet das Intro sofort, „Intro noch einmal ansehen“ startet es neu. */
+/* Morse Coach – Startseite.
+   Die Startseite ist die Meer-Animation mit Titel und Karten (startszene/index.html) in einem Vollbild-iframe.
+   Beide Seiten sprechen per postMessage miteinander:
+     von der Szene:  morse-open {tab}        → Bereich öffnen (Leiste erscheint)
+                     morse-theme-set {theme} → Design wechseln und speichern
+     an die Szene:   morse-theme {theme}     → Szene färbt Kartenbereich passend
+                     morse-zu-karten         → direkt zu den Karten springen (beim Zurückkehren)
+   Jeder Besuch beginnt oben im Meer. Mit #lernen, #hoeren … in der Adresse öffnet sich direkt der Bereich. */
 (function () {
   'use strict';
-  const intro = document.getElementById('intro');
   const frame = document.getElementById('introFrame');
-  const skip = document.getElementById('introSkip');
-  const again = document.getElementById('introAgain');
-  if (!intro || !frame) return;
-  const SRC = 'startszene/index.html?eingebettet';
-  let laeuft = true;
+  if (!frame || !window.MorseApp) return;
+  const app = window.MorseApp;
+  const TABS = ['lernen', 'hoeren', 'senden', 'spiel', 'uebersetzer', 'statistik', 'einstellungen'];
+  let geladen = false, warSchonDa = false;
 
-  function beenden(sofort) {
-    if (!laeuft) return;
-    laeuft = false;
-    document.body.classList.remove('intro-an');
-    document.body.classList.add('intro-ende');
-    if (window.MorseApp) window.MorseApp.showTab('start');
-    window.scrollTo(0, 0);
-    intro.classList.add('aus');
-    setTimeout(() => {
-      intro.hidden = true;
-      frame.src = 'about:blank';           // Animation anhalten, spart Akku
-      document.body.classList.remove('intro-ende');
-    }, sofort ? 0 : 950);
-  }
-
-  function starten() {
-    laeuft = true;
-    intro.hidden = false;
-    intro.classList.remove('aus');
-    document.body.classList.add('intro-an');
-    frame.src = SRC;
-  }
+  const senden = msg => { if (geladen && frame.contentWindow) frame.contentWindow.postMessage(msg, '*'); };
 
   window.addEventListener('message', e => {
-    if (e.source === frame.contentWindow && e.data && e.data.type === 'morse-intro-ende') beenden(false);
+    if (e.source !== frame.contentWindow || !e.data) return;
+    if (e.data.type === 'morse-open' && TABS.indexOf(e.data.tab) >= 0) app.showTab(e.data.tab);
+    if (e.data.type === 'morse-theme-set') app.setTheme(e.data.theme);
   });
-  skip.addEventListener('click', () => beenden(false));
-  if (again) again.addEventListener('click', starten);
-  // Tastatur: Pfeiltasten/Leertaste sollen gleich die Animation scrollen
-  frame.addEventListener('load', () => { if (laeuft) try { frame.contentWindow.focus(); } catch (err) { /* egal */ } });
 
-  // Wer im System „Bewegung reduzieren“ eingestellt hat, sieht direkt die Lernseite
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) beenden(true);
+  frame.addEventListener('load', () => {
+    geladen = true;
+    senden({ type: 'morse-theme', theme: app.theme() });
+    // Wer im System „Bewegung reduzieren“ eingestellt hat, landet direkt bei den Karten
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) senden({ type: 'morse-zu-karten' });
+    if (document.body.classList.contains('start-an')) try { frame.contentWindow.focus(); } catch (err) { /* egal */ }
+  });
+
+  // Design in der App geändert → Szene mitfärben
+  document.addEventListener('morse:theme', e => senden({ type: 'morse-theme', theme: e.detail }));
+
+  // Zurück zur Startseite → bei den Karten landen (die Animation liegt darüber, per Hochscrollen erreichbar)
+  document.addEventListener('morse:tab', e => {
+    if (e.detail === 'start') {
+      if (warSchonDa) senden({ type: 'morse-zu-karten' });
+      try { frame.contentWindow.focus(); } catch (err) { /* egal */ }
+    } else warSchonDa = true;
+  });
+
+  // Direktaufruf eines Bereichs über die Adresse, z. B. index.html#statistik
+  const ziel = location.hash.replace('#', '');
+  if (TABS.indexOf(ziel) >= 0) app.showTab(ziel);
 })();
