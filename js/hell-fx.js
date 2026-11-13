@@ -20,11 +20,11 @@
     W = innerWidth; H = innerHeight;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = Math.min(36, Math.max(12, Math.round(W * H * 3e-5)));
+    const n = Math.min(60, Math.max(20, Math.round(W * H * 5e-5)));
     sterne = Array.from({ length: n }, () => {
       const a = Math.random() * 6.283, v = 3 * (.25 + .75 * Math.random());
-      return { x: Math.random() * W, y: Math.random() * H, r: .5 + .8 * Math.random(),
-        vx: Math.cos(a) * v, vy: Math.sin(a) * v, o: .18 + .3 * Math.random(),
+      return { x: Math.random() * W, y: Math.random() * H, r: .7 + 1.2 * Math.random(),
+        vx: Math.cos(a) * v, vy: Math.sin(a) * v, o: .35 + .45 * Math.random(),
         bs: .6 + 1.6 * Math.random(), bo: Math.random() * 6.3 };
     });
   }
@@ -48,25 +48,25 @@
         if (s.y < -3) s.y = H + 3; if (s.y > H + 3) s.y = -3;
         const o = s.o * (.55 + .45 * Math.sin(t * s.bs + s.bo));
         ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.2832);
-        ctx.shadowBlur = 4; ctx.shadowColor = `rgba(56,160,220,${o})`;
+        ctx.shadowBlur = 6; ctx.shadowColor = `rgba(56,160,220,${o})`;
         ctx.fillStyle = `rgba(90,175,225,${o})`; ctx.fill();
       }
       ctx.shadowBlur = 0;
-      // Blasen: höchstens 3 gleichzeitig, steigen langsam und wackelnd auf
+      // Blasen: höchstens 5 gleichzeitig, steigen langsam und wackelnd auf
       naechste -= dt;
-      if (naechste <= 0 && blasen.length < 3) {
-        const r = 2 + 4 * Math.random();
+      if (naechste <= 0 && blasen.length < 5) {
+        const r = 3 + 5.5 * Math.random();
         blasen.push({ x: W * (.04 + .92 * Math.random()), y: H + 10, r, v: 18 + 22 * Math.random(),
           w: 2 + 4 * Math.random(), f: 1 + Math.random(), p: Math.random() * 6 });
-        naechste = 3 + 4 * Math.random();
+        naechste = 1.5 + 2.5 * Math.random();
       }
       blasen = blasen.filter(b => b.y > -15);
       for (const b of blasen) {
         b.y -= b.v * dt;
-        const x = b.x + Math.sin(t * b.f + b.p) * b.w, a = .35 * Math.min(1, b.y / (H * .2));
+        const x = b.x + Math.sin(t * b.f + b.p) * b.w, a = .6 * Math.min(1, b.y / (H * .2));
         ctx.beginPath(); ctx.arc(x, b.y, b.r, 0, 6.2832);
-        ctx.fillStyle = `rgba(120,190,235,${a * .15})`; ctx.fill();
-        ctx.lineWidth = 1; ctx.strokeStyle = `rgba(70,160,220,${a})`; ctx.stroke();
+        ctx.fillStyle = `rgba(120,190,235,${a * .2})`; ctx.fill();
+        ctx.lineWidth = 1.3; ctx.strokeStyle = `rgba(70,160,220,${a})`; ctx.stroke();
         ctx.beginPath(); ctx.arc(x - b.r * .35, b.y - b.r * .35, Math.max(.6, b.r * .22), 0, 6.2832);
         ctx.fillStyle = `rgba(255,255,255,${a * 1.4})`; ctx.fill();
       }

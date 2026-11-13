@@ -620,9 +620,13 @@
     box-shadow:2px 6px 14px rgba(0,0,0,.5);font:11px/1.45 "Courier New",Courier,monospace;outline:none}
   html[data-theme="funk"] .k-zettel::before{content:"";position:absolute;top:-8px;left:50%;width:70px;height:22px;
     transform:translateX(-50%) rotate(2deg);background:rgba(255,250,230,.45);box-shadow:0 1px 2px rgba(0,0,0,.2)}
-  html[data-theme="funk"] .k-zettel.bild{background:url(img/see/zettel.webp) center/100% 100% no-repeat;box-shadow:none;
+  /* Zettel-Foto als eigene Ebene GANZ HINTEN im Zettel (isolation), der Text liegt immer davor */
+  html[data-theme="funk"] .k-zettel.bild{background:none;box-shadow:none;isolation:isolate;
     width:min(210px,calc((100vw - min(1180px,92vw)) / 2 - 22px));height:auto;min-height:0;aspect-ratio:420/357;overflow:hidden;
-    padding:26px 12px 6px;font-size:11px;line-height:1.4;display:flex;flex-direction:column;justify-content:center;filter:drop-shadow(2px 6px 8px rgba(0,0,0,.55))}
+    padding:26px 12px 6px;font-size:11px;line-height:1.4;display:flex;flex-direction:column;justify-content:center}
+  html[data-theme="funk"] .k-zettel.bild::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+    background:url(img/see/zettel.webp) center/100% 100% no-repeat;filter:drop-shadow(2px 6px 8px rgba(0,0,0,.55))}
+  .k-zettel p{z-index:1}
   /* schmalere Laptops: kein Platz links neben den Karten → Zettel in einem Streifen über den Karten */
   @media (min-width:701px) and (max-width:1499px){
     html[data-theme="funk"] .k-buehne{padding-top:150px}
@@ -1236,8 +1240,8 @@
   function kGroesse(){
     const dpr=Math.min(devicePixelRatio||1,2); kW=buehne.clientWidth; kH=buehne.clientHeight;
     kfx.width=Math.round(kW*dpr); kfx.height=Math.round(kH*dpr); kctx.setTransform(dpr,0,0,dpr,0,0);
-    kSterne=Array.from({length:Math.min(40,Math.max(14,Math.round(kW*kH*5e-5)))},()=>{const a=Math.random()*6.283,v=3*(.25+.75*Math.random());
-      return {x:Math.random()*kW,y:Math.random()*kH,r:.4+.7*Math.random(),vx:Math.cos(a)*v,vy:Math.sin(a)*v,o:.25+.45*Math.random(),bs:.8+2*Math.random(),bo:Math.random()*6.3};});
+    kSterne=Array.from({length:Math.min(70,Math.max(24,Math.round(kW*kH*8e-5)))},()=>{const a=Math.random()*6.283,v=3*(.25+.75*Math.random());
+      return {x:Math.random()*kW,y:Math.random()*kH,r:.6+1.1*Math.random(),vx:Math.cos(a)*v,vy:Math.sin(a)*v,o:.4+.5*Math.random(),bs:.8+2*Math.random(),bo:Math.random()*6.3};});
   }
   addEventListener('resize',kGroesse); kGroesse();
   function kSchritt(now){
@@ -1249,13 +1253,13 @@
         s.x+=s.vx*dt; s.y+=s.vy*dt;
         if(s.x<-3)s.x=kW+3; if(s.x>kW+3)s.x=-3; if(s.y<-3)s.y=kH+3; if(s.y>kH+3)s.y=-3;
         const o=s.o*(.55+.45*Math.sin(t*s.bs+s.bo));
-        kctx.beginPath(); kctx.arc(s.x,s.y,s.r,0,6.2832); kctx.fillStyle=`rgba(255,255,255,${o})`; kctx.fill();
+        kctx.beginPath(); kctx.arc(s.x,s.y,s.r,0,6.2832); kctx.shadowBlur=s.r>1.3?5:0; kctx.shadowColor='rgba(255,255,255,.9)'; kctx.fillStyle=`rgba(255,255,255,${o})`; kctx.fill();
       }
-      kNaechste-=dt;
-      if(kNaechste<=0&&kBlasen.length<3){ const r=1.8+3.5*Math.random(); kBlasen.push({x:kW*(.05+.9*Math.random()),y:kH+10,r,v:20+25*Math.random(),w:2+4*Math.random(),f:1+Math.random(),p:Math.random()*6}); kNaechste=2+3*Math.random(); }
+      kctx.shadowBlur=0; kNaechste-=dt;
+      if(kNaechste<=0&&kBlasen.length<5){ const r=2.5+5*Math.random(); kBlasen.push({x:kW*(.05+.9*Math.random()),y:kH+10,r,v:20+25*Math.random(),w:2+4*Math.random(),f:1+Math.random(),p:Math.random()*6}); kNaechste=1.2+2.3*Math.random(); }
       kBlasen=kBlasen.filter(b=>b.y>-15);
       for(const b of kBlasen){
-        b.y-=b.v*dt; const x=b.x+Math.sin(t*b.f+b.p)*b.w, a=.45*Math.min(1,b.y/(kH*.25));
+        b.y-=b.v*dt; const x=b.x+Math.sin(t*b.f+b.p)*b.w, a=.7*Math.min(1,b.y/(kH*.25));
         kctx.beginPath(); kctx.arc(x,b.y,b.r,0,6.2832); kctx.fillStyle=`rgba(255,255,255,${a*.12})`; kctx.fill();
         kctx.lineWidth=.9; kctx.strokeStyle=`rgba(255,255,255,${a})`; kctx.stroke();
       }
