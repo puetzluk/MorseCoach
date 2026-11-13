@@ -544,6 +544,7 @@
 
   function pressAnim(sym) {
     const k = $('#morseKey');
+    if (!k) return;   // die Morsetaste-Grafik gibt es nicht mehr
     k.classList.add('down');
     setTimeout(() => k.classList.remove('down'), sym === '.' ? 130 : 380);
   }
