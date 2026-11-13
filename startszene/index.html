@@ -460,6 +460,12 @@
   @keyframes seeSkew{0%,100%{transform:skewX(-2.6deg)}50%{transform:skewX(2.6deg)}}
   .fish{position:absolute;left:0;top:0;will-change:transform}
   .fish img{display:block;width:100%;height:auto}
+  .fishin{position:relative}
+  /* Leuchtköder des Tiefseefischs: weicher Lichtpunkt an der Spitze der Angel, pulsiert langsam */
+  .lure{position:absolute;left:.2%;top:8.7%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,#f4fffd 0 6%,#bffcf5 11%,rgba(120,240,235,.55) 26%,rgba(80,220,230,.18) 50%,rgba(60,200,220,0) 70%);
+    animation:lure 3.2s ease-in-out infinite}
+  @keyframes lure{0%,100%{opacity:.75}50%{opacity:1}}
   #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   /* Rahmen: freigestelltes Messing-Bullauge. Maße im Foto gemessen: Außenring 535 px,
      Öffnung 345 px (= 64,5 %), Mitte der Öffnung bei (301|271) von 664 × 542 px. */
@@ -654,9 +660,10 @@
     sink:[.50,.82], // Landschaft + Fische sinken nach unten weg
     title:[.74,.94],// Titel erscheint
     SINK:1350,      // so weit (px auf der 1920er-Bühne) sinkt die Landschaft
-    lane:320,       // Höhe der Fischlinie (Mitte, px auf der Bühne)
-    speed:70,       // Schwimmtempo (px/s auf der Bühne)
-    visible:4,      // so viele Fische sind immer gleichzeitig im Bild
+    lane:320,       // höchste Bahn (Mitte der Fische, px auf der Bühne)
+    speed:70,       // mittleres Schwimmtempo (px/s auf der Bühne), je Fisch ±20 %
+    minFish:2, maxFish:4,   // so viele Fische sind mindestens / höchstens gleichzeitig im Bild
+    laneLow:625,   // tiefste Bahn: Unterkante der Fische knapp über dem linken Seegras-Büschel (px auf der Bühne)
     fish:[["hai", 430, 192], ["clownfisch", 230, 144], ["benno", 330, 182], ["mondfisch", 260, 290], ["taucherhelm", 280, 155], ["kugelfisch", 220, 175], ["feuerfisch", 320, 249], ["morsestreifen", 380, 114], ["tiefsee", 320, 162]],    // [name, breite, höhe] – Hai, Mondfisch, Feuerfisch im Papier-Look
   };
   const pb=document.getElementById('pb'), world=document.getElementById('world'), wclip=document.getElementById('wclip'),
@@ -678,19 +685,54 @@
     seeS=Math.max(innerWidth/1920,Math.min(innerHeight/1080,innerWidth/1100)); visW=innerWidth/seeS;
     see.style.transform=`translate(${(innerWidth-1920*seeS)/2}px,${innerHeight-1080*seeS}px) scale(${seeS})`;
   }
-  /* ---------- Fische: eine Linie, gleiche Abstände ----------
-     Abstand D (Mitte zu Mitte) = (sichtbare Breite + Breite des schmalsten Fisches) / SEE.visible:
-     verlässt links ein Fisch das Bild, kommt rechts gleichzeitig der nächste herein → immer SEE.visible Fische im Bild. */
-  const wAvg=SEE.fish.reduce((s,f)=>s+f[1],0)/SEE.fish.length, wMin=Math.min(...SEE.fish.map(f=>f[1]));
-  const fishEls=SEE.fish.map(([n,w,h])=>{const d=document.createElement('div');d.className='fish';d.style.width=w+'px';
-    d.innerHTML=`<img src="img/see/f_${n}.webp" alt="">`;gFish.appendChild(d);return {d,w,h};});
-  function fishAt(t){
-    const D=(visW+wMin)/SEE.visible, L=D*fishEls.length, xl=(1920-visW)/2;   // schmalster Fisch zählt → nie weniger als 4
-    fishEls.forEach((f,i)=>{
-      const c=(((i*D-SEE.speed*t+250)%L)+L)%L-250;
-      const x=xl-wAvg/2+c-f.w/2, y=SEE.lane-f.h/2;
-      f.d.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;
-    });
+  /* ---------- Fische: zufällig, auf wechselnden Höhen, leicht unterschiedlich schnell ----------
+     - höchstens SEE.maxFish, mindestens SEE.minFish Fische im Bild
+     - welcher Fisch als Nächstes kommt, ist zufällig; ein Fisch, der gerade im Bild ist, kommt nicht doppelt
+     - jede Durchfahrt auf einer neuen Höhe zwischen SEE.lane (oben) und knapp über dem linken Seegras-Büschel (unten),
+       möglichst weit weg von den Höhen der anderen Fische; tiefe Fische ziehen hinter Hügeln und Pflanzen vorbei
+     - Tempo je Durchfahrt zufällig ±20 % um SEE.speed */
+  const wAvg=SEE.fish.reduce((s,f)=>s+f[1],0)/SEE.fish.length;
+  const fishes=SEE.fish.map(([n,w,h])=>{
+    const d=document.createElement('div'); d.className='fish'; d.style.width=w+'px'; d.style.display='none';
+    d.innerHTML=`<div class="fishin"><img src="img/see/f_${n}.webp" alt="">${n==='tiefsee'?'<div class="lure"></div>':''}</div>`;
+    gFish.appendChild(d); return {n,d,w,h,on:false,x:0,y:0,v:0,lastY:null};
+  });
+  let simT=0, nextSpawn=0;
+  const visEdges=()=>{const xl=(1920-visW)/2; return [xl,xl+visW];};
+  function pickLane(f){
+    const lo=SEE.lane, hi=Math.max(lo,SEE.laneLow-f.h/2-15);
+    const others=fishes.filter(o=>o.on&&o!==f);
+    let best=lo, bestScore=-1;
+    for(let k=0;k<10;k++){
+      const y=lo+Math.random()*(hi-lo);
+      if(f.lastY!==null&&Math.abs(y-f.lastY)<(hi-lo)*.25&&k<9) continue;      // Höhe muss wechseln
+      const score=others.length?Math.min(...others.map(o=>Math.abs(o.y-y))):1e9;
+      if(score>bestScore){bestScore=score;best=y;}
+    }
+    return best;
+  }
+  function spawn(x){
+    const free=fishes.filter(f=>!f.on); if(!free.length) return;
+    const f=free[Math.floor(Math.random()*free.length)];
+    f.on=true; f.y=pickLane(f); f.v=SEE.speed*(.8+.4*Math.random()); f.x=x===undefined?visEdges()[1]+f.w/2+4:x;
+    f.d.style.display='';
+  }
+  function fishStep(dt,first){
+    const [L,R]=visEdges();
+    if(first){ [.18,.52,.86].forEach(k=>{spawn(L+visW*k);}); }
+    simT+=dt;
+    for(const f of fishes){
+      if(!f.on) continue;
+      f.x-=f.v*dt;
+      if(f.x+f.w/2<L-10){f.on=false; f.lastY=f.y; f.d.style.display='none'; continue;}
+      f.d.style.transform=`translate(${(f.x-f.w/2).toFixed(1)}px,${(f.y-f.h/2).toFixed(1)}px)`;
+    }
+    const on=fishes.filter(f=>f.on), sichtbar=on.filter(f=>f.x-f.w/2<R).length;
+    const cross=(visW+wAvg)/SEE.speed;                       // so lange braucht ein Fisch durchs Bild
+    if(on.length<SEE.maxFish){
+      if(sichtbar<SEE.minFish){ spawn(R+40); nextSpawn=simT+cross/3*(.6+.8*Math.random()); }
+      else if(simT>=nextSpawn){ spawn(); nextSpawn=simT+cross/3*(.6+.8*Math.random()); }
+    }
   }
   /* ---------- Glitzern (nach wiro.ae: winzige Punkte, langsam treibend, manche blinken) + Blasen ---------- */
   const ctx=fx.getContext('2d'); let FW=0,FH=0,stars=[],bubbles=[],nextBubble=1.5;
@@ -810,6 +852,7 @@
   addEventListener('resize',()=>{fitSee();sizeFx();lastKey=''});
   fitSee(); sizeFx();
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let firstFish=true;
   function tick(now){
     const dt=last===null?0:Math.min(.1,(now-last)/1000); last=now;
     const target=scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight);   // 0 … 1, auch wenn die Handy-Adressleiste die Höhe ändert
@@ -818,7 +861,7 @@
     if(key!==lastKey){render(p,pop);lastKey=key}
     meldeFertig(p);
     const t=(now-tLoad)/1000;
-    fishAt(reduce?0:t);
+    fishStep(reduce?0:dt,firstFish); firstFish=false;
     if(pop>0) drawFx(t,reduce?0:dt);
     requestAnimationFrame(tick);
   }
