@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morse Coach – Startszene</title>
+<style>
+  html,body{margin:0;background:#0b1a24;font-family:system-ui,sans-serif}
+  body{overflow-x:hidden}
+  /* Die Bühne hat immer die Originalgröße der Bilder (1376 × 768).
+     Per JavaScript wird sie auf die Fenstergröße skaliert. */
+  #stage{position:fixed;left:50%;top:50%;width:1376px;height:768px;transform-origin:center center;overflow:hidden}
+  .layer{position:absolute;display:block;pointer-events:none}
+  /* Wolken: zwei gleiche Bilder nebeneinander, die Reihe zieht um eine Bildbreite nach links → nahtlose Schleife
+     (die Wolken-Bilder laufen an beiden Rändern weich aus, deshalb keine sichtbare Naht) */
+  .wolken{position:absolute;left:0;top:0;width:2752px;height:274px;pointer-events:none;animation:wolken linear infinite}
+  .wolken img{display:block;float:left;width:1376px;height:274px}
+  @keyframes wolken{from{transform:translateX(0)}to{transform:translateX(-1376px)}}
+
+  /* ---------- Animation 1: Krakenschiff schaukelt ----------
+     Zwei verschachtelte Hüllen, damit sich zwei Bewegungen überlagern:
+     .rock  = langsames Schaukeln (Wellengang)
+     .tug   = kurzer Ruck, wenn die Krake zieht                      */
+  #ship-rock{position:absolute;left:234px;top:183px;width:661px;height:508px;
+    transform-origin:330px 456px;               /* Drehpunkt: Mitte der Wasserlinie */
+    animation:rock 7s ease-in-out infinite}
+  #ship-tug{width:100%;height:100%;transform-origin:330px 456px;
+    animation:tug 5.3s ease-in-out infinite}
+  #ship-tug img{width:100%;height:100%}
+
+  @keyframes rock{
+    0%  {transform:translateY(0)   rotate(-1.4deg)}
+    50% {transform:translateY(5px) rotate( 1.6deg)}
+    100%{transform:translateY(0)   rotate(-1.4deg)}
+  }
+  @keyframes tug{
+    0%,70%,100%{transform:translate(0,0) rotate(0)}
+    74%{transform:translate(-3px,6px) rotate(-1.2deg)}   /* Krake reißt nach unten */
+    80%{transform:translate(2px,2px)  rotate(0.6deg)}
+    88%{transform:translate(0,0)      rotate(0)}
+  }
+
+  /* Das Wasser vor dem Rumpf hebt und senkt sich leicht mit */
+  #front-water{left:85px;top:76px;animation:bob 3.5s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
+
+  /* ---------- Animation 2: Papierschiff fährt, wird am linken Rand zerknüllt ----------
+     Start: Das Schiff steht 4 s an seiner Ursprungsposition (mit Schatten).
+     Endlosschleife 62,8 s (ca. 20 px pro Sekunde), Zeiten in Sekunden:
+        0 – 1,5   Schuss mit Rückstoß, Schiff steht
+      1,5 – 15    A nach rechts, bis die Schiffsmitte bei 3/8 der Bildbreite liegt (+270 px)
+       15 – 17    wenden
+       17 – 39,3  B nach links, bis das Schiff zu 1/4 aus dem Bild ist (−183 px)
+     39,3 – 42,3  zerknüllen: drei Bilder (knuell3 → knuell2 → knuell1) blenden weich ineinander
+     42,3 – 42,8  Papierkugel liegt kurz da (am Rand)
+     42,8 – 44,6  Kugel versinkt (nach unten, blasser)
+     44,6         unsichtbar nach links außerhalb des Bildes springen, wieder glatt
+     44,7 – 62,8  C von links herein bis zur Startposition, dort halten → Schuss  */
+  #paper-travel{position:absolute;left:0;top:0;width:1376px;height:768px;
+    animation:travel 62.8s infinite 4s}
+  @keyframes travel{
+    0%     {transform:translateX(0)}
+    0.22%  {transform:translateX(-7px)}                 /* Rückstoß beim Schuss */
+    1.78%  {transform:translateX(0)}
+    2.39%  {transform:translateX(0);      animation-timing-function:ease-in-out}
+    23.89% {transform:translateX(270px);  animation-timing-function:linear}
+    27.07% {transform:translateX(270px);  animation-timing-function:cubic-bezier(.4,0,.55,1)}
+    62.50% {transform:translateX(-183px)}                /* Schiff zu 1/4 aus dem Bild */
+    70.94% {transform:translateX(-183px)}
+    71.10% {transform:translateX(-420px); animation-timing-function:ease-out}
+    100%   {transform:translateX(0)}                    /* bremst ab und hält an der Startposition */
+  }
+  .paper-flip{animation:flip 62.8s linear infinite 4s}
+  @keyframes flip{
+    0%,23.89%      {transform:scaleX(1)}
+    27.07%,70.94%  {transform:scaleX(-1)}
+    71.10%,100%    {transform:scaleX(1)}
+  }
+  #paper-shadow{position:absolute;left:111px;top:175px;
+    animation:shadowOff 1s ease-in 5s forwards}
+  @keyframes shadowOff{to{opacity:0}}
+  #paper-wrap{position:absolute;left:120px;top:182px;width:252px;height:187px}
+  #paper{position:absolute;left:0;top:0;display:block;width:100%;height:100%;transform-origin:50% 90%;
+    animation:rockPaper 4s ease-in-out infinite, paperOut 62.8s infinite 4s}
+  /* Zerknüllen (36,5 – 39,5 s): glattes Schiff → knuell3 → knuell2 → knuell1 (Kugel).
+     Weiche Übergänge ohne Sprung: Jedes neue Bild blendet über dem alten ein.
+     Jedes Bild ist so verschoben, dass es genau am linken Bildrand anliegt
+     (im gespiegelten Schiff heißt "left" optisch: weiter nach links).        */
+  @keyframes paperOut{0%,63.62%{opacity:1}64.09%,70.94%{opacity:0}71.10%,100%{opacity:1}}
+  #crumple{position:absolute;left:0;top:0;width:100%;height:100%;transform-origin:100% 80%;
+    animation:sink 62.8s infinite 4s}
+  #crumple img{position:absolute;top:0;width:100%;height:100%;opacity:0;animation-timing-function:ease-in-out}
+  #k3{left:5px; animation:k3 62.8s ease-in-out infinite 4s}
+  #k2{left:28px;animation:k2 62.8s ease-in-out infinite 4s}
+  #k1{left:47px;animation:k1 62.8s ease-in-out infinite 4s}
+  /* Das neue Bild blendet ÜBER dem alten ein; erst wenn es ganz da ist,
+     verschwindet das alte darunter. So wird es nie durchsichtig. */
+  @keyframes k3{0%,62.50%{opacity:0}63.62%,65.21%{opacity:1}65.69%,100%{opacity:0}}
+  @keyframes k2{0%,64.09%{opacity:0}65.21%,66.80%{opacity:1}67.28%,100%{opacity:0}}
+  @keyframes k1{0%,65.69%{opacity:0}66.80%,70.94%{opacity:1}71.10%,100%{opacity:0}}
+  @keyframes sink{
+    0%,62.50%  {transform:none;opacity:1}
+    64.73%     {transform:scale(.985,1.01);opacity:1}     /* Papier staucht sich zusammen */
+    67.28%     {transform:none;opacity:1}
+    68.07%     {transform:none;opacity:1;animation-timing-function:ease-in}
+    70.94%     {transform:translateY(22px) scale(.9);opacity:0}   /* Kugel versinkt */
+    71.10%,100%{transform:none;opacity:1}
+  }
+  @keyframes rockPaper{
+    0%,100%{transform:rotate(-2deg)}
+    50%    {transform:rotate(2deg) translateY(2px)}
+  }
+
+  /* ---------- Animation 3: Münchhausen wird abgefeuert ----------
+     Synchron mit dem Papierschiff (gleiche Dauer 62,8 s, gleiche Verzögerung 4 s):
+     Immer wenn das Schiff an seiner Startposition vorbeikommt und Richtung Insel
+     fährt (Beginn jeder Runde), fliegt er los.
+     Flugbahn: CSS-Bewegungspfad (offset-path), eine Kurve (Q = quadratische
+     Bézierkurve) vom Bug des Papierschiffs hoch und dann hinter Schiff 1.
+     Tempo: ca. 120 px/s, sechsmal so schnell wie das Schiff → 4,2 s ≈ 6,64 %.
+     Größe: beim Abschuss ein Fünftel (scale .2), wächst im Flug auf volle Größe,
+     weil er auf Schiff 1 zufliegt, das näher am Betrachter liegt.
+     Danach bleibt er unsichtbar, bis die nächste Runde beginnt.              */
+  #mh{position:absolute;left:0;top:0;width:111px;height:83px;
+    offset-path:path('M 286 333 Q 440 120 565 560');
+    offset-anchor:50% 50%;
+    offset-rotate:0deg;                        /* Neigung steuern die Keyframes */
+    transform:scale(.2);                       /* vor dem Abschuss: ein Fünftel so groß */
+    opacity:0;                                 /* vor dem ersten Abschuss unsichtbar (steckt in der Kanone) */
+    animation:fire 62.8s infinite 4s}
+  #mh img{display:block;width:100%;height:100%}
+  @keyframes fire{
+    0%      {offset-distance:0%;   offset-rotate:0deg;  transform:scale(.2);   opacity:0; animation-timing-function:cubic-bezier(.25,.6,.6,1)}
+    0.53%   {opacity:1}
+    1.48%   {offset-rotate:-15deg}
+    3.95%   {offset-rotate:15deg}
+    6.64%   {offset-distance:100%; offset-rotate:35deg; transform:scale(1);    opacity:1}
+    6.8%    {offset-distance:100%; transform:scale(1);  opacity:0}
+    99.9%   {offset-distance:0%;   transform:scale(.2); opacity:0}
+    100%    {offset-distance:0%;   transform:scale(.2); opacity:0}
+  }
+  /* Neigung: erst leicht nach oben (Steigflug), dann nach unten (Sturzflug).
+     Sein Schatten verschwindet beim Abschuss und kommt mit ihm zurück. */
+
+  /* ---------- Animation 3c: Mündungsexplosion beim Abschuss (Code) ----------
+     Liegt fest im Bild genau am Startpunkt der Flugbahn (286 | 333), Kanonenluke am Rumpf, am Bug von
+     Schiff 2. Sie fährt NICHT mit dem Schiff mit: Der Rauch bleibt dort stehen,
+     wo geschossen wurde, und der Baron fliegt mitten aus ihm heraus.
+     Gleicher Takt wie Schiff und Baron (62,8 s, Start nach 4 s).
+     Blitz: heller Feuerball, der in 0,3 s aufleuchtet und verschwindet.
+     Rauch: 7 Wolken, die sich ausdehnen, auseinandertreiben und verblassen.
+     Jede Wolke bekommt über CSS-Variablen ihre eigene Richtung und Größe.   */
+  #boom{position:absolute;left:286px;top:333px;width:0;height:0}
+  #boom .flash{position:absolute;left:-45px;top:-45px;width:90px;height:90px;border-radius:50%;
+    background:radial-gradient(circle,#fffbe0 0%,#ffd45a 25%,#ff8a1e 50%,rgba(255,90,0,0) 72%);
+    mix-blend-mode:screen;opacity:0;transform:scale(0);
+    animation:flash 62.8s infinite 4s}
+  @keyframes flash{
+    0%    {opacity:0;transform:scale(.2)}
+    0.12% {opacity:1;transform:scale(1.15)}
+    0.53% {opacity:0;transform:scale(1.4)}
+    100%  {opacity:0;transform:scale(.2)}
+  }
+  #boom .puff{position:absolute;left:calc(var(--s) / -2);top:calc(var(--s) / -2);
+    width:var(--s);height:var(--s);border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.95),rgba(225,225,225,.85) 45%,rgba(160,160,165,.55) 70%,rgba(140,140,145,0) 72%);
+    filter:blur(2px);opacity:0;animation:puff 62.8s infinite 4s;animation-delay:calc(4s + var(--d))}
+  @keyframes puff{
+    0%    {opacity:0;   transform:translate(0,0) scale(.3)}
+    0.22% {opacity:.95; transform:translate(calc(var(--dx)*.4),calc(var(--dy)*.4)) scale(.9)}
+    3.26% {opacity:0;   transform:translate(var(--dx),var(--dy)) scale(1.8)}
+    100%  {opacity:0;   transform:translate(0,0) scale(.3)}
+  }
+
+  /* ---------- Animation 4: Moby Dick taucht auf, schwimmt, bläst, taucht ab ----------
+     Takt: 20 s, Start nach 2 s. Alle Teile laufen im selben Takt.
+       0–10 %   auftauchen (2 s)
+       10–35 %  schwimmt an der Oberfläche, Fontäne nur in jeder zweiten Runde
+     Er schwimmt die ganze Zeit gleichmäßig nach links, auch beim Auf- und Abtauchen.
+       35–48 %  taucht schräg nach vorn ab
+       48–100 % unsichtbar unter Wasser (schwimmt dabei zurück an den Start)
+
+     #whale-mover   bewegt alles zusammen nach links (Schwimmen)
+     #whale-window  Fenster mit Unterkante = Wasserlinie (overflow:hidden)
+     #whale-swim    leichtes Wiegen beim Schwimmen
+     #whale         hoch/runter (Auf- und Abtauchen)
+     Die Fontäne ist eine Bildfolge aus einer Partikel-Simulation
+     (Tropfen mit Schwerkraft und Wind). steps() spielt sie wie ein Daumenkino ab. */
+  #whale-mover{position:absolute;left:0;top:0;width:0;height:0;animation:whaleX 20s infinite 2s}
+  @keyframes whaleX{
+    0%   {transform:translateX(70px);  animation-timing-function:linear}
+    48%  {transform:translateX(-60px)}                  /* gleichmäßig schwimmen: auf- und abtauchen in der Bewegung */
+    49%  {transform:translateX(-60px)}
+    100% {transform:translateX(70px)}
+  }
+  #whale-window{position:absolute;left:760px;top:241px;width:151px;height:47px;overflow:hidden;
+    /* Wellige, weiche Wasserlinie statt einer geraden Kante: Eine SVG-Welle
+       dient als Maske. Sie wandert langsam seitwärts (mask-position). */
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='47'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0.80' stop-color='white'/%3E%3Cstop offset='0.92' stop-color='white' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 0H40V43Q35 39 30 42T20 42T10 42T0 43Z' fill='url(%23g)'/%3E%3C/svg%3E") 0 0/40px 47px repeat-x;
+    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='47'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0.80' stop-color='white'/%3E%3Cstop offset='0.92' stop-color='white' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 0H40V43Q35 39 30 42T20 42T10 42T0 43Z' fill='url(%23g)'/%3E%3C/svg%3E") 0 0/40px 47px repeat-x;
+    animation:waveMask 2.2s linear infinite}
+  @keyframes waveMask{to{-webkit-mask-position:40px 0;mask-position:40px 0}}
+  #whale-swim{position:absolute;left:10px;top:10px;width:131px;height:61px;transform-origin:40% 60%;
+    animation:swim 2.6s ease-in-out infinite}
+  @keyframes swim{0%,100%{transform:rotate(-1.2deg) translateY(0)}50%{transform:rotate(1deg) translateY(1px)}}
+  #whale{position:absolute;left:0;top:0;width:131px;height:61px;transform:translateY(34px);
+    transform-origin:30% 50%;animation:whale 20s infinite 2s}
+  @keyframes whale{
+    0%   {transform:translateY(34px) rotate(5deg);   animation-timing-function:ease-out}
+    10%  {transform:translateY(0)    rotate(0deg)}
+    20%  {transform:translateY(2px)  rotate(.5deg)}
+    30%  {transform:translateY(0)    rotate(0deg);   animation-timing-function:ease-in}
+    35%  {transform:translateY(1px)  rotate(-1deg);  animation-timing-function:ease-in}
+    48%  {transform:translateY(34px) rotate(-8deg)}
+    100% {transform:translateY(34px) rotate(5deg)}
+  }
+  /* Fontäne: 30 Bilder, 2,4 s, Blasloch am Kopf */
+  #spout{position:absolute;left:764px;top:197px;width:60px;height:70px;
+    background:url(img/fontaene.png) 0 0/1800px 70px no-repeat;opacity:0;
+    animation:spout 40s infinite 2s}                    /* 40 s = zwei Wal-Runden → Fontäne nur jedes zweite Mal */
+  @keyframes spout{
+    0%,7.5%   {opacity:0;background-position:0 0}
+    7.55%     {opacity:1;background-position:0 0;animation-timing-function:steps(29,end)}
+    13.5%     {opacity:1;background-position:-1740px 0}
+    13.55%,100%{opacity:0;background-position:-1740px 0}
+  }
+
+  /* ---------- Erdmännchen im Schwimmring (vor der Insel) ----------
+     Gleicher Trick wie beim Wal: Fenster mit welliger, weicher Unterkante
+     (Maske) = Wasserlinie. Der Ring schaukelt sanft auf den Wellen.          */
+  #meerkats{position:absolute;left:1105px;top:392px;width:124px;height:84px;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='84'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0.88' stop-color='white'/%3E%3Cstop offset='0.97' stop-color='white' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 0H30V81Q26 77 22 80T15 80T7 80T0 81Z' fill='url(%23g)'/%3E%3C/svg%3E") 0 0/30px 84px repeat-x;
+    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='84'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0.88' stop-color='white'/%3E%3Cstop offset='0.97' stop-color='white' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 0H30V81Q26 77 22 80T15 80T7 80T0 81Z' fill='url(%23g)'/%3E%3C/svg%3E") 0 0/30px 84px repeat-x;
+    animation:waveMask2 5s linear infinite}
+  @keyframes waveMask2{to{-webkit-mask-position:30px 0;mask-position:30px 0}}
+  #meerkats img{position:absolute;left:2px;top:4px;width:120px;height:98px;transform-origin:50% 75%;
+    animation:float 6.5s ease-in-out infinite}
+  @keyframes float{
+    0%,100%{transform:translateY(0)     rotate(-.8deg)}
+    50%    {transform:translateY(1.5px) rotate(.8deg)}
+  }
+  /* Halbe Größe und nach hinten geneigt (rotateX mit Perspektive):
+     Drehpunkt ist die Wasserlinie, damit der Ring im Wasser bleibt. */
+  #meerkats-wrap{position:absolute;left:0;top:0;width:1376px;height:768px;
+    transform-origin:1167px 470px;
+    transform:perspective(400px) rotateX(22deg) scale(.5)}
+  /* Schaumkranz rund um den Ring an der Wasserlinie.
+     Hintere Hälfte liegt hinter dem Ring, vordere davor (verdeckt die Schnittkante).
+     Drei verrauschte Varianten wechseln sich ständig ab → der Schaum flimmert. */
+  .ringfoam{position:absolute;left:1092px;top:438px;width:150px;height:44px}
+  .ringfoam img{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;
+    animation:foamFlicker 3.6s ease-in-out infinite}
+  .ringfoam img:nth-child(2){animation-delay:-1.2s}
+  .ringfoam img:nth-child(3){animation-delay:-2.4s}
+  @keyframes foamFlicker{0%,100%{opacity:0}20%,45%{opacity:1}65%{opacity:0}}
+  /* Auslaufende Wellen: dünne Schaumringe, die vom Ring wegwandern,
+     größer werden und ins Wasser übergehen (verblassen). */
+  .ripples{position:absolute;left:1092px;top:438px;width:150px;height:44px}
+  .ripples img{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;
+    transform-origin:75px 22px;animation:ripple 7.5s ease-out infinite}
+  .ripples img:nth-child(2){animation-delay:-2.5s}
+  .ripples img:nth-child(3){animation-delay:-5s}
+  @keyframes ripple{
+    0%  {transform:scale(1);   opacity:0}
+    10% {transform:scale(1.04);opacity:.75}
+    100%{transform:scale(1.7); opacity:0}
+  }
+  #meerkats-shadow{position:absolute;left:1108px;top:466px;width:120px;height:16px;border-radius:50%;
+    background:radial-gradient(ellipse,rgba(0,60,70,.35),rgba(0,60,70,0) 70%)}
+
+  /* ---------- Nur für die Vorschau: Zeitleiste zum Spulen (später entfernen) ---------- */
+  /* ---------- Animation 5: Möwen ----------
+     Drei Möwen kreisen, eine fliegt ab und zu quer durchs Bild. Sie gleiten nur
+     (keine Flügelschläge) und neigen sich in den Kurven.
+     Kreisen = zwei getrennte Bewegungen, die zusammen eine Ellipse ergeben:
+       .cx  links ↔ rechts   (halbe Rundendauer, hin und her)
+       .cy  oben ↔ unten     (gleiche Dauer, um eine Viertelrunde versetzt)
+     Auf der hinteren Seite (oben) wird die Möwe kleiner → wirkt weiter weg.
+       .face dreht sie in die Flugrichtung (Spiegeln an den Wendepunkten, dabei
+             neigt sie sich wie in einer Kurve)
+       .glide leichtes Schaukeln im Wind                                         */
+  .gull{position:absolute}
+  .gull img{display:block;width:100%;height:100%}
+  .cx{animation:cx var(--h) ease-in-out infinite alternate var(--d)}
+  @keyframes cx{from{transform:translateX(calc(var(--rx) * -1))}to{transform:translateX(var(--rx))}}
+  .cy{animation:cy var(--h) ease-in-out infinite alternate calc(var(--d) - var(--h) / 2)}
+  @keyframes cy{from{transform:translateY(calc(var(--ry) * -1)) scale(.78)}to{transform:translateY(var(--ry)) scale(1.05)}}
+  .face{animation:face calc(var(--h) * 2) linear infinite var(--d)}
+  @keyframes face{
+    0%,44%  {transform:scaleX(-1) rotate(0deg)}       /* fliegt nach rechts */
+    50%     {transform:scaleX(.05) rotate(-14deg)}    /* Kurve */
+    56%,94% {transform:scaleX(1)  rotate(0deg)}       /* fliegt nach links */
+    100%    {transform:scaleX(-.05) rotate(14deg)}
+  }
+  .glide{animation:glide 3.2s ease-in-out infinite var(--d)}
+  @keyframes glide{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(2px)}}
+  /* Flügelschlag: Bildfolge (moewe_fluegel.png) mit 7 Bildern:
+     Bild 0 = Gleiten mit weit ausgebreiteten Flügeln (schwarze Spitzen sichtbar),
+     Bilder 1–6 = ein Flügelschlag. Alle Bilder sind am Schnabel
+     ausgerichtet, damit die Möwe beim Wechseln nicht springt.
+     Ablauf: 3 ruhige Flügelschläge (je ca. 0,9 s), dann gleiten. --fw/--fh = Bildgröße. */
+  .flap{width:var(--fw);height:var(--fh);
+    background:url(img/moewe_fluegel.png) 0 0/calc(var(--fw) * 7) var(--fh) no-repeat;
+    animation:flapGlide var(--ft,4.5s) infinite var(--fd,0s)}
+  @keyframes flapGlide{
+    0%     {background-position-x:calc(var(--fw) * -1);animation-timing-function:steps(6,end)}
+    12.85% {background-position-x:calc(var(--fw) * -7)}
+    12.86% {background-position-x:calc(var(--fw) * -1);animation-timing-function:steps(6,end)}
+    25.71% {background-position-x:calc(var(--fw) * -7)}
+    25.72% {background-position-x:calc(var(--fw) * -1);animation-timing-function:steps(6,end)}
+    38.57% {background-position-x:calc(var(--fw) * -7)}
+    38.58%,100%{background-position-x:0}
+  }
+  /* Durchgehender Flügelschlag (Bilder 1–6 in Schleife). --ft = Dauer eines Schlags */
+  .flap.loop{animation:flapLoop var(--ft) steps(6,end) infinite var(--fd,0s)}
+  @keyframes flapLoop{from{background-position-x:calc(var(--fw) * -1)}to{background-position-x:calc(var(--fw) * -7)}}
+  /* Die quer fliegende Möwe ist weit hinten: klein, blass (Luftperspektive)
+     und HINTER den beiden Schiffen (sie steht im HTML vor den Schiffen). */
+  .far{filter:contrast(.8) brightness(1.08) saturate(.8);opacity:.9}
+  /* Möwen, die quer durchs Bild fliegen nach links, Pause außerhalb, kommt von rechts zurück.
+     Gleichmäßiges Tempo (ca. 80 px/s), Runde 35 s. */
+  /* Der Sprung von links nach rechts außerhalb des Bildes passiert unsichtbar
+     (opacity 0), sonst sieht man die Möwe kurz durchs Bild huschen. */
+  /* Die kleine Möwe fliegt quer durchs Bild, ca. 60 px/s, Runde 38,6 s */
+  .across-d{animation:acrossD 38.6s linear infinite 3s}
+  @keyframes acrossD{
+    0%     {transform:translateX(0);       opacity:1}
+    53.9%  {transform:translateX(-1250px); opacity:1}
+    53.91% {transform:translateX(-1250px); opacity:0}
+    54%    {transform:translateX(350px);   opacity:0}
+    84.96% {transform:translateX(350px);   opacity:0}
+    84.97% {transform:translateX(350px);   opacity:1}
+    100%   {transform:translateX(0);       opacity:1}
+  }
+  .wave{animation:wave 4s ease-in-out infinite}
+  @keyframes wave{0%,100%{transform:translateY(-4px) rotate(-2deg)}50%{transform:translateY(5px) rotate(3deg)}}
+
+  /* ---------- Animation 6: Jetski fährt Achten um Moby Dick ----------
+     Der Jetski fährt immer VOR dem Wal (z-index 3 > Wal 2), damit er nie durch
+     ihn hindurchfährt. Hinten auf der Acht wird er nur kleiner.
+     Die Palmen der Insel liegen als eigene Ebene darüber (palmen_vorne.png),
+     so fährt der Jetski hinter den Palmen durch. Alles bleibt hinter den Schiffen.
+     Liegende Acht (Lissajous-Figur), Runde 12 s:
+       .jx  links ↔ rechts (−110 … +110 px), halbe Runde hin, halbe zurück
+       #jet vorn ↔ hinten, doppelt so schnell; vorne größer, hinten kleiner
+       .jface dreht ihn in Fahrtrichtung (wendet an den Enden der Acht)
+       .jbob hüpft über kleine Wellen
+     Die Gischt hinter ihm ist eine Bildfolge (Partikel-Simulation).          */
+  #whale-zone{position:absolute;left:0;top:0;width:0;height:0;z-index:0}
+  #whale-mover{z-index:2}
+  #jet{position:absolute;left:821px;top:276px;width:38px;height:23px;transform-origin:50% 100%;z-index:3;
+    animation:jy 3s ease-in-out infinite alternate -1.5s}
+  @keyframes jy{
+    from{transform:translateY(-9px) scale(.8)}
+    to  {transform:translateY(11px) scale(1.15)}
+  }
+  .jx{width:100%;height:100%;animation:jx 6s ease-in-out infinite alternate}
+  @keyframes jx{from{transform:translateX(-110px)}to{transform:translateX(110px)}}
+  .jface{width:100%;height:100%;animation:jface 12s linear infinite}
+  @keyframes jface{
+    0%,45%  {transform:scaleX(1)   rotate(0deg)}     /* fährt nach rechts */
+    50%     {transform:scaleX(.08) rotate(-8deg)}    /* Kurve */
+    55%,95% {transform:scaleX(-1)  rotate(0deg)}     /* fährt nach links */
+    100%    {transform:scaleX(.08) rotate(8deg)}
+  }
+  .jbob{position:relative;width:100%;height:100%;transform-origin:50% 90%;animation:jbob .55s ease-in-out infinite alternate}
+  @keyframes jbob{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-2px) rotate(3deg)}}
+  .jbob img{position:absolute;left:0;top:0;width:38px;height:22.5px;
+    -webkit-mask:linear-gradient(to bottom,#000 80%,transparent 96%);mask:linear-gradient(to bottom,#000 80%,transparent 96%)}
+  .jspray{position:absolute;left:-30px;top:3px;width:46px;height:22px;
+    background:url(img/jetski_gischt.png) 0 0/460px 22px no-repeat;animation:jspray .8s steps(10,end) infinite}
+  @keyframes jspray{from{background-position-x:0}to{background-position-x:-460px}}
+
+  /* ---------- Animation 7: Papagei landet auf der Insel, schaut sich um, fliegt weg ----------
+     Runde 32 s, Start nach 2 s. Zeiten in Sekunden innerhalb einer Runde:
+        0 – 3     fliegt von oben links herein (Flügelschlag), wird dabei kleiner (weiter weg)
+        3 – 4,2   gleitet mit ausgebreiteten Flügeln hinunter
+      4,2 – 5     Landepose (Beine nach vorn, Flügel hoch), setzt am Strand auf
+        5 – 13,4  sitzt und schaut sich um: vorn → links → ganz links → vorn → rechts
+     13,4 – 19    startet direkt mit Flügelschlag, erst langsam, dann schneller,
+                  nach rechts oben aus dem Bild, wird größer (kommt näher)
+       19 – 32    Pause außerhalb des Bildes
+     #parrot   fährt eine Bahn ab (offset-path): Kurve 1 bis zum Strand, Kurve 2 aus dem Bild.
+               Alle Posen sind am Kopf ausgerichtet: (0|0) ist das Auge.
+               Deshalb springt der Papagei beim Wechsel der Pose nicht.
+     .phop     federt beim Aufsetzen kurz nach
+     .pp       die einzelnen Posen; immer nur eine ist sichtbar. Beim Wechsel blendet die
+               neue Pose zuerst ein, erst dann blendet die alte aus (nie durchsichtig).  */
+  #parrot{position:absolute;left:0;top:0;width:0;height:0;
+    offset-path:path('M 760 -60 Q 905 330 1035 343 Q 1200 330 1510 -110');
+    offset-anchor:0 0;offset-distance:0%;offset-rotate:18deg;
+    animation:parrotPath 32s infinite 2s}
+  @keyframes parrotPath{
+    0%       {offset-distance:0%;     offset-rotate:18deg; transform:scale(1.45); animation-timing-function:cubic-bezier(.35,.15,.55,1)}
+    9.375% {offset-rotate:14deg}
+    13.125% {offset-rotate:4deg}
+    15.625% {offset-distance:42.98%; offset-rotate:0deg;  transform:scale(1)}
+    41.875% {offset-distance:42.98%; offset-rotate:0deg;  transform:scale(1); animation-timing-function:cubic-bezier(.4,.1,.7,.85)}
+    46.25% {offset-rotate:-14deg}
+    59.375% {offset-distance:100%;   offset-rotate:-28deg; transform:scale(2.1)}
+    100%     {offset-distance:100%;   offset-rotate:-28deg; transform:scale(2.1)}
+  }
+  #parrot .phop{position:absolute;left:0;top:0;animation:parrotHop 32s infinite 2s}
+  @keyframes parrotHop{
+    0%,14.688%{transform:translateY(0)}
+    15.625%{transform:translateY(.8px)}            /* federt beim Aufsetzen */
+    16.562%,100%{transform:translateY(0)}
+  }
+  #parrot .pp{position:absolute;display:block;opacity:0}
+  /* Flügelschlag: Bildfolge mit 6 Bildern, ein Schlag dauert 0,45 s */
+  #parrot .pflap{left:-46.15px;top:-26.51px;width:63.67px;height:55.67px;
+    background:url(img/papagei_flug.png) 0 0/382.00px 55.67px no-repeat;
+    animation:parrotFlap .45s steps(6,end) infinite, pvFlap 32s infinite 2s}
+  @keyframes parrotFlap{from{background-position-x:0}to{background-position-x:-382.00px}}
+  #parrot .pglide{left:-38.72px;top:-21.91px;width:45.33px;height:46.33px;animation:pvGlide 32s infinite 2s}
+  #parrot .pland{left:-39.16px;top:-18.66px;width:43.67px;height:47.00px;animation:pvLand 32s infinite 2s}
+  #parrot .psit0{left:-6.65px;top:-3.58px;width:13.33px;height:25.00px;animation:pvSit0 32s infinite 2s}
+  #parrot .psit1{left:-4.67px;top:-3.40px;width:14.33px;height:27.67px;animation:pvSit1 32s infinite 2s}
+  #parrot .psit3{left:-4.06px;top:-2.99px;width:17.00px;height:28.00px;animation:pvSit3 32s infinite 2s}
+  #parrot .psit5{left:-8.73px;top:-3.53px;width:13.33px;height:28.33px;animation:pvSit5 32s infinite 2s}
+  @keyframes pvFlap{0%{opacity:1}9.375%{opacity:1}10.156%{opacity:0}41.094%{opacity:0}41.875%{opacity:1}59.375%{opacity:1}60.156%{opacity:0}100%{opacity:0}}
+  @keyframes pvGlide{0%{opacity:0}8.594%{opacity:0}9.375%{opacity:1}13.125%{opacity:1}13.906%{opacity:0}100%{opacity:0}}
+  @keyframes pvLand{0%{opacity:0}12.344%{opacity:0}13.125%{opacity:1}15.625%{opacity:1}16.406%{opacity:0}100%{opacity:0}}
+  @keyframes pvSit0{0%{opacity:0}14.844%{opacity:0}15.625%{opacity:1}21.875%{opacity:1}22.656%{opacity:0}30.469%{opacity:0}31.25%{opacity:1}36.25%{opacity:1}37.031%{opacity:0}100%{opacity:0}}
+  @keyframes pvSit1{0%{opacity:0}21.094%{opacity:0}21.875%{opacity:1}26.875%{opacity:1}27.656%{opacity:0}100%{opacity:0}}
+  @keyframes pvSit3{0%{opacity:0}26.094%{opacity:0}26.875%{opacity:1}31.25%{opacity:1}32.031%{opacity:0}100%{opacity:0}}
+  @keyframes pvSit5{0%{opacity:0}35.469%{opacity:0}36.25%{opacity:1}41.875%{opacity:1}42.656%{opacity:0}100%{opacity:0}}
+  /* Schatten im Sand unter dem sitzenden Papagei */
+  #parrot-shadow{position:absolute;left:1026px;top:363px;width:20px;height:4px;border-radius:50%;
+    background:radial-gradient(ellipse,rgba(70,50,20,.55),rgba(70,50,20,0) 70%);opacity:0;
+    animation:parrotShadow 32s infinite 2s}
+  @keyframes parrotShadow{0%,13.125%{opacity:0}15.625%,41.875%{opacity:1}44.375%,100%{opacity:0}}
+  /* ================= Station B: Bullauge + Unterwasser-Landschaft =================
+     Scrollweg: 7 Bildschirmhöhen (p = 0 … 1):
+       p 0    – 0,10  man zoomt in die Inselszene hinein; bei p 0,07 ploppt das Bullauge auf
+       p 0,10 – 0,44  Bullauge wird größer, man fliegt durch das Glas
+       p 0,50 – 0,82  Landschaft und Fische sinken nach unten aus dem Bild, das Meer wird dunkler
+       p 0,74 – 0,94  Titel „Morse Coach" erscheint
+     Glitzern + Blasen liegen über allem und bleiben die ganze Zeit (dezent);
+     das Glitzern zieht beim Hineinzoomen nach außen und beim Absinken mit nach unten. */
+  #scrollspace{height:800vh;height:800svh}
+  /* Handy: Vorschau-Steuerleiste ausblenden, Hinweis tiefer */
+  @media (max-width:700px),(pointer:coarse){ #ui{display:none !important} #hint{bottom:28px} }
+  html{scrollbar-width:none} html::-webkit-scrollbar{display:none}
+  #pb{position:fixed;inset:0;pointer-events:none;z-index:5;visibility:hidden;transform-origin:50% 50%}
+  #wclip{position:absolute;inset:0}
+  #world{position:absolute;inset:0;overflow:hidden}
+  #sea{position:absolute;inset:-6% 0;background:#0a4f7a url(img/see/meer_bg.jpg) center/cover no-repeat;will-change:transform}
+  #seaDark{position:absolute;inset:0;background:#021830;opacity:0}
+  #zoom{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}
+  #see{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+  .grp{position:absolute;left:0;top:0;width:1920px;height:1080px;will-change:transform}
+  .grp>img{position:absolute;display:block}
+  .pf{position:absolute;transform-origin:50% 100%}
+  .pf img{display:block;width:100%;height:100%}
+  .pf img.fl{transform:scaleX(-1)}
+  .pf.rot{animation:seeRot ease-in-out infinite}
+  .pf.skew{animation:seeSkew ease-in-out infinite}
+  @keyframes seeRot{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
+  @keyframes seeSkew{0%,100%{transform:skewX(-2.6deg)}50%{transform:skewX(2.6deg)}}
+  .fish{position:absolute;left:0;top:0;will-change:transform}
+  .fish img{display:block;width:100%;height:auto}
+  #fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  /* Rahmen: freigestelltes Messing-Bullauge. Maße im Foto gemessen: Außenring 535 px,
+     Öffnung 345 px (= 64,5 %), Mitte der Öffnung bei (301|271) von 664 × 542 px. */
+  #pz{position:absolute;left:50%;top:50%;width:0;height:0}
+  #frame,#pshadow{position:absolute;left:calc(var(--D) * -.5632);top:calc(var(--D) * -.506);width:calc(var(--D) * 1.241);height:auto;display:block}
+  #pshadow{filter:brightness(0) blur(.8vmin);transform:translate(1vmin,1.3vmin);opacity:.5}
+  #glass{position:absolute;border-radius:50%;left:calc(var(--D) * -.3227);top:calc(var(--D) * -.3227);
+    width:calc(var(--D) * .6454);height:calc(var(--D) * .6454);
+    background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.05));
+    box-shadow:inset 0 0 2.5vmin rgba(0,10,20,.6),inset .5vmin .7vmin 1.2vmin rgba(0,0,0,.4)}
+  #titel{position:fixed;left:0;right:0;top:50%;z-index:7;text-align:center;color:#eaf6ff;opacity:0;pointer-events:none;
+    font-family:Georgia,'Times New Roman',serif;transform:translateY(-50%)}
+  #titel h1{margin:0;font-weight:400;font-size:clamp(40px,11vw,132px);letter-spacing:.04em;line-height:1.05}
+  #titel p{margin:.6em 0 0;font:400 clamp(14px,1.6vw,22px)/1.4 system-ui,sans-serif;letter-spacing:.3em;text-transform:uppercase;opacity:.7}
+  #hint{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:6;pointer-events:none;
+    font:600 14px system-ui;letter-spacing:.12em;color:#fff;text-shadow:0 1px 6px #0009;text-align:center}
+  #hint span{display:block;font-size:22px;animation:nudge 1.6s ease-in-out infinite}
+  @keyframes nudge{50%{transform:translateY(6px)}}
+
+  #ui{position:fixed;left:12px;right:12px;bottom:12px;z-index:10;display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+    padding:8px 10px;border-radius:10px;background:#000000a0;color:#fff;font:13px system-ui;backdrop-filter:blur(4px)}
+  #ui button{font:13px system-ui;padding:5px 10px;border-radius:6px;border:1px solid #ffffff55;background:#ffffff14;color:#fff;cursor:pointer}
+  #ui button.on{background:#ffffff40;border-color:#fff}
+  #ui input[type=range]{flex:1 1 220px;min-width:160px}
+  #ui .t{min-width:58px;text-align:right;font-variant-numeric:tabular-nums}
+  #ui .sep{width:1px;height:20px;background:#ffffff40;margin:0 4px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- Ebene 1: Hintergrund (Meer, Insel) -->
+  <img class="layer" src="img/hinten_ohne_wolken.jpg" style="left:0;top:0;width:1376px;height:768px" alt="">
+  <!-- Ebene 1w: Wolken ziehen langsam nach links (zwei Höhen, zwei Tempi), Insel-Bäume liegen davor -->
+  <div class="wolken" style="animation-duration:420s"><img src="img/wolken_unten.png" alt=""><img src="img/wolken_unten.png" alt=""></div>
+  <div class="wolken" style="animation-duration:260s"><img src="img/wolken_oben.png" alt=""><img src="img/wolken_oben.png" alt=""></div>
+  <img class="layer" src="img/insel_oben.png" style="left:860px;top:120px" alt="">
+  <!-- Ebene 1a: Moby Dick (schwimmt, taucht auf und ab), Schaum, Spritzer, Fontäne -->
+  <div id="whale-zone">
+  <div id="whale-mover">
+    <div id="whale-window"><div id="whale-swim"><img id="whale" src="img/wal.png" alt=""></div></div>
+    <div id="spout"></div>
+  </div>
+    <div id="jet"><div class="jx"><div class="jface"><div class="jbob"><div class="jspray"></div><img src="img/jetski_fahrer.png" alt=""></div></div></div></div>
+  </div>
+  <!-- Palmen und Insel nochmal als Ebene über dem Jetski: er fährt hinter ihnen durch -->
+  <img class="layer" src="img/palmen_vorne.png" style="left:880px;top:200px" alt="">
+  <!-- Erdmännchen im Schwimmring -->
+  <div id="meerkats-wrap">
+    <div id="meerkats-shadow"></div>
+    <div class="ripples"><img src="img/ring_welle1.png" alt=""><img src="img/ring_welle2.png" alt=""><img src="img/ring_welle1.png" alt="" style="transform:scaleX(-1)"></div>
+    <div class="ringfoam"><img src="img/ring_schaum_hinten1.png" alt=""><img src="img/ring_schaum_hinten2.png" alt=""><img src="img/ring_schaum_hinten3.png" alt=""></div>
+    <div id="meerkats"><img src="img/erdmaennchen.png" alt=""></div>
+    <div class="ringfoam"><img src="img/ring_schaum_vorne1.png" alt=""><img src="img/ring_schaum_vorne2.png" alt=""><img src="img/ring_schaum_vorne3.png" alt=""></div>
+  </div>
+  <!-- Kleine Möwe, die quer fliegt: liegt im HTML vor den Schiffen → fliegt immer dahinter -->
+  <div class="gull far" style="left:1139.5px;top:209.9px;width:42.4px;height:35.0px">
+    <div class="across-d"><div class="wave"><div class="flap loop" style="--fw:42.4px;--fh:35.0px;--ft:1.0s;--fd:-0.5s"></div></div></div></div>
+  <!-- Ebene 1b: Papierschiff mit Schatten (fährt, wendet, schaukelt) -->
+  <div id="paper-travel">
+    <img id="paper-shadow" class="paper-flip" src="img/papierschiff_schatten.png" alt="">
+    <div id="paper-wrap" class="paper-flip">
+      <img id="paper" src="img/papierschiff.png" alt="">
+      <div id="crumple"><img id="k3" src="img/knuell3.png" alt=""><img id="k2" src="img/knuell2.png" alt=""><img id="k1" src="img/knuell1.png" alt=""></div>
+    </div>
+  </div>
+  <!-- Ebene 1c: Münchhausen mit Schatten (wird abgefeuert, fliegt hinter Schiff 1) -->
+  <div id="mh"><img src="img/muenchhausen.png" alt=""></div>
+  <!-- Mündungsexplosion: fest am Startpunkt der Flugbahn, über dem Baron -->
+  <div id="boom">
+    <div class="puff" style="--s:38px;--dx:-18px;--dy:-14px;--d:0s"></div>
+    <div class="puff" style="--s:32px;--dx:-26px;--dy:8px;--d:.05s"></div>
+    <div class="puff" style="--s:44px;--dx:6px;--dy:-26px;--d:.02s"></div>
+    <div class="puff" style="--s:30px;--dx:26px;--dy:-16px;--d:.08s"></div>
+    <div class="puff" style="--s:36px;--dx:-10px;--dy:18px;--d:.1s"></div>
+    <div class="puff" style="--s:28px;--dx:30px;--dy:4px;--d:.04s"></div>
+    <div class="puff" style="--s:46px;--dx:-30px;--dy:-22px;--d:.12s"></div>
+    <div class="flash"></div>
+  </div>
+  <!-- Ebene 2: Krakenschiff (animiert) -->
+  <div id="ship-rock"><div id="ship-tug"><img src="img/krakenschiff.png" alt=""></div></div>
+  <!-- Ebene 3: Wasser vor dem Rumpf (verdeckt alles unter der Wasserlinie) -->
+  <img class="layer" id="front-water" src="img/wasser_vorne.png" alt="">
+  <!-- Ebene 4: Möwen (zwei kreisen langsam schlagend) -->
+  <div class="gull" style="left:540.6px;top:110.7px;width:78.7px;height:65.0px;--h:15s;--d:0s;--rx:70px;--ry:18px">
+    <div class="cx"><div class="cy"><div class="face"><div class="glide"><div class="flap loop" style="--fw:78.7px;--fh:65.0px;--ft:1.9s;--fd:-0.4s"></div></div></div></div></div></div>
+  <div class="gull" style="left:1062.3px;top:140.0px;width:71.9px;height:59.4px;--h:8s;--d:-3s;--rx:60px;--ry:15px">
+    <div class="cx"><div class="cy"><div class="face"><div class="glide"><div class="flap loop" style="--fw:71.9px;--fh:59.4px;--ft:2.2s;--fd:-1.1s"></div></div></div></div></div></div>
+  <!-- Ebene 5: Papagei (landet am Strand, schaut sich um, fliegt rechts oben weg) -->
+  <div id="parrot-shadow"></div>
+  <div id="parrot"><div class="phop">
+    <div class="pp pflap"></div>
+    <img class="pp pglide" src="img/papagei_glide.png" alt="">
+    <img class="pp pland" src="img/papagei_launch.png" alt="">
+    <img class="pp psit0" src="img/papagei_sit0.png" alt="">
+    <img class="pp psit1" src="img/papagei_sit1.png" alt="">
+    <img class="pp psit3" src="img/papagei_sit3.png" alt="">
+    <img class="pp psit5" src="img/papagei_sit5.png" alt="">
+  </div></div>
+</div>
+<!-- ================= Station B: Bullauge ================= -->
+<div id="hint">SCROLLEN<span>↓</span></div>
+<div id="pb">
+  <div id="wclip"><div id="world">
+    <div id="sea"></div><div id="seaDark"></div>
+    <div id="zoom"><div id="see">
+      <div class="grp" id="gFar"><img src="img/see/sand_hinten.webp" alt="" style="left:0;top:400px;width:1920px;height:805px"></div>
+      <div class="grp" id="gFish"></div>
+      <div class="grp" id="gLand">
+      <img src="img/see/patch_fels.webp" alt="" style="left:-72px;top:490px;width:632px;height:355px">
+      <img src="img/see/patch_schrott.webp" alt="" style="left:540px;top:769px;width:520px;height:342px">
+      <div class="pf skew" style="left:898px;top:770px;width:225px;height:125px;animation-duration:7s;animation-delay:-3s"><img src="img/see/buschel.webp" alt="" class=fl></div>
+      <img src="img/see/patch_schlick.webp" alt="" style="left:741px;top:743px;width:832px;height:409px">
+      <div class="pf rot" style="left:-27px;top:340px;width:195px;height:340px;animation-duration:7.5s;animation-delay:0s"><img src="img/see/kelp.webp" alt=""></div>
+      <div class="pf rot" style="left:133px;top:570px;width:85px;height:175px;animation-duration:6s;animation-delay:-2s"><img src="img/see/seefeder.webp" alt="" class=fl></div>
+      <div class="pf skew" style="left:252px;top:625px;width:296px;height:165px;animation-duration:8s;animation-delay:-1s"><img src="img/see/buschel.webp" alt=""></div>
+      <div class="pf rot" style="left:590px;top:687px;width:100px;height:175px;animation-duration:7s;animation-delay:-2s"><img src="img/see/kelp.webp" alt="" class=fl></div>
+      <img src="img/see/patch_korallen.webp" alt="" style="left:-72px;top:555px;width:963px;height:597px">
+      <div class="pf rot" style="left:1408px;top:653px;width:135px;height:235px;animation-duration:8s;animation-delay:-1s"><img src="img/see/kelp.webp" alt=""></div>
+      <div class="pf rot" style="left:1371px;top:852px;width:78px;height:160px;animation-duration:6s;animation-delay:-1s"><img src="img/see/seefeder.webp" alt="" class=fl></div>
+      <div class="pf skew" style="left:1564px;top:245px;width:453px;height:410px;animation-duration:9s;animation-delay:-2s"><img src="img/see/hoch.webp" alt=""></div>
+      <img src="img/see/patch_sand2.webp" alt="" style="left:1322px;top:462px;width:670px;height:690px">
+      <div class="pf rot" style="left:-23px;top:880px;width:237px;height:225px;animation-duration:9s;animation-delay:-3s"><img src="img/see/schwamm.webp" alt=""></div>
+      <div class="pf rot" style="left:363px;top:877px;width:114px;height:235px;animation-duration:6.5s;animation-delay:-4s"><img src="img/see/seefeder.webp" alt=""></div>
+      <div class="pf rot" style="left:718px;top:950px;width:164px;height:155px;animation-duration:10s;animation-delay:-5s"><img src="img/see/schwamm.webp" alt="" class=fl></div>
+      <div class="pf rot" style="left:1757px;top:695px;width:246px;height:430px;animation-duration:7.2s;animation-delay:-4s"><img src="img/see/kelp.webp" alt="" class=fl></div>
+      </div>
+    </div></div>
+    <canvas id="fx"></canvas>
+  </div></div>
+  <div id="pz">
+    <img id="pshadow" src="img/bullauge_rahmen.webp" alt="">
+    <img id="frame" src="img/bullauge_rahmen.webp" alt="">
+    <div id="glass"></div>
+  </div>
+</div>
+<div id="titel"><h1>Morse Coach</h1><p>Lerne die Zeichen</p></div>
+<div id="scrollspace"></div>
+<div id="ui">
+  <button id="play">Pause</button>
+  <span class="t" id="time">0,0 s</span>
+  <input type="range" id="scrub" min="0" max="130" step="0.1" value="0" aria-label="Zeit">
+  <span class="sep"></span>
+  <span>Tempo</span>
+  <button data-speed="1" class="on">1×</button><button data-speed="2">2×</button><button data-speed="5">5×</button>
+  <span class="sep"></span>
+  <button data-jump="1.5">Wal taucht auf</button>
+  <button data-jump="3.8">Schuss</button>
+  <button data-jump="41">Zerknüllen</button>
+  <button data-jump="48.5">Rückkehr</button>
+  <button data-jump="6">Papagei landet</button>
+  <button data-jump="14.8">Papagei startet</button>
+</div>
+<script>
+  const stage=document.getElementById('stage');
+  function fit(){
+    const s=Math.max(innerWidth/1376, innerHeight/768);   // füllt das Fenster (wie ein Hintergrundbild)
+    stage.style.transform=`translate(-50%,-50%) scale(${s*(window.stageZoom||1)})`;   // stageZoom: Reinzoomen beim Scrollen
+  }
+  addEventListener('resize',fit); fit();
+  /* Vorschau-Steuerung: Alle Animationen der Seite liegen in document.getAnimations().
+     Sie sind gemeinsam gestartet, deshalb entspricht ihre Zeit (currentTime) der
+     Szenen-Zeit. Spulen = bei allen dieselbe Zeit setzen, Tempo = playbackRate. */
+  const anims=()=>stage.getAnimations({subtree:true});   // nur die Szene, nicht die Fische im Bullauge
+  const scrub=document.getElementById('scrub'), timeEl=document.getElementById('time'), playBtn=document.getElementById('play');
+  let playing=true, dragging=false, speed=1;
+  const setTime=t=>anims().forEach(a=>{a.currentTime=t*1000});
+  const now=()=>{const a=anims()[0];return a?a.currentTime/1000:0};
+  function show(t){timeEl.textContent=t.toFixed(1).replace('.',',')+' s'; if(!dragging) scrub.value=t%130;}
+  playBtn.onclick=()=>{playing=!playing; anims().forEach(a=>playing?a.play():a.pause()); playBtn.textContent=playing?'Pause':'Abspielen';};
+  scrub.addEventListener('pointerdown',()=>dragging=true);
+  scrub.addEventListener('pointerup',()=>dragging=false);
+  scrub.addEventListener('input',()=>{setTime(+scrub.value); show(+scrub.value);});
+  document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{
+    speed=+b.dataset.speed; anims().forEach(a=>a.playbackRate=speed*window.sceneRate);
+    document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('on',x===b));});
+  document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>{setTime(+b.dataset.jump); show(+b.dataset.jump);});
+  (function loop(){show(now()); requestAnimationFrame(loop);})();
+
+  /* ================= Station B: Bullauge + Unterwasser-Landschaft ================= */
+  const SEE={
+    D0:28,          // Außendurchmesser des Bullauges (vmin) – im Hochformat (Handy) größer, siehe D0hoch
+    D0hoch:62,
+    open:.6454,     // Anteil der runden Öffnung (im Foto gemessen)
+    stageZoom:1.3,  // so weit zoomt man zuerst in die Inselszene hinein (bis pZoom), danach noch etwas weiter
+    pAppear:.07,    // ab hier ploppt das Bullauge auf (beim Zurückscrollen verschwindet es wieder)
+    pZoom:.10,      // ab hier wird das Bullauge größer
+    popDur:.75,     // Dauer des Aufploppens (s)
+    pPass:.44,      // hier fliegt man durch das Glas
+    sink:[.50,.82], // Landschaft + Fische sinken nach unten weg
+    title:[.74,.94],// Titel erscheint
+    SINK:1350,      // so weit (px auf der 1920er-Bühne) sinkt die Landschaft
+    lane:320,       // Höhe der Fischlinie (Mitte, px auf der Bühne)
+    speed:70,       // Schwimmtempo (px/s auf der Bühne)
+    fish:[["hai", 430, 192], ["clownfisch", 230, 144], ["benno", 330, 182], ["mondfisch", 260, 290], ["taucherhelm", 280, 155], ["kugelfisch", 220, 175], ["feuerfisch", 320, 249], ["morsestreifen", 380, 114], ["tiefsee", 320, 162]],    // [name, breite, höhe] – Hai, Mondfisch, Feuerfisch im Papier-Look
+  };
+  const pb=document.getElementById('pb'), world=document.getElementById('world'), wclip=document.getElementById('wclip'),
+        zoomEl=document.getElementById('zoom'), see=document.getElementById('see'), sea=document.getElementById('sea'),
+        pz=document.getElementById('pz'), hint=document.getElementById('hint'), titel=document.getElementById('titel'),
+        seaDark=document.getElementById('seaDark'),
+        ui=document.getElementById('ui'), fx=document.getElementById('fx');
+  const gFar=document.getElementById('gFar'), gFish=document.getElementById('gFish'), gLand=document.getElementById('gLand');
+  const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+  const touch=matchMedia('(pointer: coarse)').matches;
+  const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a));return t*t*(3-2*t)};
+  const ease=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+
+  /* ---------- Bühne der Landschaft an das Fenster anpassen (füllt, unten verankert) ---------- */
+  let seeS=1, visW=1920;
+  /* Querformat: füllt das Fenster. Hochformat (Handy): höchstens ca. 1100 px der Bühne breit sichtbar,
+     damit Korallen links und Sand rechts zu sehen sind; darüber ist freies Wasser. */
+  function fitSee(){
+    seeS=Math.max(innerWidth/1920,Math.min(innerHeight/1080,innerWidth/1100)); visW=innerWidth/seeS;
+    see.style.transform=`translate(${(innerWidth-1920*seeS)/2}px,${innerHeight-1080*seeS}px) scale(${seeS})`;
+  }
+  /* ---------- Fische: eine Linie, gleiche Abstände ----------
+     Abstand D (Mitte zu Mitte) = halbe sichtbare Breite + halbe mittlere Fischbreite:
+     ist ein Fisch links ganz draußen, ist der nächste genau in der Mitte und der dritte kommt rechts herein. */
+  const wAvg=SEE.fish.reduce((s,f)=>s+f[1],0)/SEE.fish.length;
+  const fishEls=SEE.fish.map(([n,w,h])=>{const d=document.createElement('div');d.className='fish';d.style.width=w+'px';
+    d.innerHTML=`<img src="img/see/f_${n}.webp" alt="">`;gFish.appendChild(d);return {d,w,h};});
+  function fishAt(t){
+    const D=visW/2+wAvg/2, L=D*fishEls.length, xl=(1920-visW)/2;
+    fishEls.forEach((f,i)=>{
+      const c=(((i*D-SEE.speed*t+250)%L)+L)%L-250;
+      const x=xl-wAvg/2+c-f.w/2, y=SEE.lane-f.h/2;
+      f.d.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;
+    });
+  }
+  /* ---------- Glitzern (nach wiro.ae: winzige Punkte, langsam treibend, manche blinken) + Blasen ---------- */
+  const ctx=fx.getContext('2d'); let FW=0,FH=0,stars=[],bubbles=[],nextBubble=1.5;
+  function sizeFx(){
+    const dpr=Math.min(devicePixelRatio||1,2), oW=FW, oH=FH; FW=innerWidth; FH=innerHeight;
+    fx.width=Math.round(FW*dpr); fx.height=Math.round(FH*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);
+    // Handy: Adressleiste ein/aus ändert nur die Höhe → Punkte behalten, nur mitstrecken (kein Flackern)
+    if(stars.length&&oW===FW){stars.forEach(s=>{s.y*=FH/oH});return;}
+    const n=Math.min(80,Math.max(22,Math.round(FW*FH*1.0e-4)));
+    stars=Array.from({length:n},()=>{const a=Math.random()*Math.PI*2,v=3.2*(.25+.75*Math.random());
+      return {x:Math.random()*FW,y:Math.random()*FH,r:Math.random()<.88?.3+.5*Math.random():.8+.5*Math.random(),
+        vx:Math.cos(a)*v,vy:Math.sin(a)*v,o:.15+.45*Math.random(),bs:.12+.5*Math.random(),blink:Math.random()<.5,
+        bo:Math.random()*6.3,glow:Math.random()<.1};});
+  }
+  function spawnBubble(){
+    const r=Math.random()<.85?1.6+3.4*Math.random():5+3*Math.random();
+    bubbles.push({x:FW*(.06+.88*Math.random()),y:FH+12,r,v:22+30*Math.random()+r*2,a:.28+.25*Math.random(),
+      wob:2+5*Math.random(),wf:1+1.5*Math.random(),ph:Math.random()*6.3});
+  }
+  let fxK=1, fxDY=0;   // Zoom-Faktor und Versatz nach unten, setzt render()
+  const wrap=(v,m)=>((v%m)+m)%m;
+  function drawFx(t,dt){
+    ctx.clearRect(0,0,FW,FH);
+    const cx=FW/2, cy=FH/2, rk=Math.pow(fxK,.35);
+    for(const s of stars){
+      s.x+=s.vx*dt; s.y+=s.vy*dt;
+      if(s.x<-3)s.x=FW+3; if(s.x>FW+3)s.x=-3; if(s.y<-3)s.y=FH+3; if(s.y>FH+3)s.y=-3;
+      let o=s.o; if(s.blink) o*=.55+.45*Math.sin(t*s.bs*6+s.bo);
+      // beim Hineinzoomen wandern die Punkte nach außen, beim Absinken nach unten (Endlos-Feld, gleiche Dichte)
+      const x=wrap(cx+(s.x-cx)*fxK,FW+6)-3, y=wrap(cy+(s.y-cy)*fxK+fxDY,FH+6)-3;
+      ctx.beginPath(); ctx.arc(x,y,s.r*rk,0,6.2832);
+      ctx.shadowBlur=s.glow?3:0; ctx.shadowColor=`rgba(235,248,255,${o})`;
+      ctx.fillStyle=`rgba(235,248,255,${o})`; ctx.fill();
+    }
+    ctx.shadowBlur=0;
+    nextBubble-=dt; if(nextBubble<=0&&bubbles.length<5){spawnBubble(); if(Math.random()<.3)spawnBubble(); nextBubble=1.4+2.8*Math.random();}
+    bubbles=bubbles.filter(b=>b.y>-20);
+    for(const b of bubbles){
+      b.y-=b.v*dt; const x=b.x+Math.sin(t*b.wf+b.ph)*b.wob;
+      const a=b.a*smooth(0,FH*.3,b.y)*smooth(FH+12,FH-40,b.y);
+      ctx.beginPath(); ctx.arc(x,b.y,b.r,0,6.2832);
+      ctx.fillStyle=`rgba(220,240,255,${a*.12})`; ctx.fill();
+      ctx.lineWidth=.9; ctx.strokeStyle=`rgba(225,244,255,${a})`; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x-b.r*.35,b.y-b.r*.35,Math.max(.5,b.r*.22),0,6.2832);
+      ctx.fillStyle=`rgba(255,255,255,${a*1.2})`; ctx.fill();
+    }
+  }
+  /* ---------- Aufploppen: sobald man etwas in die Inselszene hineingezoomt hat ---------- */
+  const tLoad=performance.now();
+  let popP=0;   // 0 … 1, läuft in SEE.popDur Sekunden hoch (beim Zurückscrollen schneller wieder runter)
+  const backOut=t=>{const c1=1.9,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2)};
+  function popScale(p,dt){
+    const want=p>=SEE.pAppear;
+    popP=want?Math.min(1,popP+dt/SEE.popDur):Math.max(0,popP-dt/(SEE.popDur*.5));
+    if(popP<=0) return 0;
+    return want?(popP>=1?1:Math.max(0,backOut(popP))):popP*popP*(3-2*popP);
+  }
+  /* ---------- Geometrie ---------- */
+  function geo(){
+    const vmin=Math.min(innerWidth,innerHeight)/100, D=(innerHeight>innerWidth?SEE.D0hoch:SEE.D0)*vmin, diag=Math.hypot(innerWidth,innerHeight);
+    return {vmin,D,diag,Spass:diag/(D*SEE.open)*1.04};
+  }
+  /* ---------- Steuerung beim Scrollen ---------- */
+  window.sceneRate=1;
+  const sceneAnims=()=>stage.getAnimations({subtree:true});
+  function render(p,pop){
+    const g=geo();
+    // 0) erst in die Inselszene hineinzoomen, dann (langsamer) weiter, bis man durch das Glas ist
+    window.stageZoom=1+(SEE.stageZoom-1)*ease(clamp(p/SEE.pZoom))+.15*smooth(SEE.pZoom,SEE.pPass,p); fit();
+    const S=Math.exp(Math.log(g.Spass)*clamp((p-SEE.pZoom)/(SEE.pPass-SEE.pZoom)));
+    pb.style.visibility=pop>0?'visible':'hidden';
+    pb.style.transform=pop<1?`scale(${pop.toFixed(4)})`:'none';
+    pb.style.setProperty('--D',g.D+'px');
+    pz.style.transform=`scale(${S.toFixed(4)})`;
+    pz.style.display=p<SEE.pPass+.01?'block':'none';
+    const R=g.D*SEE.open/2*S;
+    wclip.style.clipPath=R<g.diag/2*1.02?`circle(${R.toFixed(1)}px at 50% 50%)`:'none';
+    // Landschaft füllt den Kreis immer ganz aus (keine leere Fläche unter dem Boden)
+    const zf=x=>Math.min(1,x*g.D*SEE.open*1.02/Math.min(innerWidth,innerHeight));
+    const zNow=zf(S);
+    // Landschaft im Kreis mittig zeigen (wichtig im Hochformat, wo der Boden unten liegt); beim Durchtauchen Versatz 0
+    const tz=clamp((p-SEE.pZoom)/(SEE.pPass-SEE.pZoom)), yc=innerHeight-1080*seeS/2;
+    const ty=-(yc-innerHeight/2)*zNow*(1-smooth(.55,1,tz));
+    zoomEl.style.transform=`translateY(${ty.toFixed(1)}px) scale(${zNow.toFixed(5)})`;
+    fxK=zNow/zf(1);
+    const blur=1.2*(1-smooth(SEE.pPass-.1,SEE.pPass,p));
+    zoomEl.style.filter=blur>.05&&!touch?`blur(${blur.toFixed(2)}px)`:'none';   // am Handy ohne Unschärfe (spart Rechenzeit)
+    // Absinken: hinten etwas langsamer als vorn
+    const u=ease(clamp((p-SEE.sink[0])/(SEE.sink[1]-SEE.sink[0])));
+    gFar.style.transform=`translateY(${(u*SEE.SINK*.92).toFixed(1)}px)`;
+    gFish.style.transform=`translateY(${(u*SEE.SINK*.97).toFixed(1)}px)`;
+    gLand.style.transform=`translateY(${(u*SEE.SINK).toFixed(1)}px)`;
+    fxDY=u*SEE.SINK*seeS*.45;                                     // Glitzern sinkt langsamer mit als der Boden
+    sea.style.transform=`translateY(${(u*innerHeight*.05).toFixed(1)}px)`;
+    seaDark.style.opacity=(.82*smooth(SEE.sink[0],1,p)).toFixed(3);   // je tiefer, desto dunkler
+    const tt=smooth(SEE.title[0],SEE.title[1],p);
+    titel.style.opacity=tt.toFixed(3); titel.style.transform=`translateY(calc(-50% + ${((1-tt)*30).toFixed(1)}px))`;
+    // Insel-Szene außen wird langsamer und hält an, sobald sie verdeckt ist
+    const rate=1-smooth(0,SEE.pPass,p); window.sceneRate=rate;
+    sceneAnims().forEach(a=>a.playbackRate=rate*speed);
+    stage.style.visibility=p>=SEE.pPass+.01?'hidden':'visible';
+    hint.style.opacity=(1-smooth(0,.03,p)).toFixed(3);
+    if(ui) ui.style.display=p>.02?'none':'';
+  }
+  let cur=0,last=null,lastKey='';
+  addEventListener('resize',()=>{fitSee();sizeFx();lastKey=''});
+  fitSee(); sizeFx();
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function tick(now){
+    const dt=last===null?0:Math.min(.1,(now-last)/1000); last=now;
+    const target=scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight);   // 0 … 1, auch wenn die Handy-Adressleiste die Höhe ändert
+    cur+=(target-cur)*.14; if(Math.abs(target-cur)<1e-4) cur=target;
+    const p=clamp(cur), pop=popScale(p,dt), key=p.toFixed(5)+'|'+pop.toFixed(4);
+    if(key!==lastKey){render(p,pop);lastKey=key}
+    const t=(now-tLoad)/1000;
+    fishAt(reduce?0:t);
+    if(pop>0) drawFx(t,reduce?0:dt);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  window.__seeJump=p=>{cur=p;popP=p>=SEE.pAppear?1:0;scrollTo(0,p*(document.documentElement.scrollHeight-innerHeight))};
+</script>
+</body>
+</html>

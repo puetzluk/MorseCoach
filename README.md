@@ -12,6 +12,16 @@
 - Fortschritt wird im Browser gespeichert (localStorage)
 - Drei Designs: Dunkel, Hell, Funkgerät (die Szene färbt sich live mit um)
 
+## Neue Startszene (in Arbeit): `startszene/`
+
+Aufruf: `startszene/index.html` (online: https://puetzluk.github.io/MorseCoach/startszene/)
+
+- Inselszene mit Krakenschiff, Papierschiff, Wal, Papagei, ziehenden Wolken
+- Beim Scrollen: erst in die Szene hineinzoomen, dann ploppt das Bullauge auf, man fliegt hindurch in eine Unterwasser-Landschaft (Collage aus ausgeschnittenen Böden und Pflanzen, Fische auf einer Linie, Glitzern und Blasen)
+- Weiterscrollen: Landschaft und Fische sinken weg, Titel „Morse Coach“ erscheint; danach soll später die Lernseite folgen
+- Funktioniert am Laptop und am Handy (Hoch- und Querformat)
+- Alles steckt in `startszene/index.html` (CSS und JavaScript inline), Bilder in `startszene/img/`
+
 ## Dateien
 
 - `index.html` – Seitengerüst und alle Bereiche
