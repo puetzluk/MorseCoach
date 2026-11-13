@@ -480,7 +480,7 @@
     width:calc(var(--D) * .6454);height:calc(var(--D) * .6454);
     background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.05));
     box-shadow:inset 0 0 2.5vmin rgba(0,10,20,.6),inset .5vmin .7vmin 1.2vmin rgba(0,0,0,.4)}
-  #titel{position:fixed;left:0;right:0;top:50%;z-index:7;text-align:center;color:#eaf6ff;opacity:0;pointer-events:none;
+  #titel{position:fixed;left:0;right:0;top:50%;z-index:9;text-align:center;color:#eaf6ff;opacity:0;pointer-events:none;
     font-family:Georgia,'Times New Roman',serif;transform:translateY(-50%)}
   #titel h1{margin:0 auto;position:relative;width:min(92vw,940px);aspect-ratio:1946/334}
   #titel h1 img{position:absolute;top:0;height:100%;display:block}
@@ -501,7 +501,7 @@
      Nach dem Titel scrollt man weiter: der Bereich schiebt sich von unten herein (Übergang je nach Design),
      danach füllen die Karten den Bildschirm. Design = html[data-theme] (dunkel | hell | funk). */
   #karten{position:relative;z-index:8}
-  .k-ueber{height:90vh;height:90svh}
+  .k-ueber{height:40vh;height:40svh;margin-top:-60vh;margin-top:-60svh}
   .k-buehne{min-height:100vh;min-height:100svh;display:flex;align-items:center;justify-content:center;
     padding:76px 4vw 4vh;box-sizing:border-box}
   .k-raster{width:min(1180px,100%);height:min(600px,calc(100svh - 110px));display:grid;gap:16px;
@@ -1175,8 +1175,8 @@
     titel.style.opacity=tt.toFixed(3); titel.style.transform=`translateY(calc(-50% + ${((1-tt)*30-ueber).toFixed(1)}px))`;
     titelTippen(tt);
     // Kartenbereich: Design-Schalter erst dort, „Überspringen“ verschwindet
-    designKnopf.classList.toggle('an',ueber>innerHeight*.75);
-    document.documentElement.classList.toggle('cursor-an',ueber>innerHeight*.5);   // Cursor im Design erst unter dem Titel
+    designKnopf.classList.toggle('an',ueber>innerHeight*.45);
+    document.documentElement.classList.toggle('cursor-an',ueber>innerHeight*.3);   // Cursor im Design erst unter dem Titel
     skipKnopf.classList.toggle('weg',ueber>innerHeight*.2);
     // Insel-Szene außen wird langsamer und hält an, sobald sie verdeckt ist
     const rate=1-smooth(0,SEE.pPass,p); window.sceneRate=rate;
