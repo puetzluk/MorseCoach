@@ -1,9 +1,10 @@
 /* Einfacher Offline-Cache: die Seite funktioniert nach dem ersten Laden auch ohne Netz. */
-const CACHE = 'morse-v16';
+const CACHE = 'morse-v17';
 // Grundgerüst der App; die Bilder der Meer-Animation (startszene/) landen beim ersten Laden automatisch im Cache.
 // (Die Icons fehlen im Repo noch – sobald der Ordner icons/ da ist, hier wieder eintragen.)
 const FILES = ['./', 'index.html', 'css/style.css', 'css/intro.css', 'js/morse.js', 'js/storage.js', 'js/game.js',
-  'js/app.js', 'js/intro.js', 'js/hell-fx.js', 'startszene/index.html', 'manifest.webmanifest'];
+  'js/app.js', 'js/intro.js', 'js/hell-fx.js', 'startszene/index.html', 'manifest.webmanifest',
+  'img/logo_dunkel.webp', 'img/logo_hell.webp', 'img/logo_funk.webp'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

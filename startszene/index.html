@@ -438,7 +438,7 @@
        p 0,74 – 0,94  Titel „Morse Coach" erscheint
      Glitzern + Blasen liegen über allem und bleiben die ganze Zeit (dezent);
      das Glitzern zieht beim Hineinzoomen nach außen und beim Absinken mit nach unten. */
-  #scrollspace{height:800vh;height:800svh}
+  #scrollspace{height:620vh;height:620svh}
   /* Handy: Vorschau-Steuerleiste ausblenden, Hinweis tiefer */
   @media (max-width:700px),(pointer:coarse){ #ui{display:none !important} #hint{bottom:28px} }
   html{scrollbar-width:none} html::-webkit-scrollbar{display:none}
@@ -501,7 +501,7 @@
      Nach dem Titel scrollt man weiter: der Bereich schiebt sich von unten herein (Übergang je nach Design),
      danach füllen die Karten den Bildschirm. Design = html[data-theme] (dunkel | hell | funk). */
   #karten{position:relative;z-index:8}
-  .k-ueber{height:40vh;height:40svh;margin-top:-60vh;margin-top:-60svh}
+  .k-ueber{height:40vh;height:40svh;margin-top:-140vh;margin-top:-140svh}
   .k-buehne{min-height:100vh;min-height:100svh;display:flex;align-items:center;justify-content:center;
     padding:76px 4vw 4vh;box-sizing:border-box}
   .k-raster{width:min(1180px,100%);height:min(600px,calc(100svh - 110px));display:grid;gap:16px;
@@ -933,12 +933,12 @@
     D0hoch:62,
     open:.6454,     // Anteil der runden Öffnung (im Foto gemessen)
     stageZoom:1.3,  // so weit zoomt man zuerst in die Inselszene hinein (bis pZoom), danach noch etwas weiter
-    pAppear:.07,    // ab hier ploppt das Bullauge auf (beim Zurückscrollen verschwindet es wieder)
-    pZoom:.10,      // ab hier wird das Bullauge größer
+    pAppear:.094,    // ab hier ploppt das Bullauge auf (beim Zurückscrollen verschwindet es wieder)
+    pZoom:.135,      // ab hier wird das Bullauge größer
     popDur:.75,     // Dauer des Aufploppens (s)
-    pPass:.44,      // hier fliegt man durch das Glas
-    sink:[.50,.82], // Landschaft + Fische sinken nach unten weg
-    title:[.74,.94],// Titel erscheint
+    pPass:.592,      // hier fliegt man durch das Glas
+    sink:[.673,1],  // Landschaft + Fische sinken nach unten weg (die Karten schieben sich am Ende darüber)
+    title:[.75,.846],// Titel erscheint; danach scrollt er mit der Seite nach oben
     SINK:1350,      // so weit (px auf der 1920er-Bühne) sinkt die Landschaft
     laneTop:150, laneBottom:955,   // Bereich, in dem die Fische schwimmen (rote Linien der Skizze, px auf der Bühne)
     felsZeilen:[530, 787],   // Höhe des sichtbaren Felses: wer hier durchschwimmt, verschwindet hinter Fels und Korallen
@@ -1194,7 +1194,7 @@
     const dt=last===null?0:Math.min(.1,(now-last)/1000); last=now;
     // Fortschritt der Animation: 0 … 1 über den Meer-Teil (#scrollspace); danach kommt der Kartenbereich
     const E=Math.max(1,scrollspace.offsetTop+scrollspace.offsetHeight-innerHeight);
-    const target=Math.min(scrollY,E)/E; ueber=Math.max(0,scrollY-E);
+    const target=Math.min(scrollY,E)/E; ueber=Math.max(0,scrollY-E*SEE.title[1]);   // ab hier scrollt der Titel mit, die Karten rücken nach
     cur+=(target-cur)*.14; if(Math.abs(target-cur)<1e-4) cur=target;
     const p=clamp(cur), pop=popScale(p,dt), key=p.toFixed(5)+'|'+pop.toFixed(4)+'|'+Math.round(ueber);
     if(key!==lastKey){render(p,pop);lastKey=key}
