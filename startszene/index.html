@@ -556,6 +556,19 @@
 
   /* --- Funkgerät: Übergang in dunkles Holz; Karten als Messingschilder mit Schrauben --- */
   html[data-theme="funk"] .k-ueber{background:linear-gradient(rgba(45,30,18,0.000) 0.0%,rgba(45,30,18,0.003) 7.1%,rgba(45,30,18,0.023) 14.3%,rgba(45,30,18,0.069) 21.4%,rgba(45,30,18,0.145) 28.6%,rgba(45,30,18,0.246) 35.7%,rgba(45,30,18,0.368) 42.9%,rgba(45,30,18,0.500) 50.0%,rgba(45,30,18,0.632) 57.1%,rgba(45,30,18,0.754) 64.3%,rgba(45,30,18,0.855) 71.4%,rgba(45,30,18,0.931) 78.6%,rgba(45,30,18,0.977) 85.7%,rgba(45,30,18,0.997) 92.9%,rgba(45,30,18,1.000) 100.0%)}
+  /* Funk: Übergang = Schiffsrumpf (Holz in Rumpfform + Messingkante mit Säbeln und Medaillon; der Morsering dreht sich) */
+  .k-rumpf{display:none}
+  html[data-theme="funk"] .k-ueber{background:none;position:relative;overflow:hidden;
+    min-height:calc(max(100vw,1000px) * 0.2181 + 40px)}
+  html[data-theme="funk"] .k-rumpf{display:block;--rw:max(100vw,1000px);position:absolute;left:0;right:0;bottom:0;
+    height:calc(var(--rw) * 0.2181);pointer-events:none}
+  .k-rumpf-holz,.k-rumpf-deko{position:absolute;inset:0}
+  .k-rumpf-holz{background:repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 2px,transparent 2px 7px),
+    repeating-linear-gradient(90deg,rgba(255,190,110,.035) 0 1px,transparent 1px 13px),#2d1e12;
+    -webkit-mask:url(img/see/rumpf_maske.png) center bottom / var(--rw) 100% no-repeat;mask:url(img/see/rumpf_maske.png) center bottom / var(--rw) 100% no-repeat}
+  .k-rumpf-deko{background:url(img/see/rumpf_kante.webp) center bottom / var(--rw) 100% no-repeat}
+  .k-rumpf-ring{position:absolute;left:50%;top:46.587%;width:calc(var(--rw) * 0.09062);height:auto;
+    transform:translate(-50%,-50%) rotate(var(--dreh,0deg));will-change:transform}
   html[data-theme="funk"] .k-buehne{background:
     repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 2px,transparent 2px 7px),
     repeating-linear-gradient(90deg,rgba(255,190,110,.035) 0 1px,transparent 1px 13px),linear-gradient(#2d1e12,#1b120a)}
@@ -863,7 +876,10 @@
 <div id="titel"><h1 aria-label="Morse Coach"></h1></div>
 <div id="scrollspace"></div>
 <section id="karten" aria-label="Lernbereiche">
-  <div class="k-ueber"></div>
+  <div class="k-ueber">
+    <!-- Funkgerät: Schiffsrumpf mit verzierter Messingkante schiebt sich herein -->
+    <div class="k-rumpf" aria-hidden="true"><div class="k-rumpf-holz"></div><div class="k-rumpf-deko"></div><img class="k-rumpf-ring" src="img/see/rumpf_ring.webp" alt=""></div>
+  </div>
   <div class="k-buehne">
     <!-- Deko hinter den Karten: Fische (Hell/Dunkel), Wrack (Dunkel), Zettel und Glühbirne (Funk) -->
     <div class="k-deko">
@@ -1327,6 +1343,11 @@
       return {x:Math.random()*kW,y:Math.random()*kH,r:.6+1.1*Math.random(),vx:Math.cos(a)*v,vy:Math.sin(a)*v,o:.4+.5*Math.random(),bs:.8+2*Math.random(),bo:Math.random()*6.3};});
   }
   addEventListener('resize',kGroesse); kGroesse();
+  /* Morsering im Medaillon dreht sich mit dem Scrollen (runter = im Uhrzeigersinn) */
+  const rumpfRing=karten.querySelector('.k-rumpf-ring');
+  let ringAuf=false;
+  addEventListener('scroll',()=>{ if(ringAuf||document.documentElement.dataset.theme!=='funk') return; ringAuf=true;
+    requestAnimationFrame(()=>{ ringAuf=false; rumpfRing.style.setProperty('--dreh',(scrollY*.18).toFixed(1)+'deg'); }); },{passive:true});
   function kSchritt(now){
     const dt=kLast===null?0:Math.min(.1,(now-kLast)/1000); kLast=now;
     if(ueber>0&&document.documentElement.dataset.theme==='hell'){
