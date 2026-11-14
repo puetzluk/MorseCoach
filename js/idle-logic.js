@@ -44,7 +44,7 @@ const IdleLogic = (table) => {
     solved: 0,              // gelöste Aufgaben
     bestStreak: 0,
     koch: { level: CFG.startLevel, recent: [] },
-    settings: { task: 'mix', confirm: 'auto', tempo: 1 }
+    settings: { task: 'mix', tempo: 1 }   // Eingabe und Bestätigung: Einstellungen, Bereich Games
   });
 
   // Speicherstand auffüllen und auf gültige Werte begrenzen
@@ -60,7 +60,7 @@ const IdleLogic = (table) => {
     const tp = Math.round(Number(g.settings.tempo));
     g.settings.tempo = Number.isFinite(tp) ? Math.max(0, Math.min(CFG.tempos.length - 1, tp)) : 1;
     if (['mix', 'sehen', 'tasten'].indexOf(g.settings.task) < 0) g.settings.task = 'mix';
-    if (['auto', 'enter'].indexOf(g.settings.confirm) < 0) g.settings.confirm = 'auto';
+    delete g.settings.confirm;
     ['dots', 'total', 'solved', 'bestStreak'].forEach(k => { g[k] = Number(g[k]) || 0; });
     return g;
   }

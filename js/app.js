@@ -106,6 +106,9 @@
     clearTimeout(L.timer);
     clearTimeout(T.timer);
     clearTimeout(T.auto);
+    clearTimeout(L.auto);
+    clearTimeout(H.auto);
+    sendKeyer.cancel();
     if (name !== 'spiel') Idle.hide();
     $$('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
     $$('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
@@ -117,7 +120,10 @@
     if (name === 'start') renderStart();
     if (name === 'lernen') { pickers.lernen.render(); renderLernMeter(); }
     if (name === 'hoeren') { pickers.hoeren.render(); renderHoer(); }
-    if (name === 'senden') { pickers.senden.render(); sendNext(); }
+    if (name === 'senden') { pickers.senden.render(); renderSendMode(); sendNext(); }
+    if (name === 'lernen') renderLernMode();
+    if (name === 'hoeren') renderHoerMode();
+    if (name === 'einstellungen') renderAreaSettings();
     if (name === 'spiel') Idle.show();
     if (name === 'statistik') renderStats();
     updateHeaderHeight();
@@ -166,14 +172,14 @@
   function showSetting(key) {
     const val = S.settings[key];
     $$('input[data-set="' + key + '"]').forEach(e => { e.value = val; });
-    $$('[data-out="' + key + '"]').forEach(o => { o.textContent = key === 'confirmDelay' ? Number(val).toFixed(1) : val; });
+    $$('[data-out="' + key + '"]').forEach(o => { o.textContent = val; });
   }
   $$('input[data-set]').forEach(el => {
     const key = el.dataset.set;
     el.addEventListener('input', () => { S.settings[key] = Number(el.value); showSetting(key); save(); });
     el.addEventListener('change', () => { if (key === 'freq' || key === 'vol') Morse.beep(1, audioOpts()); });
   });
-  ['cwpm', 'wpm', 'freq', 'vol', 'confirmDelay'].forEach(showSetting);
+  ['cwpm', 'wpm', 'freq', 'vol'].forEach(showSetting);
 
   // Eingeklappte Leiste (kleine Bildschirme)
   $('#qToggle').addEventListener('click', () => {
@@ -292,7 +298,8 @@
   }
 
   /* ---------- Lernen ---------- */
-  const L = { cur: null, prev: null, busy: false, timer: null };
+  const L = { cur: null, prev: null, busy: false, timer: null, auto: null };
+  const lernAS = () => S.settings.areas.lernen;
 
   function renderLernMeter() {
     const koch = S.sel.lernen.method === 'koch';
@@ -310,7 +317,8 @@
     L.cur = pickChar('lernen', L.prev);
     L.prev = L.cur;
     $('#lernAnzeige').textContent = '?';
-    $('#lernCode').textContent = S.settings.hint ? symbols(Morse.TABLE[L.cur]) : '';
+    $('#lernCode').textContent = lernAS().hint ? symbols(Morse.TABLE[L.cur]) : '';
+    clearTimeout(L.auto);
     fb.textContent = '';
     fb.className = 'feedback';
     $('#lernInput').value = '';
@@ -357,17 +365,61 @@
     L.timer = setTimeout(lernNext, wait);
   }
 
+  // Bestätigung je nach Einstellung: sofort, nach einer Pause oder mit Enter
+  function lernSubmit() {
+    clearTimeout(L.auto);
+    const v = $('#lernInput').value.trim().toUpperCase();
+    if (!v || !L.cur || L.busy) return;
+    $('#lernInput').value = '';
+    lernAnswer(v.slice(-1));
+  }
+  function renderLernMode() {
+    const c = lernAS().confirm;
+    $('#lernInput').placeholder = 'Zeichen eintippen' + (c === 'enter' ? ', dann Enter' : '');
+    $('#lernMode').textContent = 'Bestätigung: ' + Keyer.label(lernAS());
+    if (L.cur && !L.busy) $('#lernCode').textContent = lernAS().hint ? symbols(Morse.TABLE[L.cur]) : '';
+  }
   $('#lernInput').addEventListener('input', e => {
     const raw = e.target.value.trim().toUpperCase();
-    e.target.value = '';
-    if (!raw || !L.cur || L.busy) return;
-    lernAnswer(raw.slice(-1));
+    if (!L.cur || L.busy) { e.target.value = ''; return; }
+    const ch = raw.slice(-1);
+    const a = lernAS();
+    clearTimeout(L.auto);
+    if (a.confirm === 'sofort') { e.target.value = ''; if (ch) lernAnswer(ch); return; }
+    e.target.value = ch;
+    if (ch && a.confirm === 'pause') L.auto = setTimeout(lernSubmit, a.delay * 1000);
   });
+  $('#lernInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lernSubmit(); } });
   $('#lernStart').addEventListener('click', () => { clearTimeout(L.timer); lernNext(); });
   $('#lernReplay').addEventListener('click', () => { if (L.cur) { Morse.play(L.cur, audioOpts()); $('#lernInput').focus(); } });
 
   /* ---------- Hören ---------- */
-  const H = { text: '' };
+  const H = { text: '', auto: null, playing: false };
+  const hoerAS = () => S.settings.areas.hoeren;
+  // Getippter Text, wie er geprüft wird (Wörter/Sätze: Umlaute als AE usw.)
+  function hoerTyped() {
+    const lv = HLEVELS[S.hoerLevel];
+    let typed = $('#hoerInput').value.toUpperCase();
+    if (lv.words || lv.sentences) typed = typed.replace(/Ä/g, 'AE').replace(/Ö/g, 'OE').replace(/Ü/g, 'UE').replace(/ß/g, 'SS');
+    return typed.replace(/\s/g, '');
+  }
+  function hoerPlay() {
+    H.playing = true;
+    Morse.play(H.text, hoerOpts()).then(() => { H.playing = false; hoerArm(); });
+  }
+  // Automatische Bestätigung nach einer Pause (erst, wenn nichts mehr abgespielt wird)
+  function hoerArm() {
+    clearTimeout(H.auto);
+    const a = hoerAS();
+    if (!H.text || a.confirm !== 'pause' || H.playing || !hoerTyped()) return;
+    H.auto = setTimeout(hoerCheck, a.delay * 1000);
+  }
+  function renderHoerMode() {
+    const c = hoerAS().confirm;
+    $('#hoerInput').placeholder = 'Gehörtes hier eintippen' + (c === 'enter' ? ', dann Enter' : '');
+    $('#hoerMode').textContent = 'Bestätigung: ' + Keyer.label(hoerAS())
+      + (c === 'sofort' ? ' (sobald so viele Zeichen getippt sind, wie gesendet wurden)' : '');
+  }
 
   function renderHoer() {
     const seg = $('#hoerLevels');
@@ -456,22 +508,29 @@
     H.text = buildHoerText();
     $('#hoerInput').value = '';
     $('#hoerTempo').textContent = S.hoerenWpm;
-    Morse.play(H.text, hoerOpts());
+    hoerPlay();
     $('#hoerInput').focus();
   });
-  $('#hoerReplay').addEventListener('click', () => { if (H.text) Morse.play(H.text, hoerOpts()); });
+  $('#hoerReplay').addEventListener('click', () => { if (H.text) { clearTimeout(H.auto); hoerPlay(); } });
+  $('#hoerInput').addEventListener('input', () => {
+    if (!H.text) return;
+    if (hoerAS().confirm === 'sofort') {
+      if (hoerTyped().length >= H.text.replace(/\s/g, '').length) hoerCheck();
+    } else hoerArm();
+  });
+  $('#hoerInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && hoerAS().confirm === 'enter') { e.preventDefault(); hoerCheck(); }
+  });
   $('#hoerMinus').addEventListener('click', () => { if (S.hoerenWpm > 5) { S.hoerenWpm--; save(); $('#hoerTempo').textContent = S.hoerenWpm; } });
   $('#hoerPlus').addEventListener('click', () => { if (S.hoerenWpm < 40) { S.hoerenWpm++; save(); $('#hoerTempo').textContent = S.hoerenWpm; } });
 
-  $('#hoerCheck').addEventListener('click', () => {
+  $('#hoerCheck').addEventListener('click', () => hoerCheck());
+  function hoerCheck() {
+    clearTimeout(H.auto);
     if (!H.text) return;
     Morse.stop();
-    const lv = HLEVELS[S.hoerLevel];
-    let typed = $('#hoerInput').value.toUpperCase();
-    if (lv.words || lv.sentences) {
-      typed = typed.replace(/Ä/g, 'AE').replace(/Ö/g, 'OE').replace(/Ü/g, 'UE').replace(/ß/g, 'SS');
-    }
-    typed = typed.replace(/\s/g, '');
+    H.playing = false;
+    const typed = hoerTyped();
     const target = H.text.replace(/\s/g, '');
     const al = align(target, typed);
     let correct = 0;
@@ -510,14 +569,34 @@
     $('#hoerTempo').textContent = S.hoerenWpm;
     H.text = '';
     save();
+  }
+
+  /* ---------- Senden (Eingabe über js/keyer.js: Maus, Leertaste oder E/T) ---------- */
+  const T = { target: null, prev: null, pat: '', locked: false, timer: null, auto: null };
+  const sendAS = () => S.settings.areas.senden;
+  const sendKeyer = Keyer.create({
+    field: $('#sendFeld'),
+    timingBox: $('#sendTiming'),
+    settings: sendAS,
+    active: () => activeTab === 'senden' && !!T.target && !T.locked,
+    audioOpts: () => audioOpts(),
+    onSymbol: sym => sendSym(sym)
   });
 
-  /* ---------- Senden (Tasten E = kurz, T = lang) ---------- */
-  const T = { target: null, prev: null, pat: '', locked: false, timer: null, auto: null };
+  // Hinweise und Knöpfe passend zur eingestellten Eingabe
+  function renderSendMode() {
+    const a = sendAS();
+    $('#sendHinweis').textContent = Keyer.describe(a);
+    $('#sendModus').textContent = Keyer.label(a, true);
+    $('#sendKeys').hidden = a.input !== 'et';
+    $('#sendOk').hidden = a.confirm === 'sofort';
+    sendKeyer.refresh();
+    renderSend();
+  }
 
   function renderSend() {
     $('#sendAnzeige').textContent = T.target || '?';
-    $('#sendCode').textContent = (S.settings.hint && T.target) ? symbols(Morse.TABLE[T.target]) : '';
+    $('#sendCode').textContent = (sendAS().hint && T.target) ? symbols(Morse.TABLE[T.target]) : '';
     $('#sendMuster').textContent = T.pat ? symbols(T.pat) : ' ';
   }
 
@@ -526,6 +605,7 @@
     clearTimeout(T.auto);
     T.pat = '';
     T.locked = false;
+    sendKeyer.clear();
     const fb = $('#sendFeedback');
     fb.textContent = '';
     fb.className = 'feedback';
@@ -537,9 +617,8 @@
 
   function armAuto() {
     clearTimeout(T.auto);
-    if (S.settings.autoConfirm && T.pat && !T.locked) {
-      T.auto = setTimeout(sendConfirm, S.settings.confirmDelay * 1000);
-    }
+    const a = sendAS();
+    if (a.confirm === 'pause' && T.pat && !T.locked) T.auto = setTimeout(sendConfirm, a.delay * 1000);
   }
 
   function pressAnim(sym) {
@@ -552,10 +631,13 @@
   function sendSym(sym) {
     if (!T.target || T.locked || T.pat.length >= 7) return;
     T.pat += sym;
-    Morse.beep(sym === '.' ? 1 : 3, audioOpts());
     pressAnim(sym);
     renderSend();
-    armAuto();
+    if (sendAS().confirm === 'sofort') {
+      // sofort prüfen: fertig, sobald das Zeichen vollständig ist oder nicht mehr passen kann
+      const code = Morse.TABLE[T.target];
+      if (T.pat === code || code.indexOf(T.pat) !== 0) sendConfirm();
+    } else armAuto();
   }
   function sendBack() {
     if (T.locked) return;
@@ -582,12 +664,12 @@
     T.timer = setTimeout(sendNext, ok ? 600 : 1800);
   }
 
-  // Knöpfe: sofort bei Berührung/Klick; Tastatur-Aktivierung (click ohne Zeigerereignis) bleibt erhalten
+  // Knöpfe Kurz/Lang (Eingabe E/T): sofort bei Berührung/Klick; Tastatur-Aktivierung bleibt erhalten
   function bindKeyButton(sel, sym) {
     const b = $(sel);
-    b.addEventListener('pointerdown', e => { e.preventDefault(); sendSym(sym); });
+    b.addEventListener('pointerdown', e => { e.preventDefault(); sendKeyer.tap(sym); });
     b.addEventListener('contextmenu', e => e.preventDefault());
-    b.addEventListener('click', e => { if (e.detail === 0) sendSym(sym); });
+    b.addEventListener('click', e => { if (e.detail === 0) sendKeyer.tap(sym); });
   }
   bindKeyButton('#sendKurz', '.');
   bindKeyButton('#sendLang', '-');
@@ -597,13 +679,13 @@
   document.addEventListener('keydown', e => {
     if (activeTab !== 'senden' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.target.matches('textarea, select, input[type="text"]')) return;
+    // Punkte und Striche kommen aus js/keyer.js; hier nur Bestätigen und Löschen
     const k = e.key.toLowerCase();
-    if (['e', 't', ' ', 'enter', 'backspace'].indexOf(k) < 0) return;
+    const space = k === ' ' && sendAS().input !== 'leertaste';
+    if (k !== 'enter' && k !== 'backspace' && !space) return;
     if (e.target.matches('button, input')) e.target.blur();
     e.preventDefault();
-    if (k === 'e') sendSym('.');
-    else if (k === 't') sendSym('-');
-    else if (k === 'backspace') sendBack();
+    if (k === 'backspace') sendBack();
     else sendConfirm();
   });
 
@@ -772,15 +854,77 @@
   $$('#periodSeg button').forEach(b => b.addEventListener('click', () => { statPeriod = b.dataset.period; renderStats(); }));
 
   /* ---------- Einstellungen ---------- */
-  $('#setHint').checked = S.settings.hint;
-  $('#setHint').addEventListener('change', e => {
-    S.settings.hint = e.target.checked;
+  /* Eingabe & Bestätigung je Bereich: jeder Bereich hat dieselben Punkte, unabhängig eingestellt.
+     Was in einem Bereich keine Rolle spielt, wird dort ausgeblendet. */
+  const AREA_INFO = {
+    lernen: { opts: ['confirm', 'delay', 'hint'],
+      note: 'Beim Lernen hörst du ein Zeichen und tippst den Buchstaben. Punkte und Striche gibst du hier nicht ein.' },
+    hoeren: { opts: ['confirm', 'delay'],
+      note: 'Beim Hören tippst du die gehörten Zeichen als Text ein. Punkte und Striche gibst du hier nicht ein.' },
+    senden: { opts: ['input', 'left', 'confirm', 'delay', 'timing', 'hint'],
+      note: 'Beim Senden gibst du jedes Zeichen als Punkte und Striche ein.' },
+    spiel: { opts: ['input', 'left', 'confirm', 'delay', 'timing'],
+      note: 'Gilt für die Aufgaben „Mit Morse eingeben“. Beim Erkennen tippst du den Buchstaben.' }
+  };
+  const CONFIRM_TEXT = {
+    sofort: 'Geprüft wird, sobald die Eingabe fertig ist oder nicht mehr passen kann.',
+    pause: 'Geprüft wird, wenn du eine Weile nichts eingibst.',
+    enter: 'Du bestätigst selbst mit Enter (oder dem Knopf Bestätigen).'
+  };
+  let setArea = 'senden';
+
+  function renderAreaSettings() {
+    const a = S.settings.areas[setArea];
+    const info = AREA_INFO[setArea];
+    $$('#areaSeg button').forEach(b => b.classList.toggle('active', b.dataset.area === setArea));
+    $('#areaNote').textContent = info.note;
+    $$('#eingabeCard [data-opt]').forEach(row => {
+      const o = row.dataset.opt;
+      let show = info.opts.indexOf(o) >= 0;
+      if (o === 'left') show = show && a.input === 'maus';
+      if (o === 'timing') show = show && a.input !== 'et';
+      if (o === 'delay') show = show && a.confirm === 'pause';
+      row.hidden = !show;
+    });
+    $$('#setInput button').forEach(b => b.classList.toggle('active', b.dataset.v === a.input));
+    $$('#setConfirm button').forEach(b => b.classList.toggle('active', b.dataset.v === a.confirm));
+    $('#setConfirmText').textContent = CONFIRM_TEXT[a.confirm];
+    $('#setLeft').checked = a.left;
+    $('#setTiming').checked = a.timing;
+    $('#setHint').checked = a.hint;
+    $('#setDelay').value = a.delay;
+    $('#setDelayOut').textContent = Number(a.delay).toFixed(1).replace('.', ',');
+  }
+
+  // Ein Bereich wurde umgestellt: dessen Anzeige auffrischen
+  function areaChanged(area) {
     save();
-    if (L.cur && !L.busy) $('#lernCode').textContent = S.settings.hint ? symbols(Morse.TABLE[L.cur]) : '';
-    if (T.target) renderSend();
+    renderAreaSettings();
+    if (area === 'senden') renderSendMode();
+    if (area === 'lernen') renderLernMode();
+    if (area === 'hoeren') renderHoerMode();
+    if (area === 'spiel') Idle.refresh();
+  }
+  const setOpt = (key, val) => { S.settings.areas[setArea][key] = val; areaChanged(setArea); };
+
+  $$('#areaSeg button').forEach(b => b.addEventListener('click', () => { setArea = b.dataset.area; renderAreaSettings(); }));
+  $$('#setInput button').forEach(b => b.addEventListener('click', () => setOpt('input', b.dataset.v)));
+  $$('#setConfirm button').forEach(b => b.addEventListener('click', () => setOpt('confirm', b.dataset.v)));
+  $('#setLeft').addEventListener('change', e => setOpt('left', e.target.checked));
+  $('#setTiming').addEventListener('change', e => setOpt('timing', e.target.checked));
+  $('#setHint').addEventListener('change', e => setOpt('hint', e.target.checked));
+  $('#setDelay').addEventListener('input', e => setOpt('delay', Number(e.target.value)));
+
+  // "Ändern" in einem Bereich: Einstellungen mit diesem Bereich öffnen
+  function openAreaSettings(area) {
+    setArea = area;
+    showTab('einstellungen');
+    $('#eingabeCard').scrollIntoView({ block: 'start' });
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-area-settings]');
+    if (b) openAreaSettings(b.dataset.areaSettings);
   });
-  $('#setAuto').checked = S.settings.autoConfirm;
-  $('#setAuto').addEventListener('change', e => { S.settings.autoConfirm = e.target.checked; save(); });
   $('#resetAll').addEventListener('click', () => {
     if (confirm('Wirklich den gesamten Fortschritt löschen?')) {
       S = Store.reset();
@@ -789,7 +933,7 @@
   });
 
   /* ---------- Games: Idle-Spiel (js/idle.js) ---------- */
-  Idle.init({ getState: () => S, save: save, audioOpts: audioOpts });
+  Idle.init({ getState: () => S, save: save, audioOpts: audioOpts, area: () => S.settings.areas.spiel });
 
   // Schnittstelle für js/intro.js (Intro der Meer-Animation)
   window.MorseApp = { showTab: showTab, audioOpts: audioOpts, setTheme: setTheme, theme: () => S.settings.theme };
