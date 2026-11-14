@@ -861,9 +861,9 @@
       note: 'Beim Lernen hörst du ein Zeichen und tippst den Buchstaben. Punkte und Striche gibst du hier nicht ein.' },
     hoeren: { opts: ['confirm', 'delay'],
       note: 'Beim Hören tippst du die gehörten Zeichen als Text ein. Punkte und Striche gibst du hier nicht ein.' },
-    senden: { opts: ['input', 'left', 'confirm', 'delay', 'timing', 'hint'],
+    senden: { opts: ['input', 'right', 'confirm', 'delay', 'timing', 'hint'],
       note: 'Beim Senden gibst du jedes Zeichen als Punkte und Striche ein.' },
-    spiel: { opts: ['input', 'left', 'confirm', 'delay', 'timing'],
+    spiel: { opts: ['input', 'right', 'confirm', 'delay', 'timing'],
       note: 'Gilt für die Aufgaben „Mit Morse eingeben“. Beim Erkennen tippst du den Buchstaben.' }
   };
   const CONFIRM_TEXT = {
@@ -881,7 +881,7 @@
     $$('#eingabeCard [data-opt]').forEach(row => {
       const o = row.dataset.opt;
       let show = info.opts.indexOf(o) >= 0;
-      if (o === 'left') show = show && a.input === 'maus';
+      if (o === 'right') show = show && a.input === 'maus';
       if (o === 'timing') show = show && a.input !== 'et';
       if (o === 'delay') show = show && a.confirm === 'pause';
       row.hidden = !show;
@@ -889,7 +889,7 @@
     $$('#setInput button').forEach(b => b.classList.toggle('active', b.dataset.v === a.input));
     $$('#setConfirm button').forEach(b => b.classList.toggle('active', b.dataset.v === a.confirm));
     $('#setConfirmText').textContent = CONFIRM_TEXT[a.confirm];
-    $('#setLeft').checked = a.left;
+    $('#setRight').checked = a.right;
     $('#setTiming').checked = a.timing;
     $('#setHint').checked = a.hint;
     $('#setDelay').value = a.delay;
@@ -910,7 +910,7 @@
   $$('#areaSeg button').forEach(b => b.addEventListener('click', () => { setArea = b.dataset.area; renderAreaSettings(); }));
   $$('#setInput button').forEach(b => b.addEventListener('click', () => setOpt('input', b.dataset.v)));
   $$('#setConfirm button').forEach(b => b.addEventListener('click', () => setOpt('confirm', b.dataset.v)));
-  $('#setLeft').addEventListener('change', e => setOpt('left', e.target.checked));
+  $('#setRight').addEventListener('change', e => setOpt('right', e.target.checked));
   $('#setTiming').addEventListener('change', e => setOpt('timing', e.target.checked));
   $('#setHint').addEventListener('change', e => setOpt('hint', e.target.checked));
   $('#setDelay').addEventListener('input', e => setOpt('delay', Number(e.target.value)));

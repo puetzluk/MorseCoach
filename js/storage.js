@@ -10,7 +10,7 @@ const Store = (() => {
   const AREAS = ['lernen', 'hoeren', 'senden', 'spiel'];
   const baseArea = () => ({
     input: 'maus',          // Tasten: 'maus' (Feld, Druckdauer) | 'leertaste' (Druckdauer) | 'et' (E = kurz, T = lang)
-    left: false,            // Maus: auch die linke Taste zählt (rechte zählt immer)
+    right: false,           // Maus: auch die rechte Taste zählt (linke zählt immer)
     confirm: 'sofort',      // 'sofort' | 'pause' | 'enter'
     delay: 1.0,             // Sekunden Pause bei 'pause'
     timing: true,           // Druckdauer anzeigen
@@ -68,6 +68,7 @@ const Store = (() => {
         const a = Object.assign(baseArea(), areas[k]);
         if (!areas[k] && old.hint && (k === 'lernen' || k === 'senden')) a.hint = true;
         if (!areas[k] && k === 'senden' && old.confirmDelay) a.delay = Number(old.confirmDelay) || 1;
+        delete a.left;      // früher: linke Taste zulassen (damals war rechts Standard)
         if (['maus', 'leertaste', 'et'].indexOf(a.input) < 0) a.input = 'maus';
         if (['sofort', 'pause', 'enter'].indexOf(a.confirm) < 0) a.confirm = 'sofort';
         a.delay = Math.min(3, Math.max(0.5, Number(a.delay) || 1));
