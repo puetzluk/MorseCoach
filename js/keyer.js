@@ -1,7 +1,7 @@
 /* Tasten-Eingabe für Senden und Games: aus einem Druck wird ein Punkt oder ein Strich.
 
    Drei Eingabearten (Einstellungen je Bereich):
-   - 'maus':      im Tastenfeld drücken (rechte Maustaste, wahlweise auch die linke; am Handy der Finger).
+   - 'maus':      im Tastenfeld drücken (linke Maustaste, wahlweise auch die rechte; am Handy der Finger).
                   Kurz drücken = Punkt, länger halten = Strich.
    - 'leertaste': Leertaste kurz = Punkt, länger = Strich.
    - 'et':        Taste E = Punkt, Taste T = Strich (ohne Timing), dazu die Knöpfe Kurz/Lang.
@@ -12,7 +12,7 @@
    Aufruf: const k = Keyer.create({ field, timingBox, settings, active, audioOpts, onSymbol });
    - field:     Element, in dem mit der Maus/dem Finger gedrückt wird
    - timingBox: Element für die Anzeige der Druckdauer (oder null)
-   - settings(): Einstellungen des Bereichs ({ input, left, timing })
+   - settings(): Einstellungen des Bereichs ({ input, right, timing })
    - active():  true, wenn der Bereich gerade Eingaben annimmt
    - audioOpts(): Tonhöhe, Lautstärke, Tempo (cwpm)
    - onSymbol(sym, ms): sym = '.' oder '-', ms = Druckdauer (bei E/T null) */
@@ -62,8 +62,8 @@ const Keyer = (() => {
     o.field.addEventListener('pointerdown', e => {
       if (mode() !== 'maus') return;
       const mouse = e.pointerType === 'mouse';
-      if (mouse && !(e.button === 2 || (e.button === 0 && o.settings().left))) {
-        if (e.button === 0) hint('Rechte Maustaste drücken (linke Taste kannst du in den Einstellungen zulassen).');
+      if (mouse && !(e.button === 0 || (e.button === 2 && o.settings().right))) {
+        if (e.button === 2) hint('Linke Maustaste drücken (die rechte Taste kannst du in den Einstellungen zulassen).');
         return;
       }
       e.preventDefault();
@@ -165,7 +165,6 @@ const Keyer = (() => {
     function refresh() {
       const m = mode();
       o.field.hidden = m !== 'maus';
-      o.field.classList.toggle('left-ok', !!o.settings().left);
       renderTiming();
     }
 
@@ -180,7 +179,7 @@ const Keyer = (() => {
     const t = touchOnly();
     let inp;
     if (a.input === 'maus') inp = t ? 'Feld antippen: kurz = Punkt, länger halten = Strich.'
-      : 'Im Feld drücken (' + (a.left ? 'rechte oder linke' : 'rechte') + ' Maustaste): kurz = Punkt, länger halten = Strich.';
+      : 'Im Feld drücken (' + (a.right ? 'linke oder rechte' : 'linke') + ' Maustaste): kurz = Punkt, länger halten = Strich.';
     else if (a.input === 'leertaste') inp = 'Leertaste: kurz = Punkt, länger halten = Strich.';
     else inp = 'Taste E = kurz, T = lang' + (t ? ' oder die Knöpfe.' : '.');
     const conf = a.confirm === 'sofort' ? 'Geprüft wird sofort.'

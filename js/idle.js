@@ -222,9 +222,14 @@ const Idle = (() => {
     else if (errors >= 2) help = 'Lösung: ' + (see ? cur.ch : sym(cur.code));
     $('#idHelp').textContent = help;
     $('#idInput').textContent = input ? (see ? input : sym(input)) : ' ';
-    $('#idKeys').hidden = see || a.input !== 'et';
-    $('#idFeld').hidden = see || a.input !== 'maus';
-    $('#idTiming').hidden = see || !a.timing || a.input === 'et';
+    // Eingabefeld, Knöpfe und Druckdauer bleiben immer an derselben Stelle (kein Springen beim Wechsel der
+    // Aufgabenart); bei "Morse erkennen" sind sie nur abgeblendet
+    $('#idKeys').hidden = a.input !== 'et';
+    $$('#idKeys button').forEach(b => { b.disabled = see; });
+    $('#idFeld').hidden = a.input !== 'maus';
+    $('#idFeld').classList.toggle('off', see);
+    $('#idFeld span').textContent = see ? 'Jetzt den Buchstaben auf der Tastatur tippen' : 'Hier drücken';
+    $('#idTiming').hidden = !a.timing || a.input === 'et';
     $('#idCtl').hidden = a.confirm === 'sofort';
     $('#idModus').textContent = Keyer.label(a, true);
   }
