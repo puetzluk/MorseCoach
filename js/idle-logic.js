@@ -44,7 +44,7 @@ const IdleLogic = (table) => {
     solved: 0,              // gelöste Aufgaben
     bestStreak: 0,
     koch: { level: CFG.startLevel, recent: [] },
-    settings: { task: 'mix', tempo: 1 }   // Eingabe und Bestätigung: Einstellungen, Bereich Games
+    settings: { tempo: 1 }   // Eingabe und Bestätigung: Einstellungen, Bereich Games
   });
 
   // Speicherstand auffüllen und auf gültige Werte begrenzen
@@ -59,7 +59,7 @@ const IdleLogic = (table) => {
     g.koch.recent = Array.isArray(g.koch.recent) ? g.koch.recent.slice(-CFG.recentMax) : [];
     const tp = Math.round(Number(g.settings.tempo));
     g.settings.tempo = Number.isFinite(tp) ? Math.max(0, Math.min(CFG.tempos.length - 1, tp)) : 1;
-    if (['mix', 'sehen', 'tasten'].indexOf(g.settings.task) < 0) g.settings.task = 'mix';
+    delete g.settings.task;  // Aufgabenart ist nicht mehr wählbar: immer gemischt
     delete g.settings.confirm;
     ['dots', 'total', 'solved', 'bestStreak'].forEach(k => { g[k] = Number(g[k]) || 0; });
     return g;
@@ -113,10 +113,8 @@ const IdleLogic = (table) => {
     return list[list.length - 1];
   }
 
-  // 'sehen' = Morsecode sehen, Buchstaben tippen; 'tasten' = Buchstaben sehen, mit E/T eingeben
+  // Immer gemischt: 'sehen' = Morsecode sehen, Buchstaben tippen; 'tasten' = Buchstaben sehen, Code eingeben
   function pickType(g, rand) {
-    const t = g.settings.task;
-    if (t !== 'mix') return t;
     return (rand || Math.random)() < 0.5 ? 'sehen' : 'tasten';
   }
 

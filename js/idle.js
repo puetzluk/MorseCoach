@@ -263,7 +263,6 @@ const Idle = (() => {
   }
 
   function renderSettings() {
-    $$('#idSetTask button').forEach(b => b.classList.toggle('active', b.dataset.v === g.settings.task));
     $$('#idSetTempo button').forEach(b => b.classList.toggle('active', Number(b.dataset.v) === g.settings.tempo));
     const t = L.CFG.tempos[g.settings.tempo];
     $('#idTempoInfo').textContent = 'Zeitfenster x' + t.time.toLocaleString('de-DE') + ', Dots x'
@@ -278,7 +277,6 @@ const Idle = (() => {
       g.settings[key] = numeric ? Number(b.dataset.v) : b.dataset.v;
       host.save();
       renderSettings();
-      if (key === 'task') { nxt = L.newTask(g, cur && cur.ch, quoteFn); renderNext(); }
     }));
   }
 
@@ -338,7 +336,6 @@ const Idle = (() => {
     bindKey('#idLang', '-');
     $('#idErase').addEventListener('click', erase);
     $('#idOk').addEventListener('click', submit);
-    bindSetting('#idSetTask', 'task', false);
     bindSetting('#idSetConfirm', 'confirm', false);
     bindSetting('#idSetTempo', 'tempo', true);
   }
