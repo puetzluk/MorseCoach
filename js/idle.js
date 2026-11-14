@@ -3,7 +3,8 @@
 
    Aufgabenarten:
    - "sehen":  Morsecode wird angezeigt → Buchstaben auf der Tastatur tippen
-   - "tasten": Buchstabe wird angezeigt → Code mit E (kurz) und T (lang) eingeben */
+   - "tasten": Buchstabe wird angezeigt → Code eingeben (Maus, Leertaste oder E/T, siehe js/keyer.js)
+   Eingabeart und Bestätigung (sofort, nach Pause, mit Enter) stehen in den Einstellungen unter "Games". */
 const Idle = (() => {
   'use strict';
 
@@ -13,7 +14,9 @@ const Idle = (() => {
   const sym = code => code.replace(/\./g, '•').replace(/-/g, '–').split('').join(' ');
   const num = n => Math.floor(n).toLocaleString('de-DE');
 
-  let host = null;                 // { getState, save, audioOpts } aus app.js
+  let host = null;                 // { getState, save, audioOpts, area } aus app.js
+  let keyer = null;                // Tasten-Eingabe (js/keyer.js)
+  let autoTimer = 0;               // Bestätigung nach Pause
   let g = null;                    // Spielstand (S.idle)
   let shown = false;               // Games-Bereich ist offen
   let raf = 0, nextTimer = 0, shakeTimer = 0;
@@ -24,6 +27,7 @@ const Idle = (() => {
   const clock = { running: false, last: 0, used: 0 };
 
   const S = () => host.getState();
+  const A = () => host.area();     // Einstellungen des Bereichs Games
   const quoteFn = ch => {
     const st = S().chars[ch];
     return st && st.last.length ? st.last.reduce((a, b) => a + b, 0) / st.last.length : null;
@@ -36,6 +40,8 @@ const Idle = (() => {
     nxt = L.newTask(g, cur.ch, quoteFn);
     input = '';
     errors = 0; late = false; done = false;
+    clearTimeout(autoTimer);
+    keyer.clear();
     clock.used = 0;
     startClock();
     feedback('', '');
@@ -44,6 +50,7 @@ const Idle = (() => {
   }
 
   function mistake() {
+    clearTimeout(autoTimer);
     errors++;
     input = '';
     run.streak = 0;
@@ -56,6 +63,7 @@ const Idle = (() => {
   }
 
   function finish() {
+    clearTimeout(autoTimer);
     done = true;
     stopClock();
     const r = L.solve(g, run, cur, { errors: errors, late: late });
@@ -78,17 +86,23 @@ const Idle = (() => {
   }
 
   /* ---------- Eingabe ---------- */
+  // Bestätigung nach einer Pause: Zeitgeber nach jeder Eingabe neu starten
+  function armPause() {
+    clearTimeout(autoTimer);
+    if (A().confirm === 'pause' && input) autoTimer = setTimeout(submit, A().delay * 1000);
+  }
+
   function typeLetter(ch) {
     if (done || cur.type !== 'sehen') return;
     input = ch;
-    if (g.settings.confirm === 'auto') submit(); else renderTask();
+    if (A().confirm === 'sofort') submit(); else { renderTask(); armPause(); }
   }
 
+  // Punkt oder Strich aus js/keyer.js (der Ton kommt von dort)
   function typeSymbol(s) {
     if (done || cur.type !== 'tasten' || input.length >= L.CFG.maxPattern) return;
     input += s;
-    Morse.beep(s === '.' ? 1 : 3, host.audioOpts());
-    if (g.settings.confirm === 'auto') {
+    if (A().confirm === 'sofort') {
       const c = L.checkPattern(cur, input);
       if (c === 'wrong') return mistake();
       renderTask();
@@ -96,12 +110,14 @@ const Idle = (() => {
       return;
     }
     renderTask();
+    armPause();
   }
 
   function erase() {
     if (done) return;
     input = cur.type === 'tasten' ? input.slice(0, -1) : '';
     renderTask();
+    armPause();
   }
 
   function submit() {
@@ -122,8 +138,7 @@ const Idle = (() => {
     if (k === 'Enter') submit();
     else if (k === 'Backspace') erase();
     else if (cur.type === 'sehen') typeLetter(k.toUpperCase());
-    else if (k === 'e' || k === 'E') typeSymbol('.');
-    else if (k === 't' || k === 'T') typeSymbol('-');
+    // Bei "tasten" kommen Punkte und Striche aus js/keyer.js
   }
 
   /* ---------- Zeitfenster für die Combo ---------- */
@@ -194,10 +209,11 @@ const Idle = (() => {
 
   function renderTask() {
     const see = cur.type === 'sehen';
-    const enter = g.settings.confirm === 'enter';
-    $('#idKind').textContent = see ? 'Morse erkennen' : 'Mit E/T eingeben';
-    $('#idPrompt').textContent = (see ? 'Tippe den Buchstaben.' : 'Taste E = kurz, T = lang.')
-      + (enter ? ' Bestätigen mit Enter.' : '');
+    const a = A();
+    const enter = a.confirm === 'enter';
+    $('#idKind').textContent = see ? 'Morse erkennen' : 'Mit Morse eingeben';
+    $('#idPrompt').textContent = see ? 'Tippe den Buchstaben.' + (enter ? ' Bestätigen mit Enter.' : '')
+      : Keyer.describe(a);
     const disp = $('#idDisplay');
     disp.textContent = see && !done ? sym(cur.code) : cur.ch;
     disp.classList.toggle('morse', see && !done);
@@ -206,14 +222,17 @@ const Idle = (() => {
     else if (errors >= 2) help = 'Lösung: ' + (see ? cur.ch : sym(cur.code));
     $('#idHelp').textContent = help;
     $('#idInput').textContent = input ? (see ? input : sym(input)) : ' ';
-    $('#idKeys').hidden = see;
-    $('#idCtl').hidden = !enter;
+    $('#idKeys').hidden = see || a.input !== 'et';
+    $('#idFeld').hidden = see || a.input !== 'maus';
+    $('#idTiming').hidden = see || !a.timing || a.input === 'et';
+    $('#idCtl').hidden = a.confirm === 'sofort';
+    $('#idModus').textContent = Keyer.label(a, true);
   }
 
   function renderNext() {
     if (!nxt) return;
     $('#idNext').textContent = nxt.type === 'sehen' ? sym(nxt.code) : nxt.ch;
-    $('#idNextKind').textContent = nxt.type === 'sehen' ? 'Morse erkennen' : 'mit E/T eingeben';
+    $('#idNextKind').textContent = nxt.type === 'sehen' ? 'Morse erkennen' : 'mit Morse eingeben';
   }
 
   function renderKoch() {
@@ -240,7 +259,6 @@ const Idle = (() => {
 
   function renderSettings() {
     $$('#idSetTask button').forEach(b => b.classList.toggle('active', b.dataset.v === g.settings.task));
-    $$('#idSetConfirm button').forEach(b => b.classList.toggle('active', b.dataset.v === g.settings.confirm));
     $$('#idSetTempo button').forEach(b => b.classList.toggle('active', Number(b.dataset.v) === g.settings.tempo));
     const t = L.CFG.tempos[g.settings.tempo];
     $('#idTempoInfo').textContent = 'Zeitfenster x' + t.time.toLocaleString('de-DE') + ', Dots x'
@@ -256,15 +274,15 @@ const Idle = (() => {
       host.save();
       renderSettings();
       if (key === 'task') { nxt = L.newTask(g, cur && cur.ch, quoteFn); renderNext(); }
-      if (key === 'confirm' && !done) { input = ''; renderTask(); }
     }));
   }
 
+  // Knöpfe Kurz/Lang (Eingabe E/T)
   function bindKey(sel, s) {
     const b = $(sel);
-    b.addEventListener('pointerdown', e => { e.preventDefault(); typeSymbol(s); });
+    b.addEventListener('pointerdown', e => { e.preventDefault(); keyer.tap(s); });
     b.addEventListener('contextmenu', e => e.preventDefault());
-    b.addEventListener('click', e => { if (e.detail === 0) typeSymbol(s); });
+    b.addEventListener('click', e => { if (e.detail === 0) keyer.tap(s); });
   }
 
   /* ---------- Anbindung an app.js ---------- */
@@ -278,17 +296,35 @@ const Idle = (() => {
 
   function hide() {
     if (!shown) return;
+    keyer.cancel();
+    clearTimeout(autoTimer);
     pauseClock();
     shown = false;
     cancelAnimationFrame(raf);
     if (done) { clearTimeout(nextTimer); }
   }
 
-  // opts: { getState, save, audioOpts }
+  // Einstellungen wurden geändert: Anzeige anpassen, laufende Eingabe verwerfen
+  function refresh() {
+    if (!cur || !g) return;
+    if (!done) { input = ''; clearTimeout(autoTimer); }
+    keyer.refresh();
+    renderTask();
+  }
+
+  // opts: { getState, save, audioOpts, area }
   function init(opts) {
     host = opts;
     S().idle = L.normalize(S().idle);
     g = S().idle;
+    keyer = Keyer.create({
+      field: $('#idFeld'),
+      timingBox: $('#idTiming'),
+      settings: A,
+      active: () => shown && !!cur && !done && cur.type === 'tasten',
+      audioOpts: () => host.audioOpts(),
+      onSymbol: sym => typeSymbol(sym)
+    });
     document.addEventListener('keydown', onKey);
     window.addEventListener('blur', pauseClock);
     window.addEventListener('focus', resumeClock);
@@ -302,5 +338,5 @@ const Idle = (() => {
     bindSetting('#idSetTempo', 'tempo', true);
   }
 
-  return { init, show, hide };
+  return { init, show, hide, refresh };
 })();

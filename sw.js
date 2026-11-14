@@ -1,8 +1,8 @@
 /* Einfacher Offline-Cache: die Seite funktioniert nach dem ersten Laden auch ohne Netz. */
-const CACHE = 'morse-v20';
+const CACHE = 'morse-v21';
 // Grundgerüst der App; die Bilder der Meer-Animation (startszene/) landen beim ersten Laden automatisch im Cache.
 // (Die Icons fehlen im Repo noch – sobald der Ordner icons/ da ist, hier wieder eintragen.)
-const FILES = ['./', 'index.html', 'css/style.css', 'css/intro.css', 'js/morse.js', 'js/storage.js', 'js/idle-logic.js', 'js/idle.js',
+const FILES = ['./', 'index.html', 'css/style.css', 'css/intro.css', 'js/morse.js', 'js/storage.js', 'js/keyer.js', 'js/idle-logic.js', 'js/idle.js',
   'js/app.js', 'js/intro.js', 'js/hell-fx.js', 'startszene/index.html', 'manifest.webmanifest',
   'img/logo_dunkel.webp', 'img/logo_hell.webp', 'img/logo_funk.webp'];
 

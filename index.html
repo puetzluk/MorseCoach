@@ -68,6 +68,7 @@
           </div>
           <div class="meter" id="lernMeter"><div id="lernBar"></div></div>
           <p class="muted" id="lernQuote"></p>
+          <p class="muted small mode-line"><span id="lernMode"></span> · <button type="button" class="linkbtn" data-area-settings="lernen">Ändern</button></p>
         </div>
       </section>
 
@@ -92,30 +93,34 @@
           <textarea id="hoerInput" rows="3" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Gehörtes hier eintippen"></textarea>
           <div class="row left"><button class="btn primary" id="hoerCheck">Prüfen</button></div>
           <div id="hoerResult" class="result"></div>
+          <p class="muted small mode-line"><span id="hoerMode"></span> · <button type="button" class="linkbtn" data-area-settings="hoeren">Ändern</button></p>
         </div>
       </section>
 
       <!-- SENDEN -->
       <section id="tab-senden" class="tab">
-        <div class="card">
-          <h2>Zeichen zum Senden</h2>
-          <div class="pick-slot" data-area="senden"></div>
-        </div>
         <div class="card center">
           <h2>Senden</h2>
-          <p class="muted"><span class="kbd-hint">Taste <kbd>E</kbd> = kurz, Taste <kbd>T</kbd> = lang, oder die Knöpfe unten. </span><span class="touch-hint">Tippe die Knöpfe unten. </span>Nach einer kurzen Pause wird automatisch bestätigt (einstellbar).</p>
+          <p class="muted" id="sendHinweis"></p>
           <div class="display" id="sendAnzeige">?</div>
           <div class="code" id="sendCode"></div>
           <div class="pattern" id="sendMuster">&nbsp;</div>
           <div class="feedback" id="sendFeedback"></div>
-          <div class="row">
+          <div class="ky-field" id="sendFeld" role="button" aria-label="Morsetaste: kurz drücken = Punkt, länger halten = Strich"><span>Hier drücken</span></div>
+          <div class="row" id="sendKeys">
             <button class="btn key" id="sendKurz">Kurz ( E )</button>
             <button class="btn key" id="sendLang">Lang ( T )</button>
           </div>
+          <div class="ky-timing" id="sendTiming"></div>
           <div class="row">
             <button class="btn" id="sendBack">Löschen</button>
-            <button class="btn primary" id="sendOk">Bestätigen</button>
+            <button class="btn primary" id="sendOk">Bestätigen ( Enter )</button>
           </div>
+          <p class="muted small mode-line">Eingabe: <span id="sendModus"></span> · <button type="button" class="linkbtn" data-area-settings="senden">Ändern</button></p>
+        </div>
+        <div class="card">
+          <h2>Zeichen zum Senden</h2>
+          <div class="pick-slot" data-area="senden"></div>
         </div>
       </section>
 
@@ -147,15 +152,18 @@
             <div class="code" id="idHelp"></div>
             <div class="pattern" id="idInput">&nbsp;</div>
             <div class="feedback" id="idFeedback"></div>
+            <div class="ky-field" id="idFeld" role="button" hidden aria-label="Morsetaste: kurz drücken = Punkt, länger halten = Strich"><span>Hier drücken</span></div>
             <div class="row" id="idKeys" hidden>
               <button class="btn key" id="idKurz" type="button">Kurz ( E )</button>
               <button class="btn key" id="idLang" type="button">Lang ( T )</button>
             </div>
+            <div class="ky-timing" id="idTiming" hidden></div>
             <div class="row" id="idCtl" hidden>
               <button class="btn" id="idErase" type="button">Löschen</button>
               <button class="btn primary" id="idOk" type="button">Bestätigen ( Enter )</button>
             </div>
             <p class="id-next muted">Als Nächstes: <b id="idNext"></b> <span id="idNextKind"></span></p>
+            <p class="muted small mode-line">Eingabe: <span id="idModus"></span> · <button type="button" class="linkbtn" data-area-settings="spiel">Ändern</button></p>
           </div>
 
           <div class="id-side">
@@ -172,11 +180,6 @@
                 <button type="button" data-v="mix">Gemischt</button>
                 <button type="button" data-v="sehen">Morse erkennen</button>
                 <button type="button" data-v="tasten">Mit E/T eingeben</button>
-              </div>
-              <p class="id-lbl">Eingabe bestätigen</p>
-              <div class="seg" id="idSetConfirm">
-                <button type="button" data-v="auto">Automatisch</button>
-                <button type="button" data-v="enter">Mit Enter</button>
               </div>
               <p class="id-lbl">Tempo</p>
               <div class="seg" id="idSetTempo">
@@ -271,19 +274,46 @@
           <p class="muted small">Ist das Gesamttempo kleiner als das Tempo, werden die Pausen zwischen den Zeichen länger. Du hörst schnelle Zeichen und hast mehr Zeit zum Erkennen.</p>
         </div>
 
-        <div class="card">
-          <h2>Training</h2>
-          <div class="setrow">
+        <div class="card" id="eingabeCard">
+          <h2>Eingabe &amp; Bestätigung <small>für jeden Bereich einzeln</small></h2>
+          <div class="seg" id="areaSeg">
+            <button type="button" data-area="lernen">Lernen</button>
+            <button type="button" data-area="hoeren">Hören</button>
+            <button type="button" data-area="senden">Senden</button>
+            <button type="button" data-area="spiel">Games</button>
+          </div>
+          <p class="muted small" id="areaNote"></p>
+          <div class="setrow col" data-opt="input">
+            <div><b>Eingabe der Punkte und Striche</b><span class="muted small">Maus und Leertaste: kurz drücken = Punkt, länger halten = Strich. Die Grenze richtet sich nach dem Tempo.</span></div>
+            <div class="seg" id="setInput">
+              <button type="button" data-v="maus">Maus</button>
+              <button type="button" data-v="leertaste">Leertaste</button>
+              <button type="button" data-v="et">E und T</button>
+            </div>
+          </div>
+          <div class="setrow" data-opt="left">
+            <div><b>Linke Maustaste zulassen</b><span class="muted small">Die rechte Taste zählt immer. Praktisch am Touchpad.</span></div>
+            <label class="switch"><input type="checkbox" id="setLeft"><i></i></label>
+          </div>
+          <div class="setrow col" data-opt="confirm">
+            <div><b>Bestätigung</b><span class="muted small" id="setConfirmText"></span></div>
+            <div class="seg" id="setConfirm">
+              <button type="button" data-v="sofort">Sofort</button>
+              <button type="button" data-v="pause">Nach Pause</button>
+              <button type="button" data-v="enter">Mit Enter</button>
+            </div>
+          </div>
+          <div class="setrow col" data-opt="delay">
+            <label for="setDelay">Pause bis zur Bestätigung <b id="setDelayOut"></b> Sekunden</label>
+            <input type="range" id="setDelay" min="0.5" max="3" step="0.1">
+          </div>
+          <div class="setrow" data-opt="timing">
+            <div><b>Druckdauer anzeigen</b><span class="muted small">Zeigt, wie lange du gedrückt hast und wo die Grenze liegt</span></div>
+            <label class="switch"><input type="checkbox" id="setTiming"><i></i></label>
+          </div>
+          <div class="setrow" data-opt="hint">
             <div><b>Code anzeigen</b><span class="muted small">Punkte und Striche beim Üben einblenden</span></div>
             <label class="switch"><input type="checkbox" id="setHint"><i></i></label>
-          </div>
-          <div class="setrow">
-            <div><b>Automatisch bestätigen</b><span class="muted small">Beim Senden nach einer Pause die Eingabe prüfen</span></div>
-            <label class="switch"><input type="checkbox" id="setAuto"><i></i></label>
-          </div>
-          <div class="setrow col">
-            <label for="setDelay">Pause bis zur Bestätigung <b data-out="confirmDelay"></b> Sekunden</label>
-            <input type="range" id="setDelay" data-set="confirmDelay" min="0.5" max="3" step="0.1">
           </div>
         </div>
 
@@ -349,6 +379,7 @@
 
   <script src="js/morse.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/keyer.js"></script>
   <script src="js/idle-logic.js"></script>
   <script src="js/idle.js"></script>
   <script src="js/app.js"></script>

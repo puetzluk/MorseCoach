@@ -5,7 +5,8 @@
 - Startseite (Ordner `startszene/`, Vollbild über der App): Meer-Animation → Titel „Morse Coach“ → weiterscrollen → Karten der Lernbereiche (Lernen, Hören, Senden, Games groß; Übersetzer, Statistik kleiner; Einstellungen). Ein Klick auf eine Karte öffnet den Bereich mit der Leiste oben; Das Logo „Morse Coach“ führt zurück zu den Karten, von dort geht es per Hochscrollen ins Meer. „Überspringen“ springt zu den Karten, der runde Knopf oben rechts wechselt das Design. Mit `index.html#lernen` (usw.) öffnet sich ein Bereich direkt.
 - Lernen: Koch-Methode oder eigene Zeichenauswahl
 - Hören: fünf Stufen (Zeichengruppen, Wörter, Sätze), eigene Zeichenauswahl
-- Senden: Taste E = kurz, T = lang, oder Knöpfe; eigene Zeichenauswahl
+- Senden: Punkte und Striche per Maus (rechte Taste, kurz/lang drücken), Leertaste oder E/T; eigene Zeichenauswahl
+- Einstellungen: Eingabe und Bestätigung (sofort, nach Pause, mit Enter) für jeden Bereich einzeln, Druckdauer-Anzeige, Code anzeigen
 - Games (Idle-Spiel, im Aufbau): Aufgaben lösen (Morse erkennen oder mit E/T eingeben), Dots sammeln, Combo mit Zeitfenster, Tempo-Regler, Buchstaben nach der Koch-Methode. Upgrades, Prestige und Welten folgen
 - Übersetzer: Text <-> Morse
 - Statistik: Verlauf nach Tag, Woche, Monat, Jahr
@@ -30,6 +31,7 @@ Einzeln aufrufbar: `startszene/index.html` (online: https://puetzluk.github.io/M
 - `css/intro.css` – Startseite als Vollbild über der App, Leiste nur in den Bereichen
 - `js/morse.js` – Morsetabelle und Ton (Web Audio)
 - `js/storage.js` – Speicherung (Fortschritt)
+- `js/keyer.js` – Tasten-Eingabe für Senden und Games: Maus/Finger im Feld oder Leertaste mit Druckdauer (kurz = Punkt, lang = Strich), oder E/T
 - `js/idle-logic.js` – Regeln des Idle-Spiels (alle Zahlen oben in `CFG`)
 - `js/idle.js` – Oberfläche des Idle-Spiels
 - `js/intro.js` – verbindet Startseite (Meer + Karten) und App: Bereiche öffnen, Design abgleichen, zurück zu den Karten

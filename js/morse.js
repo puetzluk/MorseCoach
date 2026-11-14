@@ -116,6 +116,35 @@ const Morse = (() => {
     setTimeout(() => signal(false), dur * 1000);
   }
 
+  // Dauerton beim Tasten mit Timing: Ton an, solange gedrückt wird. on = true/false
+  let held = null;
+  function key(on, opts) {
+    if (on) {
+      if (held) return;
+      const c = getCtx();
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      const t = c.currentTime;
+      osc.frequency.value = opts.freq;
+      osc.connect(g);
+      g.connect(c.destination);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(opts.vol, t + 0.005);
+      osc.start(t);
+      held = { osc, g, c };
+      signal(true);
+    } else if (held) {
+      const h = held;
+      held = null;
+      const t = h.c.currentTime;
+      h.g.gain.cancelScheduledValues(t);
+      h.g.gain.setValueAtTime(h.g.gain.value, t);
+      h.g.gain.linearRampToValueAtTime(0, t + 0.005);
+      h.osc.stop(t + 0.02);
+      signal(false);
+    }
+  }
+
   function encode(text) {
     return text.toUpperCase().split(/\s+/).filter(Boolean)
       .map(w => [...w].map(ch => TABLE[ch] || '?').join(' '))
@@ -129,6 +158,6 @@ const Morse = (() => {
       .join(' ');
   }
 
-  const api = { TABLE, REV, KOCH, timing, play, stop, beep, encode, decode, ctx: getCtx, onSignal: null };
+  const api = { TABLE, REV, KOCH, timing, play, stop, beep, key, encode, decode, ctx: getCtx, onSignal: null };
   return api;
 })();

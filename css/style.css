@@ -380,7 +380,7 @@ main { padding-bottom: max(60px, env(safe-area-inset-bottom)); }
 }
 
 @media (max-width: 640px) {
-  #tab-senden .card > p.muted { display: none; }
+  #tab-senden #sendHinweis { font-size: .85rem; margin: 0 0 8px; }
   #tab-senden .display { margin-top: 4px; }
   .stats { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
   .stat { padding: 10px; font-size: .85rem; }
@@ -465,3 +465,29 @@ h3 small { font-weight: normal; color: var(--muted); font-size: .8rem; margin-le
 @media (max-width: 900px) {
   .id-side, .id-bank { grid-template-columns: 1fr; }
 }
+
+/* ===================== Tasten-Eingabe (js/keyer.js) ===================== */
+[hidden] { display: none !important; }
+.ky-field {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; max-width: 420px; height: 120px; margin: 12px auto 4px;
+  border-radius: var(--radius); border: 2px dashed var(--line); background: var(--input-bg);
+  color: var(--muted); font-weight: 700; letter-spacing: .04em;
+  cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none;
+  -webkit-touch-callout: none; transition: background .08s, border-color .08s, transform .08s;
+}
+.ky-field:hover { border-color: var(--accent); }
+.ky-field.down { background: var(--accent); border-style: solid; border-color: var(--accent); color: var(--accent-text); transform: scale(.985); }
+.ky-timing { max-width: 420px; margin: 8px auto 0; text-align: left; }
+.ky-head, .ky-empty { margin: 0 0 4px; font-size: .78rem; }
+.ky-row { display: grid; grid-template-columns: 18px 1fr 64px; gap: 8px; align-items: center; margin: 3px 0; font-size: .85rem; }
+.ky-sym { font-weight: 800; text-align: center; color: var(--accent); }
+.ky-ms { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ky-bar { position: relative; height: 10px; border-radius: 5px; background: var(--input-bg); overflow: visible; }
+.ky-bar i { display: block; height: 100%; border-radius: 5px; background: var(--accent); }
+.ky-bar i.dash { background: var(--accent2); }
+.ky-bar b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); opacity: .6; }
+.ky-hint { margin: 6px 0 0; font-size: .82rem; color: var(--bad); }
+.mode-line { margin: 10px 0 0; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+#eingabeCard .setrow > .seg { flex-direction: row; gap: 4px; margin: 4px 0 0; }

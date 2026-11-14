@@ -6,14 +6,24 @@ const Store = (() => {
 
   const baseSel = () => ({ method: 'koch', level: 2, custom: ['E', 'T', 'A', 'N'] });
 
+  // Eingabe-Einstellungen: jeder Bereich hat dieselben Punkte, unabhängig voneinander einstellbar
+  const AREAS = ['lernen', 'hoeren', 'senden', 'spiel'];
+  const baseArea = () => ({
+    input: 'maus',          // Tasten: 'maus' (Feld, Druckdauer) | 'leertaste' (Druckdauer) | 'et' (E = kurz, T = lang)
+    left: false,            // Maus: auch die linke Taste zählt (rechte zählt immer)
+    confirm: 'sofort',      // 'sofort' | 'pause' | 'enter'
+    delay: 1.0,             // Sekunden Pause bei 'pause'
+    timing: true,           // Druckdauer anzeigen
+    hint: false             // Code (Punkte/Striche) beim Üben anzeigen
+  });
+  const baseAreas = () => { const a = {}; AREAS.forEach(k => { a[k] = baseArea(); }); return a; };
+
   const defaults = () => ({
     version: 3,
     settings: {
       theme: 'dunkel',      // 'hell' | 'dunkel' | 'funk'
       cwpm: 20, wpm: 12, freq: 600, vol: 50,
-      hint: false,          // Code (Punkte/Striche) beim Üben anzeigen
-      autoConfirm: true,    // Senden: automatisch bestätigen
-      confirmDelay: 1.0     // Sekunden Pause bis zur Bestätigung
+      areas: baseAreas()    // Eingabe und Bestätigung je Bereich (siehe baseArea)
     },
     // Eigene Zeichenauswahl je Bereich
     sel: { lernen: baseSel(), hoeren: baseSel(), senden: baseSel() },
@@ -50,6 +60,20 @@ const Store = (() => {
       }
       ['lernen', 'hoeren', 'senden'].forEach(a => { out.sel[a] = Object.assign(baseSel(), out.sel[a]); });
       out.hours = out.hours || {};
+      // Eingabe-Einstellungen je Bereich auffüllen; ältere Einstellungen übernehmen
+      const old = d.settings || {};
+      const areas = (old.areas && typeof old.areas === 'object') ? old.areas : {};
+      out.settings.areas = {};
+      AREAS.forEach(k => {
+        const a = Object.assign(baseArea(), areas[k]);
+        if (!areas[k] && old.hint && (k === 'lernen' || k === 'senden')) a.hint = true;
+        if (!areas[k] && k === 'senden' && old.confirmDelay) a.delay = Number(old.confirmDelay) || 1;
+        if (['maus', 'leertaste', 'et'].indexOf(a.input) < 0) a.input = 'maus';
+        if (['sofort', 'pause', 'enter'].indexOf(a.confirm) < 0) a.confirm = 'sofort';
+        a.delay = Math.min(3, Math.max(0.5, Number(a.delay) || 1));
+        out.settings.areas[k] = a;
+      });
+      delete out.settings.hint; delete out.settings.autoConfirm; delete out.settings.confirmDelay;
       return out;
     } catch (e) {
       return defaults();
@@ -108,5 +132,5 @@ const Store = (() => {
     return n;
   }
 
-  return { load, save, reset, record, streak, fmt, flag };
+  return { AREAS, baseArea, load, save, reset, record, streak, fmt, flag };
 })();
