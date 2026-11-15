@@ -1,5 +1,5 @@
 /* Einfacher Offline-Cache: die Seite funktioniert nach dem ersten Laden auch ohne Netz. */
-const CACHE = 'morse-v22';
+const CACHE = 'morse-v23';
 // Grundgerüst der App; die Bilder der Meer-Animation (startszene/) landen beim ersten Laden automatisch im Cache.
 // (Die Icons fehlen im Repo noch – sobald der Ordner icons/ da ist, hier wieder eintragen.)
 const FILES = ['./', 'index.html', 'css/style.css', 'css/intro.css', 'js/morse.js', 'js/storage.js', 'js/keyer.js', 'js/idle-logic.js', 'js/idle.js',
