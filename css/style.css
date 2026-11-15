@@ -518,3 +518,17 @@ h3 small { font-weight: normal; color: var(--muted); font-size: .8rem; margin-le
 .id-up-buy { white-space: nowrap; min-width: 180px; }
 .id-up-buy:disabled { opacity: .5; cursor: default; }
 @media (max-width: 640px) { .id-up { grid-template-columns: 1fr; } .id-up-buy { width: 100%; } }
+
+/* ===================== Games: DotRush, Erklärung ===================== */
+.id-rushbar { margin: 10px 0 0; padding: 8px 12px; border-radius: var(--radius); text-align: center; font-weight: 800;
+  letter-spacing: .03em; color: var(--accent-text); background: var(--grad); animation: idrush 1s ease-in-out infinite alternate; }
+@keyframes idrush { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+.id-head.rush { box-shadow: 0 0 0 2px var(--accent), 0 0 28px var(--accent); }
+.id-combo b.rush { color: var(--accent); }
+.id-explain-box { margin: 10px 0 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); font-size: .88rem; }
+.id-explain-box h3 { margin: 0 0 6px; font-size: 1rem; }
+.id-explain-box ul { margin: 0 0 10px; padding-left: 18px; }
+.id-explain-box li { margin: 3px 0; }
+.id-explain { border-collapse: collapse; width: 100%; font-size: .82rem; }
+.id-explain th, .id-explain td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+@media (prefers-reduced-motion: reduce) { .id-rushbar { animation: none; } }

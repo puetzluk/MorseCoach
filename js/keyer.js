@@ -15,7 +15,8 @@
    - settings(): Einstellungen des Bereichs ({ input, right, timing })
    - active():  true, wenn der Bereich gerade Eingaben annimmt
    - audioOpts(): Tonhöhe, Lautstärke, Tempo (cwpm)
-   - onSymbol(sym, ms): sym = '.' oder '-', ms = Druckdauer (bei E/T null) */
+   - onSymbol(sym, ms): sym = '.' oder '-', ms = Druckdauer (bei E/T null)
+   - compact:   true = Druckdauer nur als Balken, ohne Infotext */
 const Keyer = (() => {
   'use strict';
 
@@ -120,11 +121,14 @@ const Keyer = (() => {
       const max = 5 * unit;                  // Balken reichen bis 5 Einheiten
       const pct = ms => Math.min(100, ms / max * 100);
       box.textContent = '';
-      const head = document.createElement('p');
-      head.className = 'ky-head muted';
-      head.textContent = 'Druckdauer · Grenze Punkt/Strich ' + Math.round(2 * unit) + ' ms (' + cwpm() + ' WPM)';
-      box.appendChild(head);
-      if (!presses.length) {
+      // compact: nur die Balken, ohne Infotext (Games; die Erklärung steht dort in den Einstellungen)
+      if (!o.compact) {
+        const head = document.createElement('p');
+        head.className = 'ky-head muted';
+        head.textContent = 'Druckdauer · Grenze Punkt/Strich ' + Math.round(2 * unit) + ' ms (' + cwpm() + ' WPM)';
+        box.appendChild(head);
+      }
+      if (!presses.length && !o.compact) {
         const p = document.createElement('p');
         p.className = 'ky-empty muted';
         p.textContent = 'Punkt ca. ' + Math.round(unit) + ' ms, Strich ca. ' + Math.round(3 * unit) + ' ms';
