@@ -879,6 +879,8 @@
     const info = AREA_INFO[setArea];
     $$('#areaSeg button').forEach(b => b.classList.toggle('active', b.dataset.area === setArea));
     $('#areaNote').textContent = info.note;
+    $('#areaExplain').hidden = setArea !== 'spiel';
+    if (setArea === 'spiel') $('#areaExplain').innerHTML = Idle.explain();   // aus den Spielregeln erzeugt
     $$('#eingabeCard [data-opt]').forEach(row => {
       const o = row.dataset.opt;
       let show = info.opts.indexOf(o) >= 0;

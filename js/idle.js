@@ -23,7 +23,9 @@ const Idle = (() => {
   let shown = false;               // Games-Bereich ist offen
   let view = 'aufgaben';           // 'aufgaben' | 'upgrades'
   let raf = 0, nextTimer = 0, shakeTimer = 0, autoTimer = 0;
-  const run = { streak: 0, charge: 1e9 };   // Serie und Fehlerschutz der laufenden Sitzung (Schutz startet bereit)
+  // Serie, Fehlerschutz (startet bereit) und laufender DotRush ({ factor, left } oder null) dieser Sitzung
+  const run = { streak: 0, charge: 1e9, rush: null };
+  let lastFrame = 0;
   let cur = null, nxt = null;      // aktuelle und nächste Aufgabe
   let input = '';                  // Eingabe: Buchstabe ("sehen") oder Punkte/Striche ("tasten")
   let errors = 0, late = false, done = false, shielded = false;
@@ -77,12 +79,13 @@ const Idle = (() => {
     done = true;
     stopClock();
     const weak = L.isWeak(quoteFn(cur.ch));
-    const r = L.solve(g, run, cur, { errors: errors, time: clock.used, weak: weak, shielded: shielded });
+    const rush = run.rush ? run.rush.factor : 0;
+    const r = L.solve(g, run, cur, { errors: errors, time: clock.used, weak: weak, shielded: shielded, rush: rush });
     Store.record(S(), cur.ch, errors === 0);
     host.save();
 
     let text, cls = 'ok';
-    if (r.kind === 'ok') text = 'Richtig' + (r.combo > 1 ? ' · Combo ×' + r.combo : '');
+    if (r.kind === 'ok') text = 'Richtig' + (rush ? ' · DotRush ×' + r.combo : r.combo > 1 ? ' · Combo ×' + r.combo : '');
     else if (r.kind === 'late') text = 'Richtig, Fenster verpasst · Zeit für „' + L.CFG.modes[r.reached].name + '“ (×' + fx(r.factor) + ')';
     else if (r.kind === 'slow') text = 'Richtig, aber langsamer als Gemütlich (×' + fx(r.factor) + ')';
     else { text = 'Mit Fehler gelöst (×' + fx(r.factor) + ')' + (shielded ? ' · Combo gerettet' : ''); cls = 'bad'; }
@@ -176,8 +179,42 @@ const Idle = (() => {
   function frame(now) {
     if (!shown) return;
     tick(now);
+    rushTick(Math.min(0.25, Math.max(0, (now - (lastFrame || now)) / 1000)));
+    lastFrame = now;
     renderClock();
     raf = requestAnimationFrame(frame);
+  }
+
+  /* ---------- DotRush ----------
+     Läuft nur in aktiver Spielzeit (Bereich Aufgaben offen, Fenster im Vordergrund). */
+  function rushTick(dt) {
+    if (!L.rushOn(g) || !playing() || document.hidden || !document.hasFocus()) return;
+    if (run.rush) {
+      run.rush.left -= dt;
+      if (run.rush.left <= 0) endRush(); else renderRush();
+      return;
+    }
+    if (g.rushWait === null) g.rushWait = L.rushNextWait(g);
+    g.rushWait -= dt;
+    if (g.rushWait <= 0) startRush();
+  }
+  function startRush() {
+    run.rush = { factor: L.rushFactor(g, L.comboOf(run.streak)), left: L.rushDur(g) };
+    g.rushWait = null;
+    renderCombo();
+  }
+  function endRush() {
+    run.rush = null;
+    g.rushWait = L.rushNextWait(g);
+    host.save();
+    renderCombo();
+  }
+  function renderRush() {
+    const el = $('#idRush');
+    el.hidden = !run.rush;
+    $('.id-head').classList.toggle('rush', !!run.rush);
+    if (run.rush) el.textContent = 'DotRush ×' + Math.max(run.rush.factor, L.comboOf(run.streak))
+      + ' · noch ' + Math.ceil(run.rush.left) + ' s';
   }
 
   /* ---------- Anzeige ---------- */
@@ -205,10 +242,12 @@ const Idle = (() => {
   }
 
   function renderCombo() {
-    const f = L.comboOf(run.streak);
+    renderRush();
+    const f = run.rush ? Math.max(run.rush.factor, L.comboOf(run.streak)) : L.comboOf(run.streak);
     const n = L.nextStep(run.streak);
     $('#idCombo').textContent = '×' + f;
     $('#idCombo').classList.toggle('hot', f > 1);
+    $('#idCombo').classList.toggle('rush', !!run.rush);
     $('#idStreak').textContent = run.streak;
     $('#idComboNext').textContent = n ? '×' + n.factor + ' ab ' + n.at + ' in Folge' : 'Maximum erreicht';
     $('#idComboFill').style.width = (n ? (run.streak - n.from) / (n.at - n.from) * 100 : 100) + '%';
@@ -307,6 +346,19 @@ const Idle = (() => {
     if (id === 'schwach') return {
       what: 'Zeichen mit weniger als ' + pct(C.schwachQuote) + ' Trefferquote bringen mehr Dots.',
       now: lv ? '+' + pct(C.schwachBonus[lv - 1]) : 'noch nicht gekauft', next: lv < 3 ? '+' + pct(C.schwachBonus[lv]) : '' };
+    if (id === 'rush') return {
+      what: 'Ab und zu startet ein DotRush: ein paar Sekunden lang zählt ein hoher Faktor statt der Combo.',
+      now: lv ? 'freigeschaltet' : 'noch nicht gekauft', next: 'alle ' + fx(C.rushEvery[0]) + ' min, ' + C.rushDur[0] + ' s, ×'
+        + C.rushMin + ' bis ×' + C.rushMax[0] };
+    if (id === 'rushOft') return {
+      what: 'Der DotRush kommt öfter.',
+      now: 'etwa alle ' + fx(C.rushEvery[lv]) + ' min', next: lv < 4 ? 'alle ' + fx(C.rushEvery[lv + 1]) + ' min' : '' };
+    if (id === 'rushLang') return {
+      what: 'Der DotRush dauert länger.',
+      now: C.rushDur[lv] + ' s', next: lv < 3 ? C.rushDur[lv + 1] + ' s' : '' };
+    if (id === 'rushStark') return {
+      what: 'Der DotRush kann einen höheren Faktor ziehen (nie weniger als deine Combo).',
+      now: '×' + C.rushMin + ' bis ×' + C.rushMax[lv], next: lv < 5 ? 'bis ×' + C.rushMax[lv + 1] : '' };
     return {
       what: 'Ein Fehler kostet die Combo nicht. Danach lädt der Schutz wieder auf.',
       now: lv ? 'lädt nach ' + C.schutzCharge[lv - 1] + ' Aufgaben' : 'noch nicht gekauft',
@@ -345,6 +397,7 @@ const Idle = (() => {
       row.querySelector('.id-up-eff').textContent = 'Jetzt: ' + t.now + (maxed ? '' : '  →  danach: ' + t.next);
       const b = row.querySelector('.id-up-buy');
       if (maxed) { b.textContent = 'Voll ausgebaut'; b.disabled = true; }
+      else if (L.locked(g, u.id)) { b.textContent = 'Erst DotRush freischalten'; b.disabled = true; }
       else {
         const p = L.priceOf(u.id, lv);
         b.textContent = 'Kaufen · ' + fmt(p, true) + ' Dots';
@@ -352,6 +405,30 @@ const Idle = (() => {
       }
       row.classList.toggle('can', L.canBuy(g, u.id));
     });
+  }
+
+  // Kurze Erklärung des Spiels für die Einstellungen (aus den aktuellen Regeln erzeugt, bleibt so immer aktuell)
+  function explain() {
+    const C = L.CFG;
+    const steps = C.comboSteps.map(s => '×' + s[1] + ' ab ' + s[0]).join(', ');
+    const rows = C.modes.map(m => '<tr><td>' + m.name + '</td><td>×' + fx(m.time) + ' + ' + fx(m.extra) + ' s</td><td>×'
+      + fx(m.dots) + '</td><td>' + m.wpm + '</td><td>' + Math.round(2400 / m.wpm) + ' ms</td></tr>').join('');
+    return '<h3>So funktioniert Games</h3><ul>'
+      + '<li><b>Ziel:</b> Aufgaben lösen, Dots sammeln, im Reiter Upgrades ausgeben.</li>'
+      + '<li><b>Aufgaben</b> kommen gemischt: Morse erkennen (Buchstaben tippen) oder Buchstaben morsen.</li>'
+      + '<li><b>Zeichen</b> nach der Koch-Methode: Start mit K und M, ein neues ab ' + Math.round(C.quote * 100)
+      + ' % ohne Fehler in den letzten ' + C.recentMax + ' Aufgaben.</li>'
+      + '<li><b>Zeitfenster</b> = (' + fx(C.windowBase) + ' s + ' + fx(C.windowPerSymbol) + ' s je Punkt/Strich) × Spieltempo + Zuschlag; '
+      + 'beim Morsen mit Maus oder Leertaste kommt die Tastzeit dazu. Lösen darfst du, so lange du willst.</li>'
+      + '<li><b>Dots</b> = 1 je Punkt/Strich × Faktor. Im Fenster: Dots-Faktor des Spieltempos × Combo. Fenster verpasst: Faktor der '
+      + 'erreichten Stufe × ' + fx(C.lateFactor) + '. Langsamer als Gemütlich: × ' + fx(C.slowFactor) + '. Mit Fehler: × '
+      + fx(C.errorBase) + ' (+ ' + fx(C.errorBonus[0][1]) + ', wenn trotzdem schnell).</li>'
+      + '<li><b>Combo</b> = Aufgaben in Folge ohne Fehler im Fenster: ' + steps + '.</li>'
+      + '<li><b>DotRush</b> (Upgrade): etwa alle ' + fx(C.rushEvery[0]) + ' min aktiver Spielzeit ' + C.rushDur[0] + ' s lang ×'
+      + C.rushMin + ' bis ×' + C.rushMax[0] + ' statt der Combo, nie weniger als die Combo.</li>'
+      + '<li><b>Punkt oder Strich:</b> kürzer als 2 Einheiten = Punkt. Das WPM legt das Spieltempo fest.</li></ul>'
+      + '<table class="id-explain"><tr><th>Spieltempo</th><th>Fenster</th><th>Dots</th><th>WPM</th><th>Grenze Punkt/Strich</th></tr>'
+      + rows + '</table>';
   }
 
   function setView(v) {
@@ -412,7 +489,8 @@ const Idle = (() => {
       settings: A,
       active: () => playing() && !!cur && !done && cur.type === 'tasten',
       audioOpts: audio,
-      onSymbol: s => typeSymbol(s)
+      onSymbol: s => typeSymbol(s),
+      compact: true
     });
     document.addEventListener('keydown', onKey);
     window.addEventListener('blur', pauseClock);
@@ -432,5 +510,5 @@ const Idle = (() => {
     buildUpgrades();
   }
 
-  return { init, show, hide, refresh };
+  return { init, show, hide, refresh, explain };
 })();

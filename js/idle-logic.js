@@ -17,11 +17,11 @@ const IdleLogic = (table) => {
     // Spieltempo-Modi: time = Faktor fürs Zeitfenster, extra = Zuschlag in s, dots = Dots-Faktor,
     // wpm = Morse-Tempo in diesem Modus (Grenze Punkt/Strich und Tonlänge)
     modes: [
-      { name: 'Gemütlich', time: 1, extra: 0.2, dots: 0.8, wpm: 12 },
-      { name: 'Normal', time: 0.85, extra: 0.2, dots: 1, wpm: 15 },
-      { name: 'Zügig', time: 0.75, extra: 0.2, dots: 1.25, wpm: 18 },
-      { name: 'Schnell', time: 0.65, extra: 0.2, dots: 1.5, wpm: 21 },
-      { name: 'Blitz', time: 0.55, extra: 0, dots: 2, wpm: 25 }
+      { name: 'Gemütlich', time: 1, extra: 0.4, dots: 0.8, wpm: 12 },
+      { name: 'Normal', time: 0.85, extra: 0.4, dots: 1, wpm: 15 },
+      { name: 'Zügig', time: 0.75, extra: 0.4, dots: 1.25, wpm: 18 },
+      { name: 'Schnell', time: 0.65, extra: 0.4, dots: 1.5, wpm: 21 },
+      { name: 'Blitz', time: 0.55, extra: 0.2, dots: 2, wpm: 25 }
     ],
     // Zeitfenster = (Grundzeit + Zeit je Punkt/Strich × Anzahl) × time + extra (+ Tastzeit beim Morsen)
     windowBase: 0.9,
@@ -41,13 +41,24 @@ const IdleLogic = (table) => {
       { id: 'grund', name: 'Grund-Dots', base: 60, grow: 1.15, max: Infinity },
       { id: 'fenster', name: 'Combo-Fenster', base: 150, grow: 1.6, max: 5 },
       { id: 'schwach', name: 'Schwachstellen-Bonus', base: 260, grow: 3, max: 3 },
-      { id: 'schutz', name: 'Fehlerschutz', base: 400, grow: 3, max: 3 }
+      { id: 'schutz', name: 'Fehlerschutz', base: 400, grow: 3, max: 3 },
+      { id: 'rush', name: 'DotRush freischalten', base: 300, grow: 1, max: 1 },
+      { id: 'rushOft', name: 'DotRush häufiger', base: 800, grow: 2, max: 4, needs: 'rush' },
+      { id: 'rushLang', name: 'DotRush länger', base: 800, grow: 2, max: 3, needs: 'rush' },
+      { id: 'rushStark', name: 'DotRush stärker', base: 1000, grow: 2, max: 5, needs: 'rush' }
     ],
     grundStep: 1.1,                 // Grund-Dots: Grundwert × 1,1 je Stufe
     fensterStep: 0.1,               // Combo-Fenster: + 10 % je Stufe
     schwachQuote: 0.8,              // Schwachstelle = Trefferquote unter 80 %
     schwachBonus: [0.5, 1, 2],      // + 50 % / + 100 % / + 200 %
     schutzCharge: [50, 35, 20],     // Fehlerschutz lädt nach so vielen Aufgaben wieder auf
+
+    // DotRush: kommt automatisch nach aktiver Spielzeit; ersetzt den Combo-Faktor, ist nie kleiner als die Combo
+    rushEvery: [6, 5, 4, 3.5, 3],   // Abstand in Minuten (Stufe "häufiger" 0–4) …
+    rushJitter: 1,                  // … ± so viele Minuten zufällig
+    rushDur: [20, 25, 30, 35],      // Dauer in Sekunden (Stufe "länger" 0–3)
+    rushMin: 5,                     // kleinster Faktor
+    rushMax: [10, 15, 20, 25, 30, 35],  // größter Faktor (Stufe "stärker" 0–5)
 
     maxPattern: 7                   // längste Eingabe beim Tasten
   };
@@ -64,7 +75,8 @@ const IdleLogic = (table) => {
     solved: 0,              // gelöste Aufgaben
     bestStreak: 0,
     koch: { level: CFG.startLevel, recent: [] },
-    up: { grund: 0, fenster: 0, schwach: 0, schutz: 0 },
+    up: { grund: 0, fenster: 0, schwach: 0, schutz: 0, rush: 0, rushOft: 0, rushLang: 0, rushStark: 0 },
+    rushWait: null,         // Sekunden aktiver Spielzeit bis zum nächsten DotRush (null = noch nicht ausgelost)
     settings: { tempo: 1 }  // Spieltempo-Modus (0 = Gemütlich … 4 = Blitz); Eingabe: Einstellungen, Bereich Games
   });
 
@@ -83,6 +95,7 @@ const IdleLogic = (table) => {
     delete g.settings.task;
     delete g.settings.confirm;
     ['dots', 'total', 'solved', 'bestStreak'].forEach(k => { g[k] = Math.max(0, Number(g[k]) || 0); });
+    if (!(Number(g.rushWait) > 0)) g.rushWait = null;
     CFG.upgrades.forEach(u => { g.up[u.id] = Math.max(0, Math.min(u.max, Math.floor(Number(g.up[u.id]) || 0))); });
     // Umstieg auf den neuen Maßstab: früher 10 Dots je Punkt/Strich, jetzt 1
     if (!(s.v >= 2) && (s.dots || s.total)) { g.dots /= 10; g.total /= 10; }
@@ -206,10 +219,11 @@ const IdleLogic = (table) => {
   }
 
   // Aufgabe gelöst: Dots gutschreiben, Serie und Koch-Fortschritt fortschreiben.
-  // outcome = { errors, time (s), weak, shielded }
+  // outcome = { errors, time (s), weak, shielded, rush (Faktor des laufenden DotRush oder 0) }
   function solve(g, run, task, outcome) {
     const onTime = outcome.errors === 0 && outcome.time <= task.window;
-    const combo = onTime ? comboOf(run.streak + 1) : 1;
+    let combo = onTime ? comboOf(run.streak + 1) : 1;
+    if (onTime && outcome.rush) combo = Math.max(outcome.rush, combo);   // DotRush ersetzt die Combo, nie weniger
     const r = rate(task, outcome, combo);
     const dots = valueOf(g, task.ch, outcome.weak) * r.factor;
     g.dots += dots;
@@ -250,12 +264,28 @@ const IdleLogic = (table) => {
     while (list.length <= level) list.push(roundPrice(list[list.length - 1] * u.grow));
     return list[level];
   }
-  const canBuy = (g, id) => g.up[id] < UP[id].max && g.dots >= priceOf(id, g.up[id]);
+  const locked = (g, id) => !!UP[id].needs && !g.up[UP[id].needs];   // z. B. "häufiger" erst nach "freischalten"
+  const canBuy = (g, id) => !locked(g, id) && g.up[id] < UP[id].max && g.dots >= priceOf(id, g.up[id]);
   function buy(g, id) {
     if (!canBuy(g, id)) return false;
     g.dots -= priceOf(id, g.up[id]);
     g.up[id]++;
     return true;
+  }
+
+  /* ---------- DotRush ---------- */
+  const rushOn = g => g.up.rush > 0;
+  const rushDur = g => CFG.rushDur[g.up.rushLang];
+  const rushMax = g => CFG.rushMax[g.up.rushStark];
+  // Wartezeit bis zum nächsten DotRush in Sekunden aktiver Spielzeit
+  function rushNextWait(g, rand) {
+    const m = CFG.rushEvery[g.up.rushOft] + ((rand || Math.random)() * 2 - 1) * CFG.rushJitter;
+    return Math.max(30, m * 60);
+  }
+  // Faktor eines neuen DotRush: ganze Zahl zwischen max(5, Combo) und max(Höchstfaktor, Combo)
+  function rushFactor(g, combo, rand) {
+    const lo = Math.max(CFG.rushMin, combo), hi = Math.max(rushMax(g), combo);
+    return lo + Math.floor((rand || Math.random)() * (hi - lo + 1));
   }
 
   /* ---------- Zahlen-Anzeige ---------- */
@@ -277,7 +307,7 @@ const IdleLogic = (table) => {
   return { CFG, defaults, normalize, activeChars, quoteOf, kochComplete, comboOf, nextStep,
     modeOf, tapTime, windowsFor, pickChar, pickType, newTask, arm, checkPattern,
     valueOf, isWeak, rate, onError, shieldReady, schutzNeed, solve,
-    roundPrice, priceOf, canBuy, buy, fmt };
+    roundPrice, priceOf, locked, canBuy, buy, rushOn, rushDur, rushMax, rushNextWait, rushFactor, fmt };
 };
 
 if (typeof module !== 'undefined' && module.exports) module.exports = IdleLogic;
