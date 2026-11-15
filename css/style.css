@@ -494,3 +494,27 @@ h3 small { font-weight: normal; color: var(--muted); font-size: .8rem; margin-le
 .ky-field.off { opacity: .4; cursor: default; font-weight: 600; }
 .ky-field.off:hover { border-color: var(--line); }
 .id-kind { min-height: 3em; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 0 6px; }
+
+/* ===================== Games: Spieltempo in der Ton-Leiste, Upgrades ===================== */
+.quickbar .qb-game { display: none; margin: 0 0 14px; }
+.quickbar.game .qb-game { display: block; }
+.quickbar.game .qb-wpm { display: none; }
+.qb-title { display: block; color: var(--text) !important; margin: 0 0 6px; }
+.qb-modes { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; }
+.qb-modes button { flex: 1 1 auto; padding: 6px 8px; font-size: .8rem; }
+.qb-game p { margin: 6px 0 0; }
+@media (max-width: 1100px) {
+  .quickbar .qb-game { grid-column: 1 / -1; margin: 0 0 4px; }
+  .quickbar.closed .qb-game { display: none; }
+}
+.id-shield { grid-column: 2; margin-top: 4px; color: var(--muted); }
+.id-shield.ready { color: var(--ok); }
+.id-ups { display: grid; gap: 10px; margin-top: 8px; }
+.id-up { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: transparent; }
+.id-up.can { border-color: var(--accent); }
+.id-up-text p { margin: 2px 0 0; }
+.id-up-lv { color: var(--muted); margin-left: 6px; }
+.id-up-buy { white-space: nowrap; min-width: 180px; }
+.id-up-buy:disabled { opacity: .5; cursor: default; }
+@media (max-width: 640px) { .id-up { grid-template-columns: 1fr; } .id-up-buy { width: 100%; } }

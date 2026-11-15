@@ -114,6 +114,7 @@
     $$('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
     const sound = SOUND_TABS.indexOf(name) >= 0;
     $('#quickbar').classList.toggle('show', sound);
+    $('#quickbar').classList.toggle('game', name === 'spiel');   // Games: Spieltempo statt WPM-Regler
     $('#layout').classList.toggle('noside', !sound);
     const act = $('#tabs button.active');
     if (act) $('#tabs').scrollTo({ left: act.offsetLeft - $('#tabs').clientWidth / 2 + act.clientWidth / 2, behavior: 'smooth' });

@@ -1,10 +1,11 @@
-/* Games (Idle-Spiel): Oberfläche. Die Regeln (Dots, Combo, Koch) stehen in js/idle-logic.js.
-   Schritt 1: Aufgaben lösen und Dots sammeln. Upgrades, Prestige und Welten folgen später.
+/* Games (Idle-Spiel): Oberfläche. Die Regeln (Zeitfenster, Wertung, Combo, Koch, Upgrades) stehen in
+   js/idle-logic.js, die Zahlen dazu im Projekt-Doc "games-plan.md".
 
-   Aufgabenarten:
+   Aufgaben (immer gemischt):
    - "sehen":  Morsecode wird angezeigt → Buchstaben auf der Tastatur tippen
    - "tasten": Buchstabe wird angezeigt → Code eingeben (Maus, Leertaste oder E/T, siehe js/keyer.js)
-   Eingabeart und Bestätigung (sofort, nach Pause, mit Enter) stehen in den Einstellungen unter "Games". */
+   Eingabeart und Bestätigung stehen in den Einstellungen unter "Games".
+   Das Spieltempo (Gemütlich … Blitz) steht in der Ton-Leiste und bestimmt auch das Morse-Tempo (WPM). */
 const Idle = (() => {
   'use strict';
 
@@ -12,22 +13,29 @@ const Idle = (() => {
   const $$ = s => Array.from(document.querySelectorAll(s));
   const L = IdleLogic(Morse.TABLE);
   const sym = code => code.replace(/\./g, '•').replace(/-/g, '–').split('').join(' ');
-  const num = n => Math.floor(n).toLocaleString('de-DE');
+  const fmt = L.fmt;
+  const fx = x => x.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+  const whole = n => Math.floor(n).toLocaleString('de-DE');
 
   let host = null;                 // { getState, save, audioOpts, area } aus app.js
   let keyer = null;                // Tasten-Eingabe (js/keyer.js)
-  let autoTimer = 0;               // Bestätigung nach Pause
   let g = null;                    // Spielstand (S.idle)
   let shown = false;               // Games-Bereich ist offen
-  let raf = 0, nextTimer = 0, shakeTimer = 0;
-  const run = { streak: 0 };       // Combo-Serie der laufenden Sitzung
+  let view = 'aufgaben';           // 'aufgaben' | 'upgrades'
+  let raf = 0, nextTimer = 0, shakeTimer = 0, autoTimer = 0;
+  const run = { streak: 0, charge: 1e9 };   // Serie und Fehlerschutz der laufenden Sitzung (Schutz startet bereit)
   let cur = null, nxt = null;      // aktuelle und nächste Aufgabe
   let input = '';                  // Eingabe: Buchstabe ("sehen") oder Punkte/Striche ("tasten")
-  let errors = 0, late = false, done = false;
+  let errors = 0, late = false, done = false, shielded = false;
   const clock = { running: false, last: 0, used: 0 };
+  const upRows = {};               // Zeilen im Upgrades-Bereich
 
   const S = () => host.getState();
   const A = () => host.area();     // Einstellungen des Bereichs Games
+  const mode = () => L.modeOf(g);
+  const audio = () => host.audioOpts({ cwpm: mode().wpm, wpm: mode().wpm });
+  const keyed = () => A().input !== 'et';   // Morsen mit Maus oder Leertaste: Tastzeit zählt zum Fenster
+  const playing = () => shown && view === 'aufgaben';
   const quoteFn = ch => {
     const st = S().chars[ch];
     return st && st.last.length ? st.last.reduce((a, b) => a + b, 0) / st.last.length : null;
@@ -36,14 +44,14 @@ const Idle = (() => {
   /* ---------- Ablauf ---------- */
   function nextTask() {
     clearTimeout(nextTimer);
-    cur = L.arm(nxt || L.newTask(g, cur && cur.ch, quoteFn), g);
+    cur = L.arm(nxt || L.newTask(g, cur && cur.ch, quoteFn), g, keyed());
     nxt = L.newTask(g, cur.ch, quoteFn);
     input = '';
-    errors = 0; late = false; done = false;
+    errors = 0; late = false; done = false; shielded = false;
     clearTimeout(autoTimer);
     keyer.clear();
     clock.used = 0;
-    startClock();
+    if (playing()) startClock(); else clock.running = false;
     feedback('', '');
     renderTask();
     renderNext();
@@ -51,10 +59,12 @@ const Idle = (() => {
 
   function mistake() {
     clearTimeout(autoTimer);
+    // Erster Fehler dieser Aufgabe: Fehlerschutz kann die Combo retten; jeder weitere Fehler beendet sie
+    if (errors === 0) shielded = L.onError(g, run);
+    else { shielded = false; run.streak = 0; }
     errors++;
     input = '';
-    run.streak = 0;
-    feedback('Falsch – nochmal', 'bad');
+    feedback(shielded ? 'Falsch – der Fehlerschutz hat deine Combo gerettet. Nochmal' : 'Falsch – nochmal', 'bad');
     clearTimeout(shakeTimer);
     $('#idInput').classList.add('shake');
     shakeTimer = setTimeout(() => $('#idInput').classList.remove('shake'), 350);
@@ -66,16 +76,20 @@ const Idle = (() => {
     clearTimeout(autoTimer);
     done = true;
     stopClock();
-    const r = L.solve(g, run, cur, { errors: errors, late: late });
+    const weak = L.isWeak(quoteFn(cur.ch));
+    const r = L.solve(g, run, cur, { errors: errors, time: clock.used, weak: weak, shielded: shielded });
     Store.record(S(), cur.ch, errors === 0);
     host.save();
 
-    let text = 'Richtig';
-    if (errors) text = 'Gelöst, mit Fehler: halbe Dots';
-    else if (late) text = 'Richtig, aber zu langsam: Combo weg';
+    let text, cls = 'ok';
+    if (r.kind === 'ok') text = 'Richtig' + (r.combo > 1 ? ' · Combo ×' + r.combo : '');
+    else if (r.kind === 'late') text = 'Richtig, Fenster verpasst · Zeit für „' + L.CFG.modes[r.reached].name + '“ (×' + fx(r.factor) + ')';
+    else if (r.kind === 'slow') text = 'Richtig, aber langsamer als Gemütlich (×' + fx(r.factor) + ')';
+    else { text = 'Mit Fehler gelöst (×' + fx(r.factor) + ')' + (shielded ? ' · Combo gerettet' : ''); cls = 'bad'; }
+    if (weak && g.up.schwach > 0) text += ' · Schwachstellen-Bonus';
     if (r.unlocked) text += ' · Neues Zeichen: ' + r.unlocked + '  ' + sym(Morse.TABLE[r.unlocked]);
-    feedback(text, errors ? 'bad' : 'ok');
-    popDots(r.dots, r.combo);
+    feedback(text, cls);
+    popDots(r.dots, r.kind === 'ok' && r.combo > 1 ? r.combo : 0);
 
     renderTask();
     renderStats();
@@ -127,7 +141,7 @@ const Idle = (() => {
   }
 
   function onKey(e) {
-    if (!shown || !cur || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!playing() || !cur || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.target.matches('input, textarea, select')) return;
     const k = e.key;
     const letter = /^[a-zA-Z]$/.test(k);
@@ -145,7 +159,7 @@ const Idle = (() => {
   function startClock() { clock.running = true; clock.last = performance.now(); }
   function stopClock() { clock.running = false; }
   function pauseClock() { if (clock.running) { tick(performance.now()); clock.running = false; } }
-  function resumeClock() { if (shown && cur && !done && !clock.running) startClock(); }
+  function resumeClock() { if (playing() && cur && !done && !clock.running) startClock(); }
 
   function tick(now) {
     if (clock.running) {
@@ -175,28 +189,36 @@ const Idle = (() => {
 
   // Schwebende "+Dots"-Anzeige über dem Zähler
   function popDots(dots, combo) {
-    const box = $('#idPops');
     const el = document.createElement('span');
     el.className = 'id-pop';
-    el.textContent = '+' + num(dots) + (combo > 1 ? '  x' + combo : '');
-    box.appendChild(el);
+    el.textContent = '+' + fmt(dots) + (combo ? '  ×' + combo : '');
+    $('#idPops').appendChild(el);
     setTimeout(() => el.remove(), 1200);
   }
 
   function renderStats() {
-    $('#idDots').textContent = num(g.dots);
-    $('#idSolved').textContent = num(g.solved);
-    $('#idBest').textContent = num(g.bestStreak);
+    $('#idDots').textContent = fmt(g.dots);
+    $('#idSolved').textContent = whole(g.solved);
+    $('#idBest').textContent = whole(g.bestStreak);
+    $('#idTotal').textContent = fmt(g.total);
+    if (view === 'upgrades') renderUpgrades();
   }
 
   function renderCombo() {
     const f = L.comboOf(run.streak);
     const n = L.nextStep(run.streak);
-    $('#idCombo').textContent = 'x' + f;
+    $('#idCombo').textContent = '×' + f;
     $('#idCombo').classList.toggle('hot', f > 1);
     $('#idStreak').textContent = run.streak;
-    $('#idComboNext').textContent = n ? 'x' + n.factor + ' ab ' + n.at + ' in Folge' : 'Maximum erreicht';
+    $('#idComboNext').textContent = n ? '×' + n.factor + ' ab ' + n.at + ' in Folge' : 'Maximum erreicht';
     $('#idComboFill').style.width = (n ? (run.streak - n.from) / (n.at - n.from) * 100 : 100) + '%';
+    const sh = $('#idShield');
+    sh.hidden = g.up.schutz === 0;
+    if (g.up.schutz > 0) {
+      const ready = L.shieldReady(g, run);
+      sh.textContent = ready ? 'Fehlerschutz bereit' : 'Fehlerschutz lädt: ' + run.charge + ' / ' + L.schutzNeed(g) + ' Aufgaben';
+      sh.classList.toggle('ready', ready);
+    }
   }
 
   function renderClock() {
@@ -204,7 +226,9 @@ const Idle = (() => {
     const left = Math.max(0, cur.window - clock.used);
     $('#idClockFill').style.width = (left / cur.window * 100) + '%';
     $('#idClock').classList.toggle('late', late);
-    $('#idClockText').textContent = done ? '' : late ? 'Zeit vorbei – Combo weg, lösen geht trotzdem' : left.toFixed(1) + ' s für die Combo';
+    $('#idClockText').textContent = done ? '' : late
+      ? 'Fenster verpasst – Combo weg, Dots je nach Zeit'
+      : left.toFixed(1).replace('.', ',') + ' s für die Combo (' + mode().name + ')';
   }
 
   function renderTask() {
@@ -221,7 +245,7 @@ const Idle = (() => {
     if (done) help = sym(cur.code);
     else if (errors >= 2) help = 'Lösung: ' + (see ? cur.ch : sym(cur.code));
     $('#idHelp').textContent = help;
-    $('#idInput').textContent = input ? (see ? input : sym(input)) : ' ';
+    $('#idInput').textContent = input ? (see ? input : sym(input)) : ' ';
     // Eingabefeld, Knöpfe und Druckdauer bleiben immer an derselben Stelle (kein Springen beim Wechsel der
     // Aufgabenart); bei "Morse erkennen" sind sie nur abgeblendet
     $('#idKeys').hidden = a.input !== 'et';
@@ -264,21 +288,82 @@ const Idle = (() => {
 
   function renderSettings() {
     $$('#idSetTempo button').forEach(b => b.classList.toggle('active', Number(b.dataset.v) === g.settings.tempo));
-    const t = L.CFG.tempos[g.settings.tempo];
-    $('#idTempoInfo').textContent = 'Zeitfenster x' + t.time.toLocaleString('de-DE') + ', Dots x'
-      + t.dots.toLocaleString('de-DE') + '. Gilt ab der nächsten Aufgabe.';
+    const m = mode();
+    $('#idTempoInfo').textContent = 'Fenster ×' + fx(m.time) + (m.extra ? ' + ' + fx(m.extra) + ' s' : '')
+      + ' · Dots ×' + fx(m.dots) + ' · ' + m.wpm + ' WPM. Gilt ab der nächsten Aufgabe.';
+  }
+
+  /* ---------- Upgrades ---------- */
+  const pct = x => Math.round(x * 100) + ' %';
+  // Wirkung jetzt und nach dem Kauf, als kurzer Text
+  function upgradeText(id, lv) {
+    const C = L.CFG;
+    if (id === 'grund') return {
+      what: 'Jeder Punkt und Strich bringt mehr Dots.',
+      now: 'Grundwert ×' + fx(Math.pow(C.grundStep, lv)), next: '×' + fx(Math.pow(C.grundStep, lv + 1)) };
+    if (id === 'fenster') return {
+      what: 'Mehr Zeit für die Combo, in jedem Spieltempo.',
+      now: 'Zeitfenster +' + pct(C.fensterStep * lv), next: '+' + pct(C.fensterStep * (lv + 1)) };
+    if (id === 'schwach') return {
+      what: 'Zeichen mit weniger als ' + pct(C.schwachQuote) + ' Trefferquote bringen mehr Dots.',
+      now: lv ? '+' + pct(C.schwachBonus[lv - 1]) : 'noch nicht gekauft', next: lv < 3 ? '+' + pct(C.schwachBonus[lv]) : '' };
+    return {
+      what: 'Ein Fehler kostet die Combo nicht. Danach lädt der Schutz wieder auf.',
+      now: lv ? 'lädt nach ' + C.schutzCharge[lv - 1] + ' Aufgaben' : 'noch nicht gekauft',
+      next: lv < 3 ? 'nach ' + C.schutzCharge[lv] + ' Aufgaben' : '' };
+  }
+
+  function buildUpgrades() {
+    const box = $('#idUps');
+    L.CFG.upgrades.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'id-up';
+      row.innerHTML = '<div class="id-up-text"><b class="id-up-name"></b> <small class="id-up-lv"></small>'
+        + '<p class="muted small id-up-what"></p><p class="small id-up-eff"></p></div>'
+        + '<button type="button" class="btn primary id-up-buy"></button>';
+      row.querySelector('.id-up-name').textContent = u.name;
+      row.querySelector('.id-up-buy').addEventListener('click', () => {
+        if (!L.buy(g, u.id)) return;
+        host.save();
+        renderStats();
+        renderUpgrades();
+        renderCombo();
+      });
+      box.appendChild(row);
+      upRows[u.id] = row;
+    });
+  }
+
+  function renderUpgrades() {
+    L.CFG.upgrades.forEach(u => {
+      const row = upRows[u.id];
+      const lv = g.up[u.id];
+      const maxed = lv >= u.max;
+      const t = upgradeText(u.id, lv);
+      row.querySelector('.id-up-lv').textContent = 'Stufe ' + lv + (u.max === Infinity ? '' : ' / ' + u.max);
+      row.querySelector('.id-up-what').textContent = t.what;
+      row.querySelector('.id-up-eff').textContent = 'Jetzt: ' + t.now + (maxed ? '' : '  →  danach: ' + t.next);
+      const b = row.querySelector('.id-up-buy');
+      if (maxed) { b.textContent = 'Voll ausgebaut'; b.disabled = true; }
+      else {
+        const p = L.priceOf(u.id, lv);
+        b.textContent = 'Kaufen · ' + fmt(p, true) + ' Dots';
+        b.disabled = g.dots < p;
+      }
+      row.classList.toggle('can', L.canBuy(g, u.id));
+    });
+  }
+
+  function setView(v) {
+    view = v;
+    $$('.id-areas [data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+    $('#idViewAufgaben').hidden = v !== 'aufgaben';
+    $('#idViewUpgrades').hidden = v !== 'upgrades';
+    if (v === 'upgrades') { keyer.cancel(); clearTimeout(autoTimer); pauseClock(); renderUpgrades(); }
+    else resumeClock();
   }
 
   function renderAll() { renderStats(); renderCombo(); renderKoch(); renderSettings(); renderTask(); renderNext(); renderClock(); }
-
-  /* ---------- Einstellungen ---------- */
-  function bindSetting(sel, key, numeric) {
-    $$(sel + ' button').forEach(b => b.addEventListener('click', () => {
-      g.settings[key] = numeric ? Number(b.dataset.v) : b.dataset.v;
-      host.save();
-      renderSettings();
-    }));
-  }
 
   // Knöpfe Kurz/Lang (Eingabe E/T)
   function bindKey(sel, s) {
@@ -293,6 +378,7 @@ const Idle = (() => {
     shown = true;
     if (!cur || done) nextTask(); else resumeClock();
     renderAll();
+    if (view === 'upgrades') renderUpgrades();
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);
   }
@@ -324,9 +410,9 @@ const Idle = (() => {
       field: $('#idFeld'),
       timingBox: $('#idTiming'),
       settings: A,
-      active: () => shown && !!cur && !done && cur.type === 'tasten',
-      audioOpts: () => host.audioOpts(),
-      onSymbol: sym => typeSymbol(sym)
+      active: () => playing() && !!cur && !done && cur.type === 'tasten',
+      audioOpts: audio,
+      onSymbol: s => typeSymbol(s)
     });
     document.addEventListener('keydown', onKey);
     window.addEventListener('blur', pauseClock);
@@ -336,8 +422,14 @@ const Idle = (() => {
     bindKey('#idLang', '-');
     $('#idErase').addEventListener('click', erase);
     $('#idOk').addEventListener('click', submit);
-    bindSetting('#idSetConfirm', 'confirm', false);
-    bindSetting('#idSetTempo', 'tempo', true);
+    $$('#idSetTempo button').forEach(b => b.addEventListener('click', () => {
+      g.settings.tempo = Number(b.dataset.v);
+      host.save();
+      renderSettings();
+      keyer.refresh();
+    }));
+    $$('.id-areas [data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+    buildUpgrades();
   }
 
   return { init, show, hide, refresh };
