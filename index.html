@@ -38,10 +38,21 @@
     <!-- Immer erreichbar und läuft beim Scrollen mit: Tempo, Ton, Lautstärke -->
     <aside class="quickbar closed" id="quickbar" aria-label="Ton und Tempo">
       <button type="button" class="qtoggle" id="qToggle" aria-expanded="false">Ton &amp; Tempo ▾</button>
-      <label title="Geschwindigkeit der einzelnen Zeichen">Tempo <b data-out="cwpm"></b> WPM
+      <label class="qb-wpm" title="Geschwindigkeit der einzelnen Zeichen">Tempo <b data-out="cwpm"></b> WPM
         <input type="range" data-set="cwpm" min="10" max="40" step="1"></label>
-      <label title="Gesamttempo. Kleiner als das Tempo = längere Pausen zwischen den Zeichen">Gesamttempo <b data-out="wpm"></b> WPM
+      <label class="qb-wpm" title="Gesamttempo. Kleiner als das Tempo = längere Pausen zwischen den Zeichen">Gesamttempo <b data-out="wpm"></b> WPM
         <input type="range" data-set="wpm" min="5" max="40" step="1"></label>
+      <div class="qb-game">
+        <b class="qb-title">Spieltempo</b>
+        <div class="seg qb-modes" id="idSetTempo">
+          <button type="button" data-v="0">Gemütlich</button>
+          <button type="button" data-v="1">Normal</button>
+          <button type="button" data-v="2">Zügig</button>
+          <button type="button" data-v="3">Schnell</button>
+          <button type="button" data-v="4">Blitz</button>
+        </div>
+        <p class="muted small" id="idTempoInfo"></p>
+      </div>
       <label title="Tonhöhe">Tonhöhe <b data-out="freq"></b> Hz
         <input type="range" data-set="freq" min="300" max="1000" step="10"></label>
       <label title="Lautstärke">Lautstärke <b data-out="vol"></b> %
@@ -128,8 +139,8 @@
       <section id="tab-spiel" class="tab">
         <div class="card id-head">
           <nav class="seg id-areas" aria-label="Bereiche des Spiels">
-            <button class="active" type="button">Aufgaben</button>
-            <button type="button" disabled title="Kommt in einem späteren Schritt">Upgrades</button>
+            <button class="active" type="button" data-view="aufgaben">Aufgaben</button>
+            <button type="button" data-view="upgrades">Upgrades</button>
             <button type="button" disabled title="Kommt in einem späteren Schritt">Prestige</button>
             <button type="button" disabled title="Kommt in einem späteren Schritt">Welten</button>
           </nav>
@@ -139,11 +150,12 @@
               <b id="idCombo">x1</b>
               <span>Serie <strong id="idStreak">0</strong> · <span id="idComboNext"></span></span>
               <div class="meter"><div id="idComboFill"></div></div>
+              <small class="id-shield" id="idShield" hidden></small>
             </div>
           </div>
         </div>
 
-        <div class="id-grid">
+        <div class="id-grid" id="idViewAufgaben">
           <div class="card center id-task">
             <div class="id-clock" id="idClock"><div id="idClockFill"></div></div>
             <p class="muted id-clocktext" id="idClockText"></p>
@@ -174,22 +186,21 @@
               <p class="muted" id="idKochInfo"></p>
             </div>
             <div class="card">
-              <h2>Spielweise</h2>
-              <p class="id-lbl">Tempo</p>
-              <div class="seg" id="idSetTempo">
-                <button type="button" data-v="0">Gemütlich</button>
-                <button type="button" data-v="1">Normal</button>
-                <button type="button" data-v="2">Zügig</button>
-                <button type="button" data-v="3">Schnell</button>
-                <button type="button" data-v="4">Blitz</button>
-              </div>
-              <p class="muted" id="idTempoInfo"></p>
+              <h2>Statistik</h2>
+              <p class="muted small">Spieltempo, Tonhöhe und Lautstärke stellst du in der Leiste rechts ein.</p>
               <div class="stats id-stats">
                 <div class="stat"><span>Gelöst</span><b id="idSolved">0</b></div>
                 <div class="stat"><span>Beste Serie</span><b id="idBest">0</b></div>
+                <div class="stat"><span>Insgesamt verdient</span><b id="idTotal">0</b></div>
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="card" id="idViewUpgrades" hidden>
+          <h2>Upgrades</h2>
+          <p class="muted small">Upgrades wirken sofort. Der Preis steigt mit jeder Stufe.</p>
+          <div class="id-ups" id="idUps"></div>
         </div>
       </section>
 
