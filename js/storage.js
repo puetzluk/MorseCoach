@@ -13,7 +13,7 @@ const Store = (() => {
     right: false,           // Maus: auch die rechte Taste zählt (linke zählt immer)
     confirm: 'sofort',      // 'sofort' | 'pause' | 'enter'
     delay: 1.0,             // Sekunden Pause bei 'pause'
-    timing: true,           // Druckdauer anzeigen
+    timing: false,          // Druckdauer anzeigen (in den Einstellungen einschaltbar)
     hint: false             // Code (Punkte/Striche) beim Üben anzeigen
   });
   const baseAreas = () => { const a = {}; AREAS.forEach(k => { a[k] = baseArea(); }); return a; };
@@ -22,6 +22,7 @@ const Store = (() => {
     version: 3,
     settings: {
       theme: 'dunkel',      // 'hell' | 'dunkel' | 'funk'
+      migr: 1,              // Zähler für einmalige Anpassungen gespeicherter Einstellungen (1: Druckdauer aus)
       cwpm: 20, wpm: 12, freq: 600, vol: 50,
       areas: baseAreas()    // Eingabe und Bestätigung je Bereich (siehe baseArea)
     },
@@ -75,6 +76,9 @@ const Store = (() => {
         out.settings.areas[k] = a;
       });
       delete out.settings.hint; delete out.settings.autoConfirm; delete out.settings.confirmDelay;
+      // Einmalig: Druckdauer-Anzeige war früher an. Jetzt ist sie standardmäßig aus (Einstellungen → Eingabe & Bestätigung).
+      if ((Number(old.migr) || 0) < 1) AREAS.forEach(k => { out.settings.areas[k].timing = false; });
+      out.settings.migr = 1;
       return out;
     } catch (e) {
       return defaults();

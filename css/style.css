@@ -532,3 +532,107 @@ h3 small { font-weight: normal; color: var(--muted); font-size: .8rem; margin-le
 .id-explain { border-collapse: collapse; width: 100%; font-size: .82rem; }
 .id-explain th, .id-explain td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
 @media (prefers-reduced-motion: reduce) { .id-rushbar { animation: none; } }
+
+/* ===================== Handy: schlichte Ansicht ===================== */
+/* Grundregeln für alle Breiten: Symbole, Mehr-Menü und Modus-Fenster gibt es nur am Handy */
+.ti { display: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+.nav-more, .more-menu, .mtoggle, .qb-mode, .erkl-card { display: none; }
+.qb-bar { display: contents; }                       /* Laptop und Tablet: der Knopf sitzt wie bisher direkt in der Leiste */
+@media (min-width: 641px) and (max-width: 1100px) { .qb-sound { display: contents; } }
+.erkl-body h3 { margin: 14px 0 4px; font-size: .95rem; }
+.erkl-body p, .erkl-body li { font-size: .9rem; margin: 4px 0; }
+.erkl-body ul { margin: 4px 0; padding-left: 18px; }
+.erkl-body .id-explain { font-size: .74rem; }
+
+@media (max-width: 640px) {
+  /* --- Kopf: Logo und Design in einer Zeile, darunter fünf Symbole, alle sichtbar --- */
+  .topbar { gap: 6px 10px; padding: max(8px, env(safe-area-inset-top)) 10px 6px; }
+  .topbar nav { order: 3; flex: 0 0 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin: 0; padding: 0; overflow: visible; }
+  nav .ti { display: block; }
+  nav button {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    padding: 6px 0; min-height: 52px; font-size: .72rem; line-height: 1.1; letter-spacing: 0; flex: none; border-radius: 10px;
+  }
+  [data-theme="funk"] nav button { font-size: .76rem; letter-spacing: 0; border-radius: 4px; }
+  nav .nav-sec { display: none; }
+  nav .nav-more { display: flex; }
+
+  /* Menü „Mehr“ */
+  .more-menu {
+    display: grid; position: absolute; right: 10px; top: calc(100% + 4px); z-index: 8; min-width: 210px; gap: 2px; padding: 6px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 12px 30px rgba(0,0,0,.4);
+  }
+  .more-menu button {
+    display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 10px 14px; font: inherit; text-align: left;
+    color: var(--text); background: none; border: 0; border-radius: 9px; cursor: pointer;
+  }
+  .more-menu button.active { background: var(--grad); color: var(--accent-text); font-weight: 700; }
+  .more-menu .ti { display: block; }
+  [data-theme="funk"] .more-menu { border: 3px double #a67c2e; background: #3a2a1b; }
+
+  /* --- Leiste: zwei Reiter „Ton & Tempo“ und „Einstellungen“, Fenster klappt über den Inhalt --- */
+  .quickbar.show { display: block; padding: 0; margin: 0 -10px 8px; border-width: 0 0 1px; border-radius: 0; box-shadow: none; }
+  .qb-bar { display: flex; gap: 6px; padding: 6px 8px; }
+  .qb-bar button {
+    flex: 1 1 0; width: auto; min-width: 0; min-height: 40px; padding: 6px 8px; font: inherit; font-size: .88rem; font-weight: 700; text-align: center;
+    color: var(--text); background: var(--chip-bg); border: 1px solid var(--line); border-radius: 9px; cursor: pointer;
+  }
+  .qb-bar button[aria-expanded="true"] { background: var(--grad); color: var(--accent-text); border-color: transparent; }
+  .quickbar.has-mode .mtoggle { display: block; }
+  .qb-sound, .qb-mode {
+    display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 6; padding: 12px 14px 14px;
+    background: var(--panel); border-bottom: 1px solid var(--line); border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 14px 28px rgba(0,0,0,.4); max-height: calc(100svh - var(--hh, 100px) - 64px); overflow-y: auto;
+  }
+  [data-theme="funk"] .qb-sound, [data-theme="funk"] .qb-mode { background: #3a2a1b; }
+  .quickbar:not(.closed) .qb-sound { display: block; }
+  .quickbar.mode-open .qb-mode { display: block; }
+  .qb-mode .pick-slot, .qb-mode .picker { margin: 0; }
+  .qb-mode .id-side { margin: 0; grid-template-columns: 1fr; gap: 10px; }
+  .qb-mode .card { margin: 0; padding: 12px; box-shadow: none; }
+  .qb-mode .card::before, .qb-mode .card::after { display: none; }
+  .qb-mode .chargrid { margin: 0 0 8px; }
+  .qb-mode .gridctl { margin: 6px 0 0; }
+  .qb-mode .pk-method { margin: 0 0 10px; }
+
+  /* --- Erklärungen verschwinden aus den Bereichen (sie stehen in Einstellungen → Erklärungen) --- */
+  .mode-line, #hoerDesc, #sendHinweis, #lernQuote, #idPrompt, #idClockText, #idTempoInfo, .pk-info, .erkl { display: none !important; }
+  #tab-hoeren h2, #tab-lernen h2, #tab-senden h2 { display: none; }
+  .pick-card { display: none; }
+
+  /* --- Kompakter: weniger Abstand, keine leeren Zeilen --- */
+  .layout { padding: 6px 10px 0; }
+  .card { padding: 12px; margin-bottom: 10px; }
+  .display { margin: 4px 0 2px; line-height: 1.3; }
+  .code { min-height: 1.1em; font-size: 1rem; line-height: 1.2; }
+  .pattern { min-height: 1.2em; font-size: 1.1rem; line-height: 1.2; }
+  .feedback { min-height: 1.1em; margin: 2px 0; line-height: 1.2; }
+  .ky-field { height: 110px; margin: 6px auto 4px; }
+  .row { margin: 8px 0; }
+  .meter { margin: 8px auto 2px; }
+  #lernInput { margin: 4px auto; }
+  #hoerLevels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 0; }
+  #hoerLevels button { padding: 9px 0; font-size: .8rem; }
+  #hoerPick:empty { display: none; }
+
+  /* --- Games --- */
+  .id-areas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 0 0 8px; }
+  .id-areas button { padding: 8px 2px; font-size: .8rem; }
+  .id-bank { grid-template-columns: auto 1fr; gap: 12px; }
+  .id-dots b { font-size: 2.2rem; }
+  .id-combo { column-gap: 8px; }
+  .id-combo b { font-size: 1.7rem; }
+  .id-kind { min-height: 1.5em; }
+  .id-clock { margin-bottom: 6px; }
+  .id-next { margin: 6px 0 0; }
+  #idHelp:empty { display: none; }                  /* Games: Lösungszeile nur, wenn es eine gibt */
+  .id-combo span, .id-combo small { font-size: .8rem; }
+  #tab-spiel .id-task .display { font-size: 3rem; margin: 2px 0; }
+
+  /* --- Einstellungen: Erklärungen --- */
+  .erkl-card { display: block; }
+  .erkl-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 4px 0 6px; }
+  .erkl-seg button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: .78rem; }
+  .erkl-seg .ti { display: block; width: 22px; height: 22px; }
+  .erkl-body { overflow-x: auto; }
+}

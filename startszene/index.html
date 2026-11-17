@@ -730,6 +730,12 @@
     .k-mini .k-txt{flex-direction:row;align-items:baseline;gap:10px}
     .k-mini .k-txt span{font-size:.78rem}
   }
+  /* Handy: keine Easter Eggs (Notizzettel, Glühbirne mit Filmzitat, Samuel Morse). Die Karten haben so mehr Platz. */
+  @media (max-width:700px){
+    html[data-theme="funk"] .k-zettel,html[data-theme="funk"] .k-loch,.k-sprecher,.k-blase{display:none !important}
+    html[data-theme="funk"] .k-buehne{padding-top:72px}
+    html[data-theme="funk"] .k-raster{height:calc(100svh - 88px)}
+  }
   @media (max-height:640px) and (min-width:701px){ .k-txt span{font-size:.85rem} .k-sym{width:42px;height:42px} }
 
   /* --- Cursor je Design (auch über die App) --- */

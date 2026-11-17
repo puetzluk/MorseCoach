@@ -11,6 +11,9 @@
   const THEME_ORDER = ['dunkel', 'hell', 'funk'];
   const THEME_COLORS = { dunkel: '#171a33', hell: '#ffffff', funk: '#2a1c10' };
   const SOUND_TABS = ['lernen', 'hoeren', 'senden', 'spiel', 'uebersetzer'];
+  const MODE_TABS = ['lernen', 'hoeren', 'senden', 'spiel'];            // Bereiche mit eigenem „Einstellungen“-Reiter (Handy)
+  const MORE_TABS = ['uebersetzer', 'statistik', 'einstellungen'];       // stehen am Handy hinter „Mehr“
+  const phone = window.matchMedia('(max-width: 640px)');
   const POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789.,?/=-'.split('');
   // Gruppen für die eigene Auswahl
   const GROUPS = {
@@ -110,12 +113,16 @@
     clearTimeout(H.auto);
     sendKeyer.cancel();
     if (name !== 'spiel') Idle.hide();
-    $$('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    $$('#tabs button[data-tab], #moreMenu button[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    $('#moreBtn').classList.toggle('active', MORE_TABS.indexOf(name) >= 0);
+    setMore(false);
     $$('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
     const sound = SOUND_TABS.indexOf(name) >= 0;
     $('#quickbar').classList.toggle('show', sound);
     $('#quickbar').classList.toggle('game', name === 'spiel');   // Games: Spieltempo statt WPM-Regler
     $('#layout').classList.toggle('noside', !sound);
+    placeModePanel(name);
+    if ($('#quickbar').classList.contains('mode-open')) setPanel(null);
     const act = $('#tabs button.active');
     if (act) $('#tabs').scrollTo({ left: act.offsetLeft - $('#tabs').clientWidth / 2 + act.clientWidth / 2, behavior: 'smooth' });
     if (name === 'start') renderStart();
@@ -124,7 +131,7 @@
     if (name === 'senden') { pickers.senden.render(); renderSendMode(); sendNext(); }
     if (name === 'lernen') renderLernMode();
     if (name === 'hoeren') renderHoerMode();
-    if (name === 'einstellungen') renderAreaSettings();
+    if (name === 'einstellungen') { renderAreaSettings(); renderErkl(); }
     if (name === 'spiel') Idle.show();
     if (name === 'statistik') renderStats();
     updateHeaderHeight();
@@ -132,7 +139,7 @@
     // Meldung an andere Skripte, welcher Bereich gerade offen ist
     document.dispatchEvent(new CustomEvent('morse:tab', { detail: name }));
   }
-  $$('#tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  $$('#tabs button[data-tab], #moreMenu button[data-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
   $$('[data-goto]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.goto)));
   $('#brand').addEventListener('click', () => showTab('start'));
 
@@ -182,13 +189,34 @@
   });
   ['cwpm', 'wpm', 'freq', 'vol'].forEach(showSetting);
 
-  // Eingeklappte Leiste (kleine Bildschirme)
-  $('#qToggle').addEventListener('click', () => {
-    const closed = $('#quickbar').classList.toggle('closed');
-    $('#qToggle').setAttribute('aria-expanded', closed ? 'false' : 'true');
-    $('#qToggle').textContent = 'Ton & Tempo ' + (closed ? '▾' : '▴');
+  // Eingeklappte Leiste (kleine Bildschirme). Am Handy gibt es zwei Reiter: „Ton & Tempo“ und „Einstellungen“
+  // (Einstellungen des Bereichs, z. B. die Zeichenauswahl). Es ist immer höchstens ein Fenster offen.
+  function setPanel(which) {   // 'sound' | 'mode' | null
+    const q = $('#quickbar'), sound = which === 'sound', mode = which === 'mode';
+    q.classList.toggle('closed', !sound);
+    q.classList.toggle('mode-open', mode);
+    $('#qToggle').setAttribute('aria-expanded', sound ? 'true' : 'false');
+    $('#qToggle').textContent = 'Ton & Tempo ' + (sound ? '▴' : '▾');
+    $('#mToggle').setAttribute('aria-expanded', mode ? 'true' : 'false');
+    $('#mToggle').textContent = 'Einstellungen ' + (mode ? '▴' : '▾');
     updateHeaderHeight();
+  }
+  $('#qToggle').addEventListener('click', () => setPanel($('#quickbar').classList.contains('closed') ? 'sound' : null));
+  $('#mToggle').addEventListener('click', () => setPanel($('#quickbar').classList.contains('mode-open') ? null : 'mode'));
+  // Tipp neben die Leiste schließt das offene Fenster (nur Handy)
+  document.addEventListener('click', e => {
+    if (!phone.matches || e.composedPath().some(n => n.id === 'quickbar')) return;   // composedPath: auch wenn der Knopf beim Antippen neu gezeichnet wurde
+    const q = $('#quickbar');
+    if (!q.classList.contains('closed') || q.classList.contains('mode-open')) setPanel(null);
   });
+
+  // Menü „Mehr“ (Übersetzer, Statistik, Einstellungen)
+  function setMore(open) {
+    $('#moreMenu').hidden = !open;
+    $('#moreBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  $('#moreBtn').addEventListener('click', e => { e.stopPropagation(); setMore($('#moreMenu').hidden); });
+  document.addEventListener('click', e => { if (!$('#moreMenu').hidden && !e.target.closest('#moreMenu')) setMore(false); });
 
   /* ---------- Zeichenauswahl (je Bereich eigene) ---------- */
   const pickers = {};
@@ -272,6 +300,28 @@
     render();
   }
   $$('.pick-slot').forEach(createPicker);
+
+  /* ---------- Einstellungen des Bereichs (Handy): Inhalt wandert in das Fenster neben „Ton & Tempo“ ---------- */
+  const movables = [
+    { tab: 'lernen', el: $('.pick-slot[data-area="lernen"]') },
+    { tab: 'hoeren', el: $('#hoerPick') },
+    { tab: 'senden', el: $('.pick-slot[data-area="senden"]') },
+    { tab: 'spiel', el: $('#idViewAufgaben .id-side') }
+  ].map(m => Object.assign(m, { home: m.el.parentNode }));
+
+  function placeModePanel(name) {
+    movables.forEach(m => { if (m.el.parentNode !== m.home) m.home.appendChild(m.el); });   // alles zurück an den Platz
+    if (phone.matches) { const m = movables.find(x => x.tab === name); if (m) $('#modePanel').appendChild(m.el); }
+    updateModeToggle(name);
+  }
+  // Reiter nur zeigen, wenn es etwas einzustellen gibt (Hören: nicht bei Wörtern und Sätzen)
+  function updateModeToggle(name) {
+    const lv = HLEVELS[S.hoerLevel] || {};
+    const has = MODE_TABS.indexOf(name) >= 0 && !(name === 'hoeren' && (lv.words || lv.sentences));
+    $('#quickbar').classList.toggle('has-mode', has);
+    if (!has && $('#quickbar').classList.contains('mode-open')) setPanel(null);
+  }
+  phone.addEventListener('change', () => { placeModePanel(activeTab); setPanel(null); });
 
   /* ---------- Start ---------- */
   function statCard(label, value) {
@@ -442,6 +492,7 @@
     $('#hoerDesc').textContent = lv.desc;
     // Zeichenauswahl nur bei Zeichengruppen sinnvoll
     $('#hoerPick').style.display = (lv.words || lv.sentences) ? 'none' : '';
+    updateModeToggle('hoeren');
     $('#hoerTempo').textContent = S.hoerenWpm;
   }
 
@@ -873,6 +924,41 @@
     enter: 'Du bestätigst selbst mit Enter (oder dem Knopf Bestätigen).'
   };
   let setArea = 'senden';
+
+  /* Erklärungen: am Handy stehen sie nicht mehr in den Bereichen, sondern hier (Einstellungen → Erklärungen) */
+  let erklArea = 'lernen';
+  const ERKL_PICK = '<h3>Koch-Methode</h3>'
+    + '<p>Du beginnst mit wenigen Zeichen und fügst nach und nach neue hinzu. Tippst du in der Auswahl ein Zeichen an, sind alle Zeichen bis dorthin freigeschaltet.</p>'
+    + '<h3>Eigene Auswahl</h3>'
+    + '<p>Du wählst selbst, welche Zeichen du übst (mindestens eines). Mit „Alle Buchstaben“, „Alle Ziffern“ und „Alle Satzzeichen“ wählst du ganze Gruppen auf einmal.</p>';
+  function erklHtml(area) {
+    if (area === 'lernen') {
+      return '<h3>Ablauf</h3><p>Du hörst ein Zeichen und tippst den passenden Buchstaben oder die Ziffer ein. Bei einem Fehler wird das Zeichen noch einmal vorgespielt.</p>'
+        + ERKL_PICK
+        + '<p>In der Koch-Methode rückst du ab 90 % Genauigkeit in den letzten 20 Antworten automatisch eine Stufe vor. Der Balken unter der Übung zeigt die aktuelle Genauigkeit.</p>';
+    }
+    if (area === 'hoeren') {
+      const lv = Object.keys(HLEVELS).map(id => '<li><b>' + HLEVELS[id].name + ':</b> ' + HLEVELS[id].desc + '</li>').join('');
+      return '<h3>Ablauf</h3><p>„Neue Runde“ spielt einen Text ab. Du tippst ein, was du gehört hast, und prüfst. „Nochmal hören“ spielt ihn erneut ab. Mit − und + stellst du das Hörtempo ein.</p>'
+        + '<h3>Stufen</h3><ul>' + lv + '</ul>'
+        + '<h3>Zeichenauswahl</h3><p>Sie gilt für Leicht, Mittel und Schwer. Bei Wörtern und Sätzen entfällt sie.</p>'
+        + ERKL_PICK;
+    }
+    if (area === 'senden') {
+      return '<h3>Ablauf</h3><p>Du siehst ein Zeichen und gibst es als Punkte und Striche ein.</p>'
+        + '<ul><li><b>Maus oder Finger:</b> Feld antippen. Kurz drücken ist ein Punkt, länger halten ein Strich. Die Grenze richtet sich nach dem Tempo.</li>'
+        + '<li><b>Leertaste:</b> gleiches Prinzip mit der Leertaste.</li>'
+        + '<li><b>E und T:</b> E ist ein Punkt, T ein Strich.</li></ul>'
+        + '<p>Wann geprüft wird, stellst du unter „Eingabe &amp; Bestätigung“ ein (sofort, nach einer Pause oder mit Enter).</p>'
+        + ERKL_PICK;
+    }
+    return Idle.explain();   // Games: aus den Spielregeln erzeugt
+  }
+  function renderErkl() {
+    $$('#erklSeg button').forEach(b => b.classList.toggle('active', b.dataset.erkl === erklArea));
+    $('#erklBody').innerHTML = erklHtml(erklArea);
+  }
+  $$('#erklSeg button').forEach(b => b.addEventListener('click', () => { erklArea = b.dataset.erkl; renderErkl(); }));
 
   function renderAreaSettings() {
     const a = S.settings.areas[setArea];
