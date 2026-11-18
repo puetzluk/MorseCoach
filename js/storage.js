@@ -30,6 +30,7 @@ const Store = (() => {
     sel: { lernen: baseSel(), hoeren: baseSel(), senden: baseSel() },
     levelRecent: [],        // letzte Antworten auf der aktuellen Koch-Stufe (Lernen)
     hoerLevel: 'mittel',
+    lernCfg: { mode: 'normal', dir: 'm2t', answer: 'tippen' },   // Lernen: Modus (normal|still|hoer), Richtung (m2t|t2m|both), Antwort (tippen|wahl|senden)
     idle: null,             // Games (Idle-Spiel): Spielstand, wird in js/idle-logic.js aufgefüllt
     chars: {},   // { K: { n, ok, last: [1,0,...] } }
     days: {},    // { '2026-11-07': { n, ok } }

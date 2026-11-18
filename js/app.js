@@ -122,14 +122,15 @@
     $('#quickbar').classList.toggle('game', name === 'spiel');   // Games: Spieltempo statt WPM-Regler
     $('#layout').classList.toggle('noside', !sound);
     placeModePanel(name);
-    if ($('#quickbar').classList.contains('mode-open')) setPanel(null);
+    if ($('#quickbar').classList.contains('mode-open') || $('#quickbar').classList.contains('modi-open')) setPanel(null);
     const act = $('#tabs button.active');
     if (act) $('#tabs').scrollTo({ left: act.offsetLeft - $('#tabs').clientWidth / 2 + act.clientWidth / 2, behavior: 'smooth' });
     if (name === 'start') renderStart();
-    if (name === 'lernen') { pickers.lernen.render(); renderLernMeter(); }
+    if (L.running) lernEnd();
+    if (name === 'lernen') { pickers.lernen.render(); renderLernMeter(); renderLernModi(); }
     if (name === 'hoeren') { pickers.hoeren.render(); renderHoer(); }
     if (name === 'senden') { pickers.senden.render(); renderSendMode(); sendNext(); }
-    if (name === 'lernen') renderLernMode();
+    if (name === 'lernen') { renderLernMode(); renderLernView(); }
     if (name === 'hoeren') renderHoerMode();
     if (name === 'einstellungen') { renderAreaSettings(); renderErkl(); }
     if (name === 'spiel') Idle.show();
@@ -190,11 +191,15 @@
   ['cwpm', 'wpm', 'freq', 'vol'].forEach(showSetting);
 
   // Eingeklappte Leiste (kleine Bildschirme). Am Handy gibt es zwei Reiter: „Ton & Tempo“ und „Einstellungen“
-  // (Einstellungen des Bereichs, z. B. die Zeichenauswahl). Es ist immer höchstens ein Fenster offen.
-  function setPanel(which) {   // 'sound' | 'mode' | null
-    const q = $('#quickbar'), sound = which === 'sound', mode = which === 'mode';
+  // (Einstellungen des Bereichs, z. B. die Zeichenauswahl), beim Lernen darunter noch „Modi“.
+  // Es ist immer höchstens ein Fenster offen.
+  function setPanel(which) {   // 'sound' | 'mode' | 'modi' | null
+    const q = $('#quickbar'), sound = which === 'sound', mode = which === 'mode', modi = which === 'modi';
     q.classList.toggle('closed', !sound);
     q.classList.toggle('mode-open', mode);
+    q.classList.toggle('modi-open', modi);
+    $('#moToggle').setAttribute('aria-expanded', modi ? 'true' : 'false');
+    $('#moToggle').textContent = 'Modi ' + (modi ? '▴' : '▾');
     $('#qToggle').setAttribute('aria-expanded', sound ? 'true' : 'false');
     $('#qToggle').textContent = 'Ton & Tempo ' + (sound ? '▴' : '▾');
     $('#mToggle').setAttribute('aria-expanded', mode ? 'true' : 'false');
@@ -203,11 +208,12 @@
   }
   $('#qToggle').addEventListener('click', () => setPanel($('#quickbar').classList.contains('closed') ? 'sound' : null));
   $('#mToggle').addEventListener('click', () => setPanel($('#quickbar').classList.contains('mode-open') ? null : 'mode'));
+  $('#moToggle').addEventListener('click', () => setPanel($('#quickbar').classList.contains('modi-open') ? null : 'modi'));
   // Tipp neben die Leiste schließt das offene Fenster (nur Handy)
   document.addEventListener('click', e => {
     if (!phone.matches || e.composedPath().some(n => n.id === 'quickbar')) return;   // composedPath: auch wenn der Knopf beim Antippen neu gezeichnet wurde
     const q = $('#quickbar');
-    if (!q.classList.contains('closed') || q.classList.contains('mode-open')) setPanel(null);
+    if (!q.classList.contains('closed') || q.classList.contains('mode-open') || q.classList.contains('modi-open')) setPanel(null);
   });
 
   // Menü „Mehr“ (Übersetzer, Statistik, Einstellungen)
@@ -304,6 +310,7 @@
   /* ---------- Einstellungen des Bereichs (Handy): Inhalt wandert in das Fenster neben „Ton & Tempo“ ---------- */
   const movables = [
     { tab: 'lernen', el: $('.pick-slot[data-area="lernen"]') },
+    { tab: 'lernen', el: $('#lernModiSlot'), target: '#modiPanel' },
     { tab: 'hoeren', el: $('#hoerPick') },
     { tab: 'senden', el: $('.pick-slot[data-area="senden"]') },
     { tab: 'spiel', el: $('#idViewAufgaben .id-side') }
@@ -311,7 +318,7 @@
 
   function placeModePanel(name) {
     movables.forEach(m => { if (m.el.parentNode !== m.home) m.home.appendChild(m.el); });   // alles zurück an den Platz
-    if (phone.matches) { const m = movables.find(x => x.tab === name); if (m) $('#modePanel').appendChild(m.el); }
+    if (phone.matches) movables.filter(x => x.tab === name).forEach(m => $(m.target || '#modePanel').appendChild(m.el));
     updateModeToggle(name);
   }
   // Reiter nur zeigen, wenn es etwas einzustellen gibt (Hören: nicht bei Wörtern und Sätzen)
@@ -319,9 +326,11 @@
     const lv = HLEVELS[S.hoerLevel] || {};
     const has = MODE_TABS.indexOf(name) >= 0 && !(name === 'hoeren' && (lv.words || lv.sentences));
     $('#quickbar').classList.toggle('has-mode', has);
+    $('#quickbar').classList.toggle('has-modi', name === 'lernen');   // Reiter „Modi“ gibt es nur beim Lernen (und nur am Handy)
     if (!has && $('#quickbar').classList.contains('mode-open')) setPanel(null);
+    if (name !== 'lernen' && $('#quickbar').classList.contains('modi-open')) setPanel(null);
   }
-  phone.addEventListener('change', () => { placeModePanel(activeTab); setPanel(null); });
+  phone.addEventListener('change', () => { placeModePanel(activeTab); setPanel(null); if (activeTab === 'lernen') renderLernView(); });
 
   /* ---------- Start ---------- */
   function statCard(label, value) {
@@ -348,9 +357,43 @@
     box.appendChild(statCard('Antworten gesamt', t.n));
   }
 
-  /* ---------- Lernen ---------- */
-  const L = { cur: null, prev: null, busy: false, timer: null, auto: null };
+  /* ---------- Lernen ----------
+     Auswahl: Koch-Methode oder eigene Zeichen (Zeichenauswahl) plus drei Punkte (S.lernCfg):
+       mode:   normal (hören und senden: Morse wird gehört und gezeigt) | still (nur gezeigt, kein Ton) | hoer (nur Ton, nichts gezeigt)
+       dir:    m2t (Morse zu Text) | t2m (Text zu Morse) | both (zufällig gemischt)
+       answer: tippen | wahl (aus 4 Möglichkeiten) | senden (per Knopfdruck, nur bei Text zu Morse)
+     Nicht passende Kombinationen sind ausgegraut (lernValid). Laptop: erst Auswahl, mit „Lernen starten“ ins Lernlayout.
+     Handy: keine Auswahlseite, Zeichenauswahl und Modi stehen in den Ausklappfenstern der Leiste. */
+  const L = { cur: null, prev: null, busy: false, timer: null, auto: null, running: false, type: 'm2t', pat: '' };
   const lernAS = () => S.settings.areas.lernen;
+  const LERN_DEFAULT = { mode: 'normal', dir: 'm2t', answer: 'tippen' };
+  const LERN_NAMES = {
+    mode: { normal: 'Normal', still: 'Stiller Modus', hoer: 'Hörübung' },
+    dir: { m2t: 'Morse zu Text', t2m: 'Text zu Morse', both: 'Beide Richtungen' },
+    answer: { tippen: 'Antwort eintippen', wahl: 'Antwort auswählen', senden: 'Senden per Knopfdruck' }
+  };
+
+  function lernValid(c) {
+    if (c.answer === 'senden' && c.dir !== 't2m') return false;   // Senden geht nur, wenn die Antwort Morse ist
+    if (c.mode === 'hoer' && c.dir !== 'm2t') return false;       // Hörübung zeigt nichts, also muss die Aufgabe Morse sein
+    return true;
+  }
+  // Gespeicherte Auswahl prüfen (unbekannte Werte oder unpassende Kombination: Standard)
+  (function () {
+    const c = S.lernCfg || {};
+    const ok = Object.keys(LERN_NAMES).every(k => LERN_NAMES[k][c[k]]);
+    S.lernCfg = (ok && lernValid(c)) ? { mode: c.mode, dir: c.dir, answer: c.answer } : Object.assign({}, LERN_DEFAULT);
+  })();
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+  // Ton nur, wenn es nicht der stille Modus ist
+  const lernSound = () => S.lernCfg.mode !== 'still';
 
   function renderLernMeter() {
     const koch = S.sel.lernen.method === 'koch';
@@ -361,26 +404,108 @@
     $('#lernQuote').textContent = (koch && n) ? 'Genauigkeit auf dieser Stufe: ' + Math.round(acc * 100) + ' % (' + n + ' Antworten)' : '';
   }
 
-  function lernNext() {
-    const fb = $('#lernFeedback');
-    L.busy = false;
-    if (!enoughChars('lernen', fb)) { L.cur = null; return; }
-    L.cur = pickChar('lernen', L.prev);
-    L.prev = L.cur;
-    $('#lernAnzeige').textContent = '?';
-    $('#lernCode').textContent = lernAS().hint ? symbols(Morse.TABLE[L.cur]) : '';
-    clearTimeout(L.auto);
-    fb.textContent = '';
-    fb.className = 'feedback';
-    $('#lernInput').value = '';
-    $('#lernInput').focus();
-    Morse.play(L.cur, audioOpts());
+  // Auswahl: gewählte Knöpfe hervorheben, unpassende ausgrauen (ohne Hinweis)
+  function renderLernModi() {
+    const c = S.lernCfg;
+    $$('#lernModiSlot .lm-group').forEach(g => {
+      const key = g.dataset.key;
+      $$('button', g).forEach(b => {
+        b.classList.toggle('active', c[key] === b.dataset.v);
+        b.disabled = !lernValid(Object.assign({}, c, { [key]: b.dataset.v }));
+      });
+    });
+  }
+  $$('#lernModiSlot .lm-group button').forEach(b => b.addEventListener('click', () => {
+    const key = b.closest('.lm-group').dataset.key;
+    if (b.disabled) return;
+    S.lernCfg[key] = b.dataset.v;
+    save();
+    renderLernModi();
+    renderLernMode();
+    if (L.running) lernNext();   // Handy: Änderung während des Lernens gilt ab der nächsten Aufgabe
+    else renderLernView();
+  }));
+
+  // Welche Teile des Lernlayouts sichtbar sind
+  function renderLernView() {
+    const c = S.lernCfg;
+    $('#tab-lernen').classList.toggle('running', L.running);
+    $('#lernMuster').hidden = c.dir === 'm2t';
+    $('#lernInput').hidden = c.answer !== 'tippen';
+    $('#lernOptions').hidden = c.answer !== 'wahl';
+    $('#lernSend').hidden = c.answer !== 'senden';
+    $('#lernKeys').hidden = lernAS().input !== 'et';
+    $('#lernOk').hidden = lernAS().confirm === 'sofort';
+    lernKeyer.refresh();
+    $('#lernInput').placeholder = (L.type === 't2m' && L.running ? 'Punkte (.) und Striche (-) eintippen' : 'Zeichen eintippen')
+      + (lernAS().confirm === 'enter' ? ', dann Enter' : '');
+    $('#lernReplay').hidden = !(L.running && L.type === 'm2t' && lernSound());
+    $('#lernStart').hidden = L.running || !phone.matches;
+    $('#lernStop').hidden = !L.running;
   }
 
-  function lernAnswer(v) {
+  function renderLernPat() {
+    $('#lernMuster').textContent = (L.type === 't2m' && L.pat) ? symbols(L.pat) : ' ';
+  }
+
+  // Vier Antwortmöglichkeiten: das richtige Zeichen plus drei andere (bevorzugt aus der Zeichenauswahl)
+  function renderLernOptions() {
+    const box = $('#lernOptions');
+    box.textContent = '';
+    if (S.lernCfg.answer !== 'wahl' || !L.cur) return;
+    const near = shuffle(activeChars('lernen').filter(c => c !== L.cur));
+    const far = shuffle(POOL.filter(c => c !== L.cur && near.indexOf(c) < 0));
+    const chars = shuffle([L.cur].concat(near.concat(far).slice(0, 3)));
+    chars.forEach(ch => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn';
+      b.dataset.ch = ch;
+      b.textContent = L.type === 'm2t' ? ch : symbols(Morse.TABLE[ch]);
+      b.addEventListener('click', () => {
+        if (L.busy) return;
+        lernAnswer(L.type === 'm2t' ? ch : Morse.TABLE[ch], ch);
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function lernNext() {
+    const fb = $('#lernFeedback');
+    const c = S.lernCfg;
+    clearTimeout(L.timer);
+    clearTimeout(L.auto);
+    Morse.stop();
+    lernKeyer.clear();
+    L.busy = false;
+    L.pat = '';
+    fb.textContent = '';
+    fb.className = 'feedback';
+    if (!enoughChars('lernen', fb)) { L.cur = null; L.running = false; renderLernView(); return; }
+    L.type = c.dir === 'both' ? (Math.random() < 0.5 ? 'm2t' : 't2m') : c.dir;
+    L.cur = pickChar('lernen', L.prev);
+    L.prev = L.cur;
+    const disp = $('#lernAnzeige');
+    if (L.type === 'm2t' && c.mode !== 'hoer') { disp.textContent = symbols(Morse.TABLE[L.cur]); disp.classList.add('morse'); }
+    else if (L.type === 'm2t') { disp.textContent = '?'; disp.classList.remove('morse'); }   // Hörübung: nichts zeigen
+    else { disp.textContent = L.cur; disp.classList.remove('morse'); }
+    $('#lernCode').textContent = '';
+    renderLernPat();
+    $('#lernInput').value = '';
+    renderLernOptions();
+    renderLernView();
+    if (c.answer === 'tippen') $('#lernInput').focus();
+    if (L.type === 'm2t' && lernSound()) Morse.play(L.cur, audioOpts());
+  }
+
+  // v: die Antwort (m2t: Zeichen, t2m: Punkte und Striche); pickedCh: bei „auswählen“ das angetippte Zeichen
+  function lernAnswer(v, pickedCh) {
     L.busy = true;
     clearTimeout(L.timer);
-    const ok = v === L.cur;
+    clearTimeout(L.auto);
+    const code = Morse.TABLE[L.cur];
+    const m2t = L.type === 'm2t';
+    const ok = m2t ? v === L.cur : v === code;
     Store.record(S, L.cur, ok);
     const sel = S.sel.lernen;
     const koch = sel.method === 'koch';
@@ -388,17 +513,25 @@
       S.levelRecent.push(ok ? 1 : 0);
       if (S.levelRecent.length > 20) S.levelRecent.shift();
     }
-    $('#lernAnzeige').textContent = L.cur;
-    $('#lernCode').textContent = symbols(Morse.TABLE[L.cur]);
+    const disp = $('#lernAnzeige');
+    disp.textContent = L.cur;
+    disp.classList.remove('morse');
+    $('#lernCode').textContent = symbols(code);
+    $$('#lernOptions .btn').forEach(b => {
+      b.disabled = true;
+      if (b.dataset.ch === L.cur) b.classList.add('ok');
+      else if (!ok && b.dataset.ch === pickedCh) b.classList.add('bad');
+    });
     const fb = $('#lernFeedback');
     let wait = 700;
     if (ok) {
       fb.textContent = 'Richtig';
       fb.className = 'feedback ok';
     } else {
-      fb.textContent = 'Falsch, das war ' + L.cur + (v ? ' (du: ' + v + ')' : '');
+      fb.textContent = m2t ? 'Falsch, das war ' + L.cur + (v ? ' (du: ' + v + ')' : '')
+        : 'Falsch, richtig wäre ' + symbols(code);
       fb.className = 'feedback bad';
-      Morse.play(L.cur, audioOpts());
+      if (lernSound()) Morse.play(L.cur, audioOpts());
       wait = 1800;
     }
     if (koch) {
@@ -419,30 +552,131 @@
   // Bestätigung je nach Einstellung: sofort, nach einer Pause oder mit Enter
   function lernSubmit() {
     clearTimeout(L.auto);
+    if (!L.cur || L.busy) return;
+    if (L.type === 't2m') {
+      if (!L.pat) return;
+      const p = L.pat;
+      $('#lernInput').value = '';
+      lernAnswer(p);
+      return;
+    }
     const v = $('#lernInput').value.trim().toUpperCase();
-    if (!v || !L.cur || L.busy) return;
+    if (!v) return;
     $('#lernInput').value = '';
     lernAnswer(v.slice(-1));
   }
-  function renderLernMode() {
-    const c = lernAS().confirm;
-    $('#lernInput').placeholder = 'Zeichen eintippen' + (c === 'enter' ? ', dann Enter' : '');
-    $('#lernMode').textContent = 'Bestätigung: ' + Keyer.label(lernAS());
-    if (L.cur && !L.busy) $('#lernCode').textContent = lernAS().hint ? symbols(Morse.TABLE[L.cur]) : '';
+  // Text zu Morse: das Muster hat sich geändert (eingetippt oder gesendet)
+  function lernPatChanged() {
+    clearTimeout(L.auto);
+    renderLernPat();
+    if (!L.pat || L.busy) return;
+    const a = lernAS(), code = Morse.TABLE[L.cur];
+    if (a.confirm === 'sofort') {
+      // fertig, sobald das Zeichen vollständig ist oder nicht mehr passen kann
+      if (L.pat === code || code.indexOf(L.pat) !== 0) lernSubmit();
+    } else if (a.confirm === 'pause') L.auto = setTimeout(lernSubmit, a.delay * 1000);
   }
+  function lernSym(sym) {
+    if (!L.cur || L.busy || L.type !== 't2m' || L.pat.length >= 7) return;
+    L.pat += sym;
+    lernPatChanged();
+  }
+  function lernBack() {
+    if (L.busy || L.type !== 't2m') return;
+    L.pat = L.pat.slice(0, -1);
+    if (S.lernCfg.answer === 'tippen') $('#lernInput').value = L.pat;
+    lernPatChanged();
+  }
+
+  const lernKeyer = Keyer.create({
+    field: $('#lernFeld'),
+    timingBox: $('#lernTiming'),
+    settings: lernAS,
+    active: () => activeTab === 'lernen' && L.running && !!L.cur && !L.busy && L.type === 't2m' && S.lernCfg.answer === 'senden',
+    audioOpts: () => audioOpts(lernSound() ? null : { vol: 0 }),   // stiller Modus: auch die Taste bleibt still
+    onSymbol: sym => lernSym(sym)
+  });
+  function bindLernKey(sel, sym) {
+    const b = $(sel);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); lernKeyer.tap(sym); });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+    b.addEventListener('click', e => { if (e.detail === 0) lernKeyer.tap(sym); });
+  }
+  bindLernKey('#lernKurz', '.');
+  bindLernKey('#lernLang', '-');
+  $('#lernBack').addEventListener('click', lernBack);
+  $('#lernOk').addEventListener('click', lernSubmit);
+  document.addEventListener('keydown', e => {
+    if (activeTab !== 'lernen' || !L.running || L.type !== 't2m' || S.lernCfg.answer !== 'senden') return;
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.target.matches('textarea, select, input[type="text"]')) return;
+    const k = e.key.toLowerCase();
+    const space = k === ' ' && lernAS().input !== 'leertaste';
+    if (k !== 'enter' && k !== 'backspace' && !space) return;
+    if (e.target.matches('button, input')) e.target.blur();
+    e.preventDefault();
+    if (k === 'backspace') lernBack(); else lernSubmit();
+  });
+
+  function renderLernMode() {
+    const a = lernAS(), c = S.lernCfg;
+    const eingabe = c.answer === 'senden' ? Keyer.label(a, true) : c.answer === 'tippen' ? Keyer.label(a) : '';
+    $('#lernMode').textContent = LERN_NAMES.mode[c.mode] + ' · ' + LERN_NAMES.dir[c.dir] + ' · ' + LERN_NAMES.answer[c.answer]
+      + (eingabe ? ' · ' + eingabe : '');
+    if (activeTab === 'lernen') renderLernView();
+  }
+
   $('#lernInput').addEventListener('input', e => {
-    const raw = e.target.value.trim().toUpperCase();
     if (!L.cur || L.busy) { e.target.value = ''; return; }
+    clearTimeout(L.auto);
+    if (L.type === 't2m') {
+      // Morse eintippen: Punkt und Strich (auch • und –)
+      const p = e.target.value.replace(/[•·]/g, '.').replace(/[–—_]/g, '-').replace(/[^.\-]/g, '').slice(0, 7);
+      e.target.value = p;
+      L.pat = p;
+      lernPatChanged();
+      return;
+    }
+    const raw = e.target.value.trim().toUpperCase();
     const ch = raw.slice(-1);
     const a = lernAS();
-    clearTimeout(L.auto);
     if (a.confirm === 'sofort') { e.target.value = ''; if (ch) lernAnswer(ch); return; }
     e.target.value = ch;
     if (ch && a.confirm === 'pause') L.auto = setTimeout(lernSubmit, a.delay * 1000);
   });
   $('#lernInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lernSubmit(); } });
-  $('#lernStart').addEventListener('click', () => { clearTimeout(L.timer); lernNext(); });
-  $('#lernReplay').addEventListener('click', () => { if (L.cur) { Morse.play(L.cur, audioOpts()); $('#lernInput').focus(); } });
+
+  function lernBegin() {
+    const fb = phone.matches ? $('#lernFeedback') : $('#lernSetupFb');
+    $('#lernSetupFb').textContent = '';
+    if (!enoughChars('lernen', fb)) return;
+    L.running = true;
+    L.prev = null;
+    lernNext();
+  }
+  function lernEnd() {
+    clearTimeout(L.timer);
+    clearTimeout(L.auto);
+    Morse.stop();
+    lernKeyer.cancel();
+    L.running = false;
+    L.cur = null;
+    L.busy = false;
+    L.pat = '';
+    const disp = $('#lernAnzeige');
+    disp.textContent = '?';
+    disp.classList.remove('morse');
+    $('#lernCode').textContent = '';
+    $('#lernInput').value = '';
+    $('#lernOptions').textContent = '';
+    $('#lernFeedback').textContent = '';
+    $('#lernFeedback').className = 'feedback';
+    renderLernPat();
+    renderLernView();
+  }
+  $('#lernGo').addEventListener('click', lernBegin);
+  $('#lernStart').addEventListener('click', lernBegin);
+  $('#lernStop').addEventListener('click', lernEnd);
+  $('#lernReplay').addEventListener('click', () => { if (L.cur && L.type === 'm2t' && lernSound()) { Morse.play(L.cur, audioOpts()); $('#lernInput').focus(); } });
 
   /* ---------- Hören ---------- */
   const H = { text: '', auto: null, playing: false };
@@ -897,8 +1131,8 @@
   /* Eingabe & Bestätigung je Bereich: jeder Bereich hat dieselben Punkte, unabhängig eingestellt.
      Was in einem Bereich keine Rolle spielt, wird dort ausgeblendet. */
   const AREA_INFO = {
-    lernen: { opts: ['confirm', 'delay', 'hint'],
-      note: 'Beim Lernen hörst du ein Zeichen und tippst den Buchstaben. Punkte und Striche gibst du hier nicht ein.' },
+    lernen: { opts: ['input', 'right', 'confirm', 'delay', 'timing'],
+      note: 'Gilt für „Antwort eintippen“ (Bestätigung) und „Senden per Knopfdruck“ (Eingabe von Punkten und Strichen). Bei „Antwort auswählen“ gibt es nichts einzustellen.' },
     hoeren: { opts: ['confirm', 'delay'],
       note: 'Beim Hören tippst du die gehörten Zeichen als Text ein. Punkte und Striche gibst du hier nicht ein.' },
     senden: { opts: ['input', 'right', 'confirm', 'delay', 'timing', 'hint'],
@@ -921,7 +1155,11 @@
     + '<p>Du wählst selbst, welche Zeichen du übst (mindestens eines). Mit „Alle Buchstaben“, „Alle Ziffern“ und „Alle Satzzeichen“ wählst du ganze Gruppen auf einmal.</p>';
   function erklHtml(area) {
     if (area === 'lernen') {
-      return '<h3>Ablauf</h3><p>Du hörst ein Zeichen und tippst den passenden Buchstaben oder die Ziffer ein. Bei einem Fehler wird das Zeichen noch einmal vorgespielt.</p>'
+      return '<h3>Ablauf</h3><p>Zuerst wählst du die Zeichen (Koch-Methode oder eigene Auswahl) und die Art zu lernen. Am Laptop startest du mit „Lernen starten“, am Handy stehen die Modi im Reiter „Modi“.</p>'
+        + '<h3>Modus</h3><ul><li><b>Normal:</b> Morse wird gehört und gezeigt.</li><li><b>Stiller Modus:</b> Morse wird nur gezeigt, es gibt keinen Ton.</li><li><b>Hörübung:</b> Du hörst nur den Ton, es wird nichts gezeigt.</li></ul>'
+        + '<h3>Richtung</h3><ul><li><b>Morse zu Text:</b> Du bekommst Morse und nennst das Zeichen.</li><li><b>Text zu Morse:</b> Du bekommst ein Zeichen und gibst den Morsecode an.</li><li><b>Beide:</b> Die Richtung wechselt zufällig.</li></ul>'
+        + '<h3>Antwort</h3><ul><li><b>Eintippen:</b> Zeichen bzw. Punkte (.) und Striche (-) tippen.</li><li><b>Auswählen:</b> Eine von vier Möglichkeiten antippen.</li><li><b>Senden per Knopfdruck:</b> Den Code mit Maus, Leertaste oder E und T eingeben (nur bei Text zu Morse).</li></ul>'
+        + '<p>Was zur gewählten Kombination nicht passt, ist ausgegraut.</p>'
         + ERKL_PICK
         + '<p>In der Koch-Methode rückst du ab 90 % Genauigkeit in den letzten 20 Antworten automatisch eine Stufe vor. Der Balken unter der Übung zeigt die aktuelle Genauigkeit.</p>';
     }

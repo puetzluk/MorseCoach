@@ -11,8 +11,8 @@
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <title>Morse Coach</title>
-  <link rel="stylesheet" href="css/style.css?v=27">
-  <link rel="stylesheet" href="css/intro.css?v=27">
+  <link rel="stylesheet" href="css/style.css?v=28">
+  <link rel="stylesheet" href="css/intro.css?v=28">
 </head>
 <body class="start-an">
   <!-- Startseite: Meer-Animation, Titel und Karten der Lernbereiche (startszene/).
@@ -50,6 +50,10 @@
         <!-- Nur am Handy: Einstellungen des jeweiligen Bereichs (Zeichenauswahl) -->
         <button type="button" class="mtoggle" id="mToggle" aria-expanded="false">Einstellungen ▾</button>
       </div>
+      <!-- Nur am Handy, nur beim Lernen: darunter ein Reiter für die Modi (Modus, Richtung, Antwort) -->
+      <div class="qb-bar qb-bar2">
+        <button type="button" class="motoggle" id="moToggle" aria-expanded="false">Modi ▾</button>
+      </div>
       <div class="qb-sound">
       <label class="qb-wpm" title="Geschwindigkeit der einzelnen Zeichen">Tempo <b data-out="cwpm"></b> WPM
         <input type="range" data-set="cwpm" min="10" max="40" step="1"></label>
@@ -72,29 +76,84 @@
         <input type="range" data-set="vol" min="5" max="100" step="5"></label>
       </div>
       <div class="qb-mode" id="modePanel"></div>
+      <div class="qb-modi" id="modiPanel"></div>
     </aside>
 
     <main>
       <!-- Die Startseite ist die Meer-Animation mit den Karten (#intro) -->
 
-      <!-- LERNEN -->
+      <!-- LERNEN: erst auswählen (Koch oder eigene Zeichen, Modus, Richtung, Antwort), dann starten.
+           Am Handy gibt es keine Auswahlseite: Zeichenauswahl und Modi stehen in den Ausklappfenstern der Leiste. -->
       <section id="tab-lernen" class="tab">
-        <div class="card pick-card">
-          <h2>Zeichen lernen</h2>
-          <div class="pick-slot" data-area="lernen"></div>
-        </div>
-        <div class="card center">
-          <div class="display" id="lernAnzeige">?</div>
-          <div class="code" id="lernCode"></div>
-          <input id="lernInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Zeichen eintippen" aria-label="Gehörtes Zeichen">
-          <div class="feedback" id="lernFeedback"></div>
-          <div class="row">
-            <button class="btn primary" id="lernStart">Start</button>
-            <button class="btn" id="lernReplay">Nochmal hören</button>
+        <div id="lernSetup">
+          <div class="card pick-card">
+            <h2>Zeichen lernen</h2>
+            <div class="pick-slot" data-area="lernen"></div>
           </div>
-          <div class="meter" id="lernMeter"><div id="lernBar"></div></div>
-          <p class="muted" id="lernQuote"></p>
-          <p class="muted small mode-line"><span id="lernMode"></span> · <button type="button" class="linkbtn" data-area-settings="lernen">Ändern</button></p>
+          <div class="card lern-modi-card">
+            <h2>Wie möchtest du lernen?</h2>
+            <div id="lernModiSlot" class="lm-slot">
+              <div class="lm-group" data-key="mode">
+                <b class="lm-title">Modus</b>
+                <div class="seg lm-seg">
+                  <button type="button" data-v="normal">Normal (hören und senden)</button>
+                  <button type="button" data-v="still">Stiller Modus</button>
+                  <button type="button" data-v="hoer">Hörübung</button>
+                </div>
+              </div>
+              <div class="lm-group" data-key="dir">
+                <b class="lm-title">Richtung</b>
+                <div class="seg lm-seg">
+                  <button type="button" data-v="m2t">Morse zu Text</button>
+                  <button type="button" data-v="t2m">Text zu Morse</button>
+                  <button type="button" data-v="both">Beide</button>
+                </div>
+              </div>
+              <div class="lm-group" data-key="answer">
+                <b class="lm-title">Antwort</b>
+                <div class="seg lm-seg">
+                  <button type="button" data-v="tippen">Antwort eintippen</button>
+                  <button type="button" data-v="wahl">Antwort auswählen (aus 4)</button>
+                  <button type="button" data-v="senden">Senden per Knopfdruck</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row left lern-go">
+            <button class="btn primary" id="lernGo">Lernen starten</button>
+          </div>
+          <div class="feedback" id="lernSetupFb"></div>
+        </div>
+
+        <div id="lernPlay">
+          <div class="card center">
+            <div class="display" id="lernAnzeige">?</div>
+            <div class="code" id="lernCode"></div>
+            <div class="pattern" id="lernMuster">&nbsp;</div>
+            <input id="lernInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Zeichen eintippen" aria-label="Antwort">
+            <div class="lern-options" id="lernOptions"></div>
+            <div id="lernSend">
+              <div class="ky-field" id="lernFeld" role="button" aria-label="Morsetaste: kurz drücken = Punkt, länger halten = Strich"><span>Hier drücken</span></div>
+              <div class="row" id="lernKeys">
+                <button class="btn key" id="lernKurz">Kurz ( E )</button>
+                <button class="btn key" id="lernLang">Lang ( T )</button>
+              </div>
+              <div class="ky-timing" id="lernTiming"></div>
+              <div class="row">
+                <button class="btn" id="lernBack">Löschen</button>
+                <button class="btn primary" id="lernOk">Bestätigen ( Enter )</button>
+              </div>
+            </div>
+            <div class="feedback" id="lernFeedback"></div>
+            <div class="row">
+              <button class="btn primary" id="lernStart">Start</button>
+              <button class="btn" id="lernReplay">Nochmal hören</button>
+              <button class="btn" id="lernStop">Beenden</button>
+            </div>
+            <div class="meter" id="lernMeter"><div id="lernBar"></div></div>
+            <p class="muted" id="lernQuote"></p>
+            <p class="muted small mode-line"><span id="lernMode"></span> · <button type="button" class="linkbtn" data-area-settings="lernen">Ändern</button></p>
+          </div>
         </div>
       </section>
 
@@ -406,14 +465,14 @@
     </div>
   </template>
 
-  <script src="js/morse.js?v=27"></script>
-  <script src="js/storage.js?v=27"></script>
-  <script src="js/keyer.js?v=27"></script>
-  <script src="js/idle-logic.js?v=27"></script>
-  <script src="js/idle.js?v=27"></script>
-  <script src="js/app.js?v=27"></script>
-  <script src="js/intro.js?v=27"></script>
-  <script src="js/hell-fx.js?v=27"></script>
+  <script src="js/morse.js?v=28"></script>
+  <script src="js/storage.js?v=28"></script>
+  <script src="js/keyer.js?v=28"></script>
+  <script src="js/idle-logic.js?v=28"></script>
+  <script src="js/idle.js?v=28"></script>
+  <script src="js/app.js?v=28"></script>
+  <script src="js/intro.js?v=28"></script>
+  <script src="js/hell-fx.js?v=28"></script>
   <script>
     if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
       navigator.serviceWorker.register('sw.js').catch(function () {});

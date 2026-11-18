@@ -535,8 +535,9 @@ h3 small { font-weight: normal; color: var(--muted); font-size: .8rem; margin-le
 /* ===================== Handy: schlichte Ansicht ===================== */
 /* Grundregeln für alle Breiten: Symbole, Mehr-Menü und Modus-Fenster gibt es nur am Handy */
 .ti { display: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
-.nav-more, .more-menu, .mtoggle, .qb-mode, .erkl-card { display: none; }
+.nav-more, .more-menu, .mtoggle, .motoggle, .qb-mode, .qb-modi, .erkl-card { display: none; }
 .qb-bar { display: contents; }                       /* Laptop und Tablet: der Knopf sitzt wie bisher direkt in der Leiste */
+.qb-bar2 { display: none; }
 @media (min-width: 641px) and (max-width: 1100px) { .qb-sound { display: contents; } }
 .erkl-body h3 { margin: 14px 0 4px; font-size: .95rem; }
 .erkl-body p, .erkl-body li { font-size: .9rem; margin: 4px 0; }
@@ -572,20 +573,30 @@ h3 small { font-weight: normal; color: var(--muted); font-size: .8rem; margin-le
   /* --- Leiste: zwei Reiter „Ton & Tempo“ und „Einstellungen“, Fenster klappt über den Inhalt --- */
   .quickbar.show { display: block; padding: 0; margin: 0 -10px 8px; border-width: 0 0 1px; border-radius: 0; box-shadow: none; }
   .qb-bar { display: flex; gap: 6px; padding: 6px 8px; }
+  .qb-bar2 { display: none; }
   .qb-bar button {
     flex: 1 1 0; width: auto; min-width: 0; min-height: 40px; padding: 6px 8px; font: inherit; font-size: .88rem; font-weight: 700; text-align: center;
     color: var(--text); background: var(--chip-bg); border: 1px solid var(--line); border-radius: 9px; cursor: pointer;
   }
   .qb-bar button[aria-expanded="true"] { background: var(--grad); color: var(--accent-text); border-color: transparent; }
   .quickbar.has-mode .mtoggle { display: block; }
-  .qb-sound, .qb-mode {
+  .quickbar.has-modi .qb-bar2 { display: flex; padding-top: 0; }
+  .quickbar.has-modi .motoggle { display: block; }
+  .qb-sound, .qb-mode, .qb-modi {
     display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 6; padding: 12px 14px 14px;
     background: var(--panel); border-bottom: 1px solid var(--line); border-radius: 0 0 var(--radius) var(--radius);
     box-shadow: 0 14px 28px rgba(0,0,0,.4); max-height: calc(100svh - var(--hh, 100px) - 64px); overflow-y: auto;
   }
-  [data-theme="funk"] .qb-sound, [data-theme="funk"] .qb-mode { background: #3a2a1b; }
+  [data-theme="funk"] .qb-sound, [data-theme="funk"] .qb-mode, [data-theme="funk"] .qb-modi { background: #3a2a1b; }
   .quickbar:not(.closed) .qb-sound { display: block; }
   .quickbar.mode-open .qb-mode { display: block; }
+  .quickbar.modi-open .qb-modi { display: block; }
+  .qb-modi .lm-group { margin: 0 0 12px; }
+  .qb-modi .lm-group:last-child { margin: 0; }
+  .qb-modi .lm-seg button { flex: 1 1 auto; }
+  /* Lernen am Handy: keine Auswahlseite, das Lernlayout ist immer da */
+  #lernSetup { display: none !important; }
+  #lernPlay { display: block !important; }
   .qb-mode .pick-slot, .qb-mode .picker { margin: 0; }
   .qb-mode .id-side { margin: 0; grid-template-columns: 1fr; gap: 10px; }
   .qb-mode .card { margin: 0; padding: 12px; box-shadow: none; }
@@ -635,3 +646,20 @@ h3 small { font-weight: normal; color: var(--muted); font-size: .8rem; margin-le
   .erkl-seg .ti { display: block; width: 22px; height: 22px; }
   .erkl-body { overflow-x: auto; }
 }
+
+
+/* ===================== Lernen: Auswahl und Lernlayout ===================== */
+.lm-group { margin: 0 0 14px; }
+.lm-group:last-child { margin-bottom: 0; }
+.lm-title { display: block; color: var(--text) !important; margin: 0 0 2px; }
+.lm-seg { margin: 4px 0 0; }
+.lm-seg button:disabled { opacity: .35; cursor: default; }
+.lern-go { margin: 0 0 6px; }
+.display.morse { letter-spacing: .1em; }
+.lern-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 420px; margin: 10px auto; }
+.lern-options .btn { font-size: 1.5rem; padding: 14px 8px; min-height: 56px; }
+.lern-options .btn.ok { border-color: var(--ok); color: var(--ok); }
+.lern-options .btn.bad { border-color: var(--bad); color: var(--bad); }
+.lern-options .btn:disabled { cursor: default; }
+#tab-lernen.running #lernSetup { display: none; }
+#tab-lernen:not(.running) #lernPlay { display: none; }
