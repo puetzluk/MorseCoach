@@ -370,7 +370,7 @@
   const lernAS = () => S.settings.areas.lernen;
   const LERN_DEFAULT = { mode: 'normal', dir: 'm2t', answer: 'tippen' };
   const LERN_NAMES = {
-    mode: { normal: 'Normal', still: 'Stiller Modus', hoer: 'Hörübung' },
+    mode: { normal: 'Hören und Senden', still: 'Stiller Modus', hoer: 'Hörübung' },
     dir: { m2t: 'Morse zu Text', t2m: 'Text zu Morse', both: 'Beide Richtungen' },
     answer: { tippen: 'Antwort eintippen', wahl: 'Antwort auswählen' }
   };
@@ -1165,7 +1165,7 @@
   function erklHtml(area) {
     if (area === 'lernen') {
       return '<h3>Ablauf</h3><p>Zuerst wählst du die Zeichen (Koch-Methode oder eigene Auswahl) und die Art zu lernen. Am Laptop startest du mit „Lernen starten“, am Handy stehen die Modi im Reiter „Modi“.</p>'
-        + '<h3>Modus</h3><ul><li><b>Normal:</b> Hören und Senden gemischt. Zufällig kommt ein Buchstabe, ein Morse-Strichcode mit Ton oder nur ein Ton.</li><li><b>Stiller Modus:</b> Es gibt gar keinen Ton, du siehst nur einen Buchstaben oder einen Morse-Strichcode.</li><li><b>Hörübung:</b> Du hörst nur den Ton, es wird nichts gezeigt.</li></ul>'
+        + '<h3>Modus</h3><ul><li><b>Hören und Senden:</b> Beides gemischt. Zufällig kommt ein Buchstabe, ein Morse-Strichcode mit Ton oder nur ein Ton.</li><li><b>Stiller Modus:</b> Es gibt gar keinen Ton, du siehst nur einen Buchstaben oder einen Morse-Strichcode.</li><li><b>Hörübung:</b> Du hörst nur den Ton, es wird nichts gezeigt.</li></ul>'
         + '<h3>Richtung</h3><ul><li><b>Morse zu Text:</b> Die Antwort ist ein Buchstabe.</li><li><b>Text zu Morse:</b> Die Antwort ist Morse-Code.</li><li><b>Beide:</b> Die Richtung wechselt zufällig.</li></ul>'
         + '<h3>Antwort</h3><ul><li><b>Eintippen:</b> Die Eingabe passt sich an. Ist die Antwort ein Buchstabe, tippst du ihn auf der Tastatur. Ist sie Morse-Code, gibst du ihn mit Maus (Feld), Leertaste oder E und T ein, am Handy mit dem Knopf.</li><li><b>Auswählen:</b> Eine von vier Möglichkeiten antippen.</li></ul>'
         + '<p>Der Ton lässt sich mit „Nochmal hören“ beliebig oft wiederholen. Was zur gewählten Kombination nicht passt, ist ausgegraut.</p>'
