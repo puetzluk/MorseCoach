@@ -456,7 +456,7 @@
   }
   function hoerPlay() {
     H.playing = true;
-    Morse.play(H.text, hoerOpts()).then(() => { H.playing = false; hoerArm(); });
+    Morse.play(H.text, audioOpts()).then(() => { H.playing = false; hoerArm(); });
   }
   // Automatische Bestätigung nach einer Pause (erst, wenn nichts mehr abgespielt wird)
   function hoerArm() {
@@ -493,11 +493,6 @@
     // Zeichenauswahl nur bei Zeichengruppen sinnvoll
     $('#hoerPick').style.display = (lv.words || lv.sentences) ? 'none' : '';
     updateModeToggle('hoeren');
-    $('#hoerTempo').textContent = S.hoerenWpm;
-  }
-
-  function hoerOpts() {
-    return audioOpts({ wpm: S.hoerenWpm, cwpm: Math.max(S.settings.cwpm, S.hoerenWpm) });
   }
 
   function randomOf(arr, n) {
@@ -559,7 +554,6 @@
     res.textContent = '';
     H.text = buildHoerText();
     $('#hoerInput').value = '';
-    $('#hoerTempo').textContent = S.hoerenWpm;
     hoerPlay();
     $('#hoerInput').focus();
   });
@@ -573,8 +567,6 @@
   $('#hoerInput').addEventListener('keydown', e => {
     if (e.key === 'Enter' && hoerAS().confirm === 'enter') { e.preventDefault(); hoerCheck(); }
   });
-  $('#hoerMinus').addEventListener('click', () => { if (S.hoerenWpm > 5) { S.hoerenWpm--; save(); $('#hoerTempo').textContent = S.hoerenWpm; } });
-  $('#hoerPlus').addEventListener('click', () => { if (S.hoerenWpm < 40) { S.hoerenWpm++; save(); $('#hoerTempo').textContent = S.hoerenWpm; } });
 
   $('#hoerCheck').addEventListener('click', () => hoerCheck());
   function hoerCheck() {
@@ -604,10 +596,7 @@
     if (!typed.length) lineU.appendChild(span('bad', '–'));
 
     const acc = correct / target.length;
-    let msg = correct + ' von ' + target.length + ' richtig (' + Math.round(acc * 100) + ' %). ';
-    if (acc >= 0.9 && S.hoerenWpm < 40) { S.hoerenWpm++; msg += 'Tempo steigt auf ' + S.hoerenWpm + ' WPM.'; }
-    else if (acc < 0.7 && S.hoerenWpm > 5) { S.hoerenWpm--; msg += 'Tempo sinkt auf ' + S.hoerenWpm + ' WPM.'; }
-    else msg += 'Tempo bleibt bei ' + S.hoerenWpm + ' WPM.';
+    let msg = correct + ' von ' + target.length + ' richtig (' + Math.round(acc * 100) + ' %).';
 
     const out = $('#hoerResult');
     out.className = 'result';
@@ -618,7 +607,6 @@
     m.className = 'feedback';
     m.textContent = msg;
     out.appendChild(m);
-    $('#hoerTempo').textContent = S.hoerenWpm;
     H.text = '';
     save();
   }
@@ -939,7 +927,7 @@
     }
     if (area === 'hoeren') {
       const lv = Object.keys(HLEVELS).map(id => '<li><b>' + HLEVELS[id].name + ':</b> ' + HLEVELS[id].desc + '</li>').join('');
-      return '<h3>Ablauf</h3><p>„Neue Runde“ spielt einen Text ab. Du tippst ein, was du gehört hast, und prüfst. „Nochmal hören“ spielt ihn erneut ab. Mit − und + stellst du das Hörtempo ein.</p>'
+      return '<h3>Ablauf</h3><p>„Neue Runde“ spielt einen Text ab. Du tippst ein, was du gehört hast, und prüfst. „Nochmal hören“ spielt ihn erneut ab. Das Tempo stellst du in „Ton &amp; Tempo“ ein.</p>'
         + '<h3>Stufen</h3><ul>' + lv + '</ul>'
         + '<h3>Zeichenauswahl</h3><p>Sie gilt für Leicht, Mittel und Schwer. Bei Wörtern und Sätzen entfällt sie.</p>'
         + ERKL_PICK;
