@@ -359,28 +359,41 @@
 
   /* ---------- Lernen ----------
      Auswahl: Koch-Methode oder eigene Zeichen (Zeichenauswahl) plus drei Punkte (S.lernCfg):
-       mode:   normal (hören und senden: Morse wird gehört und gezeigt) | still (nur gezeigt, kein Ton) | hoer (nur Ton, nichts gezeigt)
-       dir:    m2t (Morse zu Text) | t2m (Text zu Morse) | both (zufällig gemischt)
-       answer: tippen | wahl (aus 4 Möglichkeiten) | senden (per Knopfdruck, nur bei Text zu Morse)
+       mode:   normal (hören und senden gemischt: Buchstabe, Morse-Strichcode mit Ton oder nur Ton, zufällig im Wechsel)
+               | still (kein Ton, nur Buchstabe oder Morse-Strichcode) | hoer (immer nur Ton, nichts gezeigt)
+       dir:    m2t (Antwort ist ein Buchstabe) | t2m (Antwort ist Morse-Code) | both (zufällig gemischt)
+       answer: tippen | wahl (aus 4 Möglichkeiten)
+     Eintippen passt sich der Aufgabe an: Buchstabe auf der Tastatur oder Morse-Code mit Maus (Feld), Leertaste oder E/T.
      Nicht passende Kombinationen sind ausgegraut (lernValid). Laptop: erst Auswahl, mit „Lernen starten“ ins Lernlayout.
      Handy: keine Auswahlseite, Zeichenauswahl und Modi stehen in den Ausklappfenstern der Leiste. */
-  const L = { cur: null, prev: null, busy: false, timer: null, auto: null, running: false, type: 'm2t', pat: '' };
+  const L = { cur: null, prev: null, busy: false, timer: null, auto: null, running: false, type: 'm2t', form: 'code', pat: '' };
   const lernAS = () => S.settings.areas.lernen;
   const LERN_DEFAULT = { mode: 'normal', dir: 'm2t', answer: 'tippen' };
   const LERN_NAMES = {
     mode: { normal: 'Normal', still: 'Stiller Modus', hoer: 'Hörübung' },
     dir: { m2t: 'Morse zu Text', t2m: 'Text zu Morse', both: 'Beide Richtungen' },
-    answer: { tippen: 'Antwort eintippen', wahl: 'Antwort auswählen', senden: 'Senden per Knopfdruck' }
+    answer: { tippen: 'Antwort eintippen', wahl: 'Antwort auswählen' }
   };
 
   function lernValid(c) {
-    if (c.answer === 'senden' && c.dir !== 't2m') return false;   // Senden geht nur, wenn die Antwort Morse ist
-    if (c.mode === 'hoer' && c.dir !== 'm2t') return false;       // Hörübung zeigt nichts, also muss die Aufgabe Morse sein
+    if (c.mode === 'hoer' && c.dir !== 'm2t') return false;       // Hörübung zeigt nie einen Buchstaben, also nur Morse zu Text
     return true;
+  }
+  // Welche Aufgabenformen es gibt: Buchstabe (gezeigt), Code (Strichcode gezeigt, mit Ton), Ton (nur Ton, nichts gezeigt)
+  const FORMS_MODE = { normal: ['letter', 'code', 'tone'], still: ['letter', 'code'], hoer: ['tone'] };
+  const FORMS_DIR = { m2t: ['code', 'tone'], t2m: ['letter', 'tone'], both: ['letter', 'code', 'tone'] };
+  const pickOne = arr => arr[Math.floor(Math.random() * arr.length)];
+  // Zufällige Aufgabe nach Modus und Richtung: Form der Aufgabe und Art der Antwort (m2t: Buchstabe, t2m: Morse-Code)
+  function lernTask(c) {
+    const forms = FORMS_MODE[c.mode].filter(f => FORMS_DIR[c.dir].indexOf(f) >= 0);
+    const form = pickOne(forms);
+    const type = form === 'letter' ? 't2m' : form === 'code' ? 'm2t' : (c.dir === 'both' ? pickOne(['m2t', 't2m']) : c.dir);
+    return { form: form, type: type };
   }
   // Gespeicherte Auswahl prüfen (unbekannte Werte oder unpassende Kombination: Standard)
   (function () {
     const c = S.lernCfg || {};
+    if (c.answer === 'senden') c.answer = 'tippen';   // „Senden“ gibt es nicht mehr, es ist jetzt Teil von „Eintippen“
     const ok = Object.keys(LERN_NAMES).every(k => LERN_NAMES[k][c[k]]);
     S.lernCfg = (ok && lernValid(c)) ? { mode: c.mode, dir: c.dir, answer: c.answer } : Object.assign({}, LERN_DEFAULT);
   })();
@@ -430,16 +443,18 @@
   function renderLernView() {
     const c = S.lernCfg;
     $('#tab-lernen').classList.toggle('running', L.running);
-    $('#lernMuster').hidden = c.dir === 'm2t';
-    $('#lernInput').hidden = c.answer !== 'tippen';
+    // Art der Antwort: läuft eine Aufgabe, nach deren Art, sonst nach der Richtung
+    const morseAns = (L.running ? L.type : (c.dir === 't2m' ? 't2m' : 'm2t')) === 't2m';
+    const tippen = c.answer === 'tippen';
+    $('#lernMuster').hidden = !(tippen && morseAns);
+    $('#lernInput').hidden = !(tippen && !morseAns);
     $('#lernOptions').hidden = c.answer !== 'wahl';
-    $('#lernSend').hidden = c.answer !== 'senden';
+    $('#lernSend').hidden = !(tippen && morseAns);
     $('#lernKeys').hidden = lernAS().input !== 'et';
     $('#lernOk').hidden = lernAS().confirm === 'sofort';
     lernKeyer.refresh();
-    $('#lernInput').placeholder = (L.type === 't2m' && L.running ? 'Punkte (.) und Striche (-) eintippen' : 'Zeichen eintippen')
-      + (lernAS().confirm === 'enter' ? ', dann Enter' : '');
-    $('#lernReplay').hidden = !(L.running && L.type === 'm2t' && lernSound());
+    $('#lernInput').placeholder = 'Buchstabe eintippen' + (lernAS().confirm === 'enter' ? ', dann Enter' : '');
+    $('#lernReplay').hidden = !(L.running && L.form !== 'letter' && lernSound());
     $('#lernStart').hidden = L.running || !phone.matches;
     $('#lernStop').hidden = !L.running;
   }
@@ -482,20 +497,22 @@
     fb.textContent = '';
     fb.className = 'feedback';
     if (!enoughChars('lernen', fb)) { L.cur = null; L.running = false; renderLernView(); return; }
-    L.type = c.dir === 'both' ? (Math.random() < 0.5 ? 'm2t' : 't2m') : c.dir;
+    const task = lernTask(c);
+    L.type = task.type;
+    L.form = task.form;
     L.cur = pickChar('lernen', L.prev);
     L.prev = L.cur;
     const disp = $('#lernAnzeige');
-    if (L.type === 'm2t' && c.mode !== 'hoer') { disp.textContent = symbols(Morse.TABLE[L.cur]); disp.classList.add('morse'); }
-    else if (L.type === 'm2t') { disp.textContent = '?'; disp.classList.remove('morse'); }   // Hörübung: nichts zeigen
+    if (L.form === 'code') { disp.textContent = symbols(Morse.TABLE[L.cur]); disp.classList.add('morse'); }
+    else if (L.form === 'tone') { disp.textContent = '?'; disp.classList.remove('morse'); }   // nur Ton: nichts zeigen
     else { disp.textContent = L.cur; disp.classList.remove('morse'); }
     $('#lernCode').textContent = '';
     renderLernPat();
     $('#lernInput').value = '';
     renderLernOptions();
     renderLernView();
-    if (c.answer === 'tippen') $('#lernInput').focus();
-    if (L.type === 'm2t' && lernSound()) Morse.play(L.cur, audioOpts());
+    if (c.answer === 'tippen' && L.type === 'm2t') $('#lernInput').focus();
+    if (L.form !== 'letter' && lernSound()) Morse.play(L.cur, audioOpts());
   }
 
   // v: die Antwort (m2t: Zeichen, t2m: Punkte und Striche); pickedCh: bei „auswählen“ das angetippte Zeichen
@@ -584,7 +601,6 @@
   function lernBack() {
     if (L.busy || L.type !== 't2m') return;
     L.pat = L.pat.slice(0, -1);
-    if (S.lernCfg.answer === 'tippen') $('#lernInput').value = L.pat;
     lernPatChanged();
   }
 
@@ -592,7 +608,7 @@
     field: $('#lernFeld'),
     timingBox: $('#lernTiming'),
     settings: lernAS,
-    active: () => activeTab === 'lernen' && L.running && !!L.cur && !L.busy && L.type === 't2m' && S.lernCfg.answer === 'senden',
+    active: () => activeTab === 'lernen' && L.running && !!L.cur && !L.busy && L.type === 't2m' && S.lernCfg.answer === 'tippen',
     audioOpts: () => audioOpts(lernSound() ? null : { vol: 0 }),   // stiller Modus: auch die Taste bleibt still
     onSymbol: sym => lernSym(sym)
   });
@@ -607,7 +623,7 @@
   $('#lernBack').addEventListener('click', lernBack);
   $('#lernOk').addEventListener('click', lernSubmit);
   document.addEventListener('keydown', e => {
-    if (activeTab !== 'lernen' || !L.running || L.type !== 't2m' || S.lernCfg.answer !== 'senden') return;
+    if (activeTab !== 'lernen' || !L.running || L.type !== 't2m' || S.lernCfg.answer !== 'tippen') return;
     if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.target.matches('textarea, select, input[type="text"]')) return;
     const k = e.key.toLowerCase();
     const space = k === ' ' && lernAS().input !== 'leertaste';
@@ -619,7 +635,7 @@
 
   function renderLernMode() {
     const a = lernAS(), c = S.lernCfg;
-    const eingabe = c.answer === 'senden' ? Keyer.label(a, true) : c.answer === 'tippen' ? Keyer.label(a) : '';
+    const eingabe = c.answer === 'tippen' ? Keyer.label(a, c.dir !== 'm2t') : '';   // Maus/Leertaste/E und T nur, wenn Morse eingegeben wird
     $('#lernMode').textContent = LERN_NAMES.mode[c.mode] + ' · ' + LERN_NAMES.dir[c.dir] + ' · ' + LERN_NAMES.answer[c.answer]
       + (eingabe ? ' · ' + eingabe : '');
     if (activeTab === 'lernen') renderLernView();
@@ -628,14 +644,7 @@
   $('#lernInput').addEventListener('input', e => {
     if (!L.cur || L.busy) { e.target.value = ''; return; }
     clearTimeout(L.auto);
-    if (L.type === 't2m') {
-      // Morse eintippen: Punkt und Strich (auch • und –)
-      const p = e.target.value.replace(/[•·]/g, '.').replace(/[–—_]/g, '-').replace(/[^.\-]/g, '').slice(0, 7);
-      e.target.value = p;
-      L.pat = p;
-      lernPatChanged();
-      return;
-    }
+    if (L.type === 't2m') { e.target.value = ''; return; }   // Morse-Code kommt über Feld, Leertaste oder E/T
     const raw = e.target.value.trim().toUpperCase();
     const ch = raw.slice(-1);
     const a = lernAS();
@@ -676,7 +685,7 @@
   $('#lernGo').addEventListener('click', lernBegin);
   $('#lernStart').addEventListener('click', lernBegin);
   $('#lernStop').addEventListener('click', lernEnd);
-  $('#lernReplay').addEventListener('click', () => { if (L.cur && L.type === 'm2t' && lernSound()) { Morse.play(L.cur, audioOpts()); $('#lernInput').focus(); } });
+  $('#lernReplay').addEventListener('click', () => { if (L.cur && L.form !== 'letter' && lernSound()) { Morse.play(L.cur, audioOpts()); if (L.type === 'm2t' && S.lernCfg.answer === 'tippen') $('#lernInput').focus(); } });
 
   /* ---------- Hören ---------- */
   const H = { text: '', auto: null, playing: false };
@@ -1132,7 +1141,7 @@
      Was in einem Bereich keine Rolle spielt, wird dort ausgeblendet. */
   const AREA_INFO = {
     lernen: { opts: ['input', 'right', 'confirm', 'delay', 'timing'],
-      note: 'Gilt für „Antwort eintippen“ (Bestätigung) und „Senden per Knopfdruck“ (Eingabe von Punkten und Strichen). Bei „Antwort auswählen“ gibt es nichts einzustellen.' },
+      note: 'Gilt für „Antwort eintippen“: die Bestätigung immer, die Eingabe von Punkten und Strichen, wenn die Antwort Morse-Code ist. Bei „Antwort auswählen“ gibt es nichts einzustellen.' },
     hoeren: { opts: ['confirm', 'delay'],
       note: 'Beim Hören tippst du die gehörten Zeichen als Text ein. Punkte und Striche gibst du hier nicht ein.' },
     senden: { opts: ['input', 'right', 'confirm', 'delay', 'timing', 'hint'],
@@ -1156,10 +1165,10 @@
   function erklHtml(area) {
     if (area === 'lernen') {
       return '<h3>Ablauf</h3><p>Zuerst wählst du die Zeichen (Koch-Methode oder eigene Auswahl) und die Art zu lernen. Am Laptop startest du mit „Lernen starten“, am Handy stehen die Modi im Reiter „Modi“.</p>'
-        + '<h3>Modus</h3><ul><li><b>Normal:</b> Morse wird gehört und gezeigt.</li><li><b>Stiller Modus:</b> Morse wird nur gezeigt, es gibt keinen Ton.</li><li><b>Hörübung:</b> Du hörst nur den Ton, es wird nichts gezeigt.</li></ul>'
-        + '<h3>Richtung</h3><ul><li><b>Morse zu Text:</b> Du bekommst Morse und nennst das Zeichen.</li><li><b>Text zu Morse:</b> Du bekommst ein Zeichen und gibst den Morsecode an.</li><li><b>Beide:</b> Die Richtung wechselt zufällig.</li></ul>'
-        + '<h3>Antwort</h3><ul><li><b>Eintippen:</b> Zeichen bzw. Punkte (.) und Striche (-) tippen.</li><li><b>Auswählen:</b> Eine von vier Möglichkeiten antippen.</li><li><b>Senden per Knopfdruck:</b> Den Code mit Maus, Leertaste oder E und T eingeben (nur bei Text zu Morse).</li></ul>'
-        + '<p>Was zur gewählten Kombination nicht passt, ist ausgegraut.</p>'
+        + '<h3>Modus</h3><ul><li><b>Normal:</b> Hören und Senden gemischt. Zufällig kommt ein Buchstabe, ein Morse-Strichcode mit Ton oder nur ein Ton.</li><li><b>Stiller Modus:</b> Es gibt gar keinen Ton, du siehst nur einen Buchstaben oder einen Morse-Strichcode.</li><li><b>Hörübung:</b> Du hörst nur den Ton, es wird nichts gezeigt.</li></ul>'
+        + '<h3>Richtung</h3><ul><li><b>Morse zu Text:</b> Die Antwort ist ein Buchstabe.</li><li><b>Text zu Morse:</b> Die Antwort ist Morse-Code.</li><li><b>Beide:</b> Die Richtung wechselt zufällig.</li></ul>'
+        + '<h3>Antwort</h3><ul><li><b>Eintippen:</b> Die Eingabe passt sich an. Ist die Antwort ein Buchstabe, tippst du ihn auf der Tastatur. Ist sie Morse-Code, gibst du ihn mit Maus (Feld), Leertaste oder E und T ein, am Handy mit dem Knopf.</li><li><b>Auswählen:</b> Eine von vier Möglichkeiten antippen.</li></ul>'
+        + '<p>Der Ton lässt sich mit „Nochmal hören“ beliebig oft wiederholen. Was zur gewählten Kombination nicht passt, ist ausgegraut.</p>'
         + ERKL_PICK
         + '<p>In der Koch-Methode rückst du ab 90 % Genauigkeit in den letzten 20 Antworten automatisch eine Stufe vor. Der Balken unter der Übung zeigt die aktuelle Genauigkeit.</p>';
     }
